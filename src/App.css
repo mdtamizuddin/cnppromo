@@ -1,0 +1,184 @@
+@import url("https://fonts.googleapis.com/css2?family=Baskervville+SC&family=Wittgenstein:ital,wght@0,400..900;1,400..900&display=swap");
+
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap");
+
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lobster&display=swap");
+.baskervville {
+  font-family: "Baskervville SC", serif;
+}
+.lobster {
+  font-family: "Lobster", serif;
+  font-style: normal;
+}
+.wittgenstein {
+  font-family: "Wittgenstein", serif;
+}
+
+.playfair {
+  font-family: "Playfair Display", serif;
+}
+
+.lato {
+  font-family: "Lato", serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+  box-sizing: border-box;
+  /* font-weight: 500; */
+}
+
+body {
+  background-color: #b8b8b80e;
+}
+
+.home {
+  color: black;
+  background: rgb(254, 254, 255);
+  background: linear-gradient(
+    90deg,
+    rgba(254, 254, 255, 1) 0%,
+    rgba(197, 197, 247, 0.757) 38%,
+    rgba(206, 239, 245, 0.783) 100%
+  );
+}
+
+.home2 {
+  color: black;
+  background: rgb(254, 254, 255);
+  background: linear-gradient(
+    90deg,
+    #e5254847 10%,
+    #050d9c4b 100%,
+    #e525481f 38%
+  );
+}
+
+.gradiant-bg {
+  background-color: #8ec5fc;
+  background-image: linear-gradient(62deg, #8ec5fc 0%, #e0c3fc 100%);
+}
+
+.gradiant-bg-2 {
+  background: linear-gradient(10deg, #610f97 0%, #fd1d1ddc 50%, #5254e2 100%);
+  color: white;
+}
+
+.gradiant-bg-3 {
+  background: linear-gradient(120deg, #610f97 0%, #fd1d1ddc 50%, #5254e2 100%);
+  color: white;
+}
+
+.gradiant-bg-4 {
+  background: rgb(237, 138, 181);
+  background: linear-gradient(
+    90deg,
+    rgb(227, 116, 164) 0%,
+    rgb(15, 103, 210) 100%
+  );
+}
+
+.hero-title {
+  background: -webkit-linear-gradient(
+    43deg,
+    #c2cbf4 0%,
+    #f2eff2 80%,
+    #10ceb5 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 
+background-color: #4158D0;
+background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%); */
+
+.animated_badge_svg {
+  width: 50px;
+  height: 50px;
+}
+
+.lavel-card .animated_badge_svg {
+  width: 80px;
+  height: 80px;
+}
+
+.container {
+  max-width: 1100px !important;
+  margin: 0 auto;
+}
+
+.message {
+  background: rgb(2, 0, 36);
+  background: linear-gradient(
+    90deg,
+    rgba(2, 0, 36, 1) 0%,
+    rgba(9, 9, 121, 1) 45%,
+    rgb(5, 113, 135) 100%
+  );
+  font-weight: 400;
+}
+
+
+.userprofile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.userprofile li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.userprofile li span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a4a4a;
+}
+
+/* Pulsing Circle Animation */
+/* Waveform Animation */
+.waveform {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin: 20px auto;
+}
+
+.wave {
+  width: 5px;
+  height: 30px;
+  background-color: red;
+  animation: bounce 1s infinite ease-in-out;
+}
+
+.wave:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.wave:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.wave:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.wave:nth-child(4) {
+  animation-delay: 0.4s;
+}
+.wave:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.5);
+  }
+}
+
