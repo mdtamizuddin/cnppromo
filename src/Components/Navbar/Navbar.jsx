@@ -8,6 +8,7 @@ import { faBullhorn } from "@fortawesome/free-solid-svg-icons";
 import Cookie from "js-cookie";
 import ProfileMenu from "./ProfileMenu";
 import AdminDropdown from "./AdminDropdown";
+import { Typewriter } from "react-simple-typewriter";
 
 const NAV_ITEMS = [
   { label: "Home", to: "/", auth: false, loggedIn: "/home" },
@@ -178,11 +179,26 @@ const Topbar = () => {
 
   return (
     <>
-      <div className="sticky top-0 z-50 flex items-center lg:justify-center gap-x-3 text-xs py-1 px-2 bg-white">
-        <FontAwesomeIcon icon={faBullhorn} />
-        <p className="font-medium text-primary">
-          {settings?.notice || `Welcome to ${settings?.siteName || "CNP-PROMO"}`}
-        </p>
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 text-white text-xs py-2 px-4 shadow-lg shadow-indigo-900/20">
+        <div className="max-w-5xl mx-auto flex items-center justify-center gap-3">
+          <span className="flex items-center gap-1.5 text-amber-400 font-semibold shrink-0">
+            <FontAwesomeIcon icon={faBullhorn} className="text-[10px]" />
+            <span className="hidden sm:inline">Notice</span>
+          </span>
+          <span className="text-amber-300/40 hidden sm:block">|</span>
+          <span className="font-medium text-white/90">
+            <Typewriter
+              words={[settings?.notice || `Welcome to ${settings?.siteName || "CNP-PROMO"}`]}
+              loop={true}
+              cursor
+              cursorStyle="|"
+              typeSpeed={45}
+              deleteSpeed={30}
+              delaySpeed={5000}
+            />
+          </span>
+          <span className="text-amber-400 text-[10px] animate-pulse hidden sm:block">✦</span>
+        </div>
       </div>
       <div className="sticky top-[28px] z-40 px-6 py-3 shadow-none bg-primary border-none">
         <div className="flex mx-auto container items-center justify-between text-black">

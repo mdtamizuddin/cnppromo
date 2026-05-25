@@ -154,7 +154,7 @@ const ChatList = ({ socket, users, open, setOpen, refetch }) => {
           value={name}
           onChange={(e) => setName(e.target.value)}
           type="search"
-          className="min-w-[250px] max-w-[300px]"
+          className="w-full lg:min-w-[250px] lg:max-w-[300px]"
           name="search"
           placeholder="Search User"
           required
@@ -201,7 +201,7 @@ const ChatList = ({ socket, users, open, setOpen, refetch }) => {
           </div>
         ))}
       </div>
-      <div style={{ height: "calc(100vh - 200px)" }}>
+      <div style={{ height: "calc(100dvh - 200px)" }}>
         <Virtuoso
           data={pageData}
           itemContent={(index, record) => (
@@ -222,7 +222,8 @@ const ChatList = ({ socket, users, open, setOpen, refetch }) => {
 export default ChatList;
 
 const Person = React.memo(({ socket, user: chatUser, refetch, onClick }) => {
-  const addfavourite = async () => {
+  const addfavourite = async (e) => {
+    e.stopPropagation();
     try {
       const res = await api.put(`/message/chat/${chatUser._id}`);
       refetch();
@@ -240,47 +241,47 @@ const Person = React.memo(({ socket, user: chatUser, refetch, onClick }) => {
     navigate(`/message?${searchparams.toString()}`);
     onClick();
   };
+  const lastMsg = chatUser?.message?.message
+    ? chatUser?.message?.message?.slice(0, 50)
+    : chatUser?.message?.audio
+    ? "Voice Message"
+    : chatUser?.message?.video
+    ? "Video Message"
+    : "No message";
   return (
     <div
       onClick={handleClick}
-      className="flex items-center px-3 text-sm transition duration-150 ease-in-out cursor-pointer bg-white focus:outline-none justify-between gap-x-1"
+      className="flex items-center px-3 py-3 text-sm transition duration-150 ease-in-out cursor-pointer bg-white hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100 gap-x-3"
     >
-      <Avatar size={50} style={{ minWidth: "50px", minHeight: "50px" }} className="w-10 h-10 rounded-full border-primary">
-        {chatUser?.user?.name?.slice(0, 1)}
-      </Avatar>
-      <div className="w-full pb-2">
-        <div className="flex justify-between">
-          <span className="block ml-2 font-semibold text-gray-600">
-            <span>{chatUser?.user?.name} </span>
+      <div className="relative shrink-0">
+        <Avatar size={48} className="rounded-full">
+          {chatUser?.user?.name?.slice(0, 1)}
+        </Avatar>
+        {chatUser?.user?.active && (
+          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-gray-800 truncate">{chatUser?.user?.name}</span>
+          <div className="flex items-center gap-2 shrink-0 ml-2">
             <StarFilled
               onClick={addfavourite}
-              className={chatUser?.marked ? "text-yellow-500 text-lg" : "text-gray-500 text-lg"}
+              className={`text-base ${chatUser?.marked ? "text-yellow-500" : "text-gray-300"}`}
             />
-          </span>
-          <span className="block ml-2 text-sm text-gray-700">
-            {chatUser?.user?.active ? (
-              <span className="text-green-500">Online</span>
-            ) : chatUser?.message?.createdAt ? (
-              <span className="text-[8px]">{moment(chatUser?.message?.createdAt).fromNow()}</span>
-            ) : (
-              <span className="text-red-500">Offline</span>
-            )}
-          </span>
+            <span className="text-[10px] text-gray-400 whitespace-nowrap">
+              {chatUser?.message?.createdAt ? moment(chatUser?.message?.createdAt).fromNow() : ""}
+            </span>
+          </div>
         </div>
-        <p className="ml-2 text-xs text-gray-700 flex items-center">
-          {chatUser?.message?.message
-            ? chatUser?.message?.message?.slice(0, 50)
-            : chatUser?.message?.audio
-            ? "Voice Message"
-            : chatUser?.message?.video
-            ? "Video Message"
-            : "No message"}
+        <div className="flex items-center justify-between mt-0.5">
+          <span className="text-xs text-gray-500 truncate">{lastMsg}</span>
           {!!chatUser?.unseen && (
-            <div className="w-[17px] h-[17px] bg-red-400 text-white rounded-full flex justify-center items-center text-xs ml-2">
+            <span className="shrink-0 ml-2 min-w-[20px] h-5 bg-red-500 text-white text-[10px] font-semibold rounded-full flex items-center justify-center px-1.5">
               {chatUser?.unseen}
-            </div>
+            </span>
           )}
-        </p>
+        </div>
       </div>
     </div>
   );

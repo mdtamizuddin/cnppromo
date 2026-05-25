@@ -6,6 +6,7 @@ import {
   BarsOutlined,
   PlayCircleFilled,
   PlayCircleOutlined,
+  VerticalAlignBottomOutlined,
 } from "@ant-design/icons";
 import WriteChat from "./WriteChat";
 import { useSocketContext } from "../../Components/SocketContext";
@@ -22,6 +23,7 @@ const ChatBox = ({ users, setShowSidebar }) => {
   const chatId = search.get("chat");
   const { socket, message } = useSocketContext();
   const { user } = useSelector((state) => state.user);
+  const [typingUser, setTypingUser] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["chat", chatId],
@@ -50,6 +52,7 @@ const ChatBox = ({ users, setShowSidebar }) => {
   const virtuosoRef = useRef(null);
   const markRef = useRef("");
   const replyRef = useRef(null);
+  const scrollOnLoad = useRef(false);
   const [reply, setReplyState] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [, forceUpdate] = useState(0);
@@ -63,6 +66,25 @@ const ChatBox = ({ users, setShowSidebar }) => {
     replyRef.current = r;
     setReplyState(r);
   }, []);
+
+  // Typing indicator
+  useEffect(() => {
+    if (!socket) return;
+    let typingTimeout;
+    const handler = (data) => {
+      if (data?.chat === chatId || data?.sender === data?.user?._id) {
+        if (data?.stop) {
+          setTypingUser(false);
+        } else {
+          setTypingUser(true);
+          clearTimeout(typingTimeout);
+          typingTimeout = setTimeout(() => setTypingUser(false), 3000);
+        }
+      }
+    };
+    socket.on("typing", handler);
+    return () => { socket.off("typing", handler); clearTimeout(typingTimeout); };
+  }, [socket, chatId]);
 
   // Optimistic message append from socket
   useEffect(() => {
@@ -81,6 +103,7 @@ const ChatBox = ({ users, setShowSidebar }) => {
     if (matchSender) {
       socket && socket.emit("seen", message);
     }
+    setTypingUser(false);
   }, [message]);
 
   // Background sync when receiving "seen"
@@ -122,31 +145,38 @@ const ChatBox = ({ users, setShowSidebar }) => {
       )}
       <div className="w-full h-full flex flex-col">
         <div className="relative flex items-center p-3 border-b border-gray-300 bg-primary justify-between shrink-0">
+          <button className="lg:hidden text-white mr-2" onClick={() => { setShowSidebar((p) => !p); goBack(); }}>
+            <BarsOutlined className="text-xl" />
+          </button>
           <div className="flex items-center" onClick={() => setShowProfile((p) => !p)}>
-            <Avatar size={50} style={{ minWidth: "50px", minHeight: "50px" }} className="w-10 h-10 rounded-full">
-              {data?.user?.name?.slice(0, 1)}
-            </Avatar>
-            <div>
-              <span className="block ml-2 font-bold text-white">{data?.user?.name}</span>
-              <span className="block ml-2 text-sm text-white">
-                {data?.user?.active ? "Online" : "Offline"}
+            <div className="relative">
+              <Avatar size={44} style={{ minWidth: "44px", minHeight: "44px" }} className="rounded-full">
+                {data?.user?.name?.slice(0, 1)}
+              </Avatar>
+              <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${data?.user?.active ? "bg-green-500" : "bg-gray-400"}`} />
+            </div>
+            <div className="ml-3">
+              <span className="block font-bold text-white text-sm">{data?.user?.name}</span>
+              <span className="block text-xs text-white/80">
+                {typingUser ? "Typing..." : data?.user?.active ? "Online" : "Offline"}
               </span>
             </div>
           </div>
-          <button className="text-white text-2xl font-semibold" onClick={() => { setShowSidebar((p) => !p); goBack(); }}>
+          <button className="hidden lg:block text-white text-2xl font-semibold" onClick={() => { setShowSidebar((p) => !p); goBack(); }}>
             <BarsOutlined />
           </button>
-          <span className={`absolute w-3 h-3 rounded-full left-10 top-3 ${data?.user?.active ? "bg-green-600" : "bg-red-600"}`} />
         </div>
-        <div className="overflow-hidden relative" style={{ height: "calc(100vh - 210px)" }}>
+        <div className="overflow-hidden relative" style={{ height: "calc(100dvh - 210px)" }}>
           <MessageList
             virtuosoRef={virtuosoRef}
             messages={messages}
             user={user}
+            chatUser={data?.user}
             markRef={markRef}
             setMark={setMark}
             refetch={refetch}
             setReply={setReply}
+            chatId={chatId}
           />
         </div>
         <WriteChat socket={socket} chat={data} reply={reply} setReply={setReply} />
@@ -157,38 +187,105 @@ const ChatBox = ({ users, setShowSidebar }) => {
 
 export default ChatBox;
 
-const MessageList = ({ messages, user, markRef, setMark, refetch, setReply, virtuosoRef }) => (
-  <Virtuoso
-    ref={virtuosoRef}
-    data={messages}
-    followOutput="smooth"
-    overscan={200}
-    itemContent={(index, msg) => (
-      <MessageItem
-        key={msg?._id || index}
-        msg={msg}
-        user={user}
-        refetch={refetch}
-        setReply={setReply}
-        markRef={markRef}
-        setMark={setMark}
+// --- Date separator helper ---
+const formatDateLabel = (dateStr) => {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (d.toDateString() === today.toDateString()) return "Today";
+  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
+
+const MessageList = ({ messages, user, chatUser, markRef, setMark, refetch, setReply, virtuosoRef, chatId }) => {
+  let lastDate = "";
+  const [atBottom, setAtBottom] = useState(true);
+  const pendingScroll = useRef(false);
+
+  useEffect(() => {
+    pendingScroll.current = true;
+  }, [chatId]);
+
+  useEffect(() => {
+    if (pendingScroll.current && messages.length) {
+      pendingScroll.current = false;
+      setTimeout(() => {
+        virtuosoRef.current?.scrollToIndex({ index: "LAST", behavior: "smooth" });
+      }, 100);
+    }
+  }, [messages.length]);
+
+  const scrollToBottom = () => {
+    virtuosoRef.current?.scrollToIndex({ index: "LAST", behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative h-full">
+      <Virtuoso
+        ref={virtuosoRef}
+        data={messages}
+        followOutput="smooth"
+        overscan={200}
+        atBottomStateChange={setAtBottom}
+        itemContent={(index, msg) => {
+          const msgDate = msg?.createdAt ? new Date(msg.createdAt).toDateString() : "";
+          const showDateSep = msgDate && msgDate !== lastDate;
+          if (showDateSep) lastDate = msgDate;
+          return (
+            <React.Fragment key={msg?._id || index}>
+              {showDateSep && (
+                <div className="flex justify-center my-3">
+                  <span className="px-3 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-full">
+                    {formatDateLabel(msg?.createdAt)}
+                  </span>
+                </div>
+              )}
+              <MessageItem
+                msg={msg}
+                user={user}
+                chatUser={chatUser}
+                refetch={refetch}
+                setReply={setReply}
+                markRef={markRef}
+                setMark={setMark}
+              />
+            </React.Fragment>
+          );
+        }}
       />
-    )}
-  />
-);
+      {!atBottom && (
+        <button
+          onClick={scrollToBottom}
+          className="absolute bottom-4 right-4 w-10 h-10 bg-white border border-gray-300 rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:bg-gray-50 z-10"
+        >
+          <VerticalAlignBottomOutlined className="text-lg" />
+        </button>
+      )}
+    </div>
+  );
+};
 
 const fmtTime = (date) => {
   if (!date) return "";
   const d = new Date(date);
   return d.toLocaleString("en-US", {
-    month: "short", day: "numeric",
     hour: "numeric", minute: "2-digit", hour12: true,
   });
 };
 
-const MessageItem = memo(({ msg, user, refetch, setReply, markRef, setMark }) => {
+const UserAvatar = ({ name, size = 32 }) => (
+  <Avatar size={size} className="rounded-full shrink-0 bg-gray-400 text-white text-xs">
+    {name?.slice(0, 1) || "?"}
+  </Avatar>
+);
+
+const MessageItem = memo(({ msg, user, chatUser, refetch, setReply, markRef, setMark }) => {
   const [play, setPlay] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const isOwn = msg?.sender === user?._id;
   const isMarked = markRef.current === msg?._id;
 
   const deleteMessage = useCallback(async () => {
@@ -225,26 +322,20 @@ const MessageItem = memo(({ msg, user, refetch, setReply, markRef, setMark }) =>
   }, [msg?.message]);
 
   return (
-    <div
-      id={msg?._id}
-      className={`flex chat ${msg?.sender === user?._id ? "chat-end" : "chat-start"} flex-col px-4 py-1 ${isMarked ? "border-2 border-yellow-400 rounded" : ""}`}
-    >
-      <div className="chat-header py-[3px]">
-        <div className="flex gap-x-4 items-end">
-          {msg.reply && (
-            <p onClick={scrollToReplied} className="text-gray-400 text-sm cursor-pointer">
-              <span className="block">Replied to:</span>
-              <span className="text-xs">
-                {msg?.reply?.message ? msg.reply.message.slice(0, 50) : msg?.reply?.audio ? "Voice Message" : msg?.reply?.video ? "Video" : "Image"}
-              </span>
-            </p>
-          )}
+    <div className={`flex items-end gap-2 px-4 py-1 ${isOwn ? "flex-row-reverse" : ""}`}>
+      {isOwn ? (
+        <UserAvatar name={user?.name} />
+      ) : (
+        <UserAvatar name={chatUser?.name} />
+      )}
+      <div className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"} flex flex-col`}>
+        <div className="flex items-center gap-1 mb-0.5">
           <Popover
             trigger={"click"}
             showArrow
             content={
               <div className="flex flex-col gap-y-2 text-gray-800">
-                {msg?.sender === user?._id && (
+                {isOwn && (
                   <>
                     <button onClick={deleteMessage} className="w-[200px] py-1 text-start border-b border-primary">Delete Message</button>
                     <Popover
@@ -261,64 +352,82 @@ const MessageItem = memo(({ msg, user, refetch, setReply, markRef, setMark }) =>
                     </Popover>
                   </>
                 )}
-                <button onClick={handleReply} className="w-[200px] py-1 text-start border-black border-b">Reply</button>
+                <button onClick={handleReply} className="w-[200px] py-1 text-start border-b border-black">Reply</button>
                 {msg.message && (
                   <button onClick={copyText} className="w-[200px] py-1 text-start border-black">Copy</button>
                 )}
               </div>
             }
           >
-            <button className="text-white"><FontAwesomeIcon icon={faPenToSquare} /></button>
+            <button className="text-gray-400 hover:text-gray-600 text-base p-2"><FontAwesomeIcon icon={faPenToSquare} /></button>
           </Popover>
+          {msg.reply && (
+            <button onClick={scrollToReplied} className="text-gray-400 text-[10px] hover:underline truncate max-w-[150px]">
+              ↰ {msg?.reply?.message?.slice(0, 30) || "media"}
+            </button>
+          )}
+        </div>
+        <div
+          id={msg?._id}
+          className={`relative px-3 py-2 text-sm leading-snug rounded-2xl shadow-sm ${
+            isOwn
+              ? "bg-[#180d60] text-white rounded-br-md"
+              : "bg-white text-gray-800 rounded-bl-md"
+          } ${isMarked ? "ring-2 ring-yellow-400" : ""}`}
+        >
+          {msg.reply && (
+            <div className="mb-1 pl-2 border-l-2 border-white/40 text-[10px] opacity-70">
+              {msg?.reply?.message?.slice(0, 60) || "Replied to media"}
+            </div>
+          )}
+          <LinkifyText text={msg?.message} />
+          {msg.image && <Image width={200} src={msg?.image} className="mt-1 rounded-lg" style={{ maxWidth: "100%" }} />}
+          {msg.video &&
+            (playing ? (
+              <video width={260} controls autoPlay={false} className="rounded-lg mt-1" style={{ maxWidth: "100%" }}>
+                <source src={msg.video} type="video/mp4" />
+              </video>
+            ) : (
+              <div className="w-[260px] h-[130px] flex items-center justify-center flex-col bg-black/5 rounded-lg mt-1" style={{ maxWidth: "100%" }}>
+                <PlayCircleFilled className="text-4xl cursor-pointer text-gray-500" onClick={() => setPlaying(true)} />
+                <h2 className="text-xs mt-1">Click To Play</h2>
+              </div>
+            ))}
+          {msg.audio && (
+            <div className="flex items-center gap-x-2 mt-1">
+              <button className="text-lg" onClick={() => setPlay((p) => !p)}>
+                {!play && <PlayCircleOutlined />}
+              </button>
+              {play ? (
+                <audio controls src={msg.audio} className="h-8"></audio>
+              ) : (
+                <img width={100} height={30} src="/message-wave.png" alt="voice" />
+              )}
+            </div>
+          )}
+        </div>
+        <div className={`flex items-center gap-1 mt-0.5 ${isOwn ? "flex-row-reverse" : ""}`}>
+          <span className="text-[9px] text-gray-400">{fmtTime(msg?.createdAt)}</span>
+          {isOwn && (
+            <span className={`text-[9px] ${msg?.seen ? "text-blue-400" : "text-gray-400"}`}>
+              {msg?.seen ? "✓✓" : "✓"}
+            </span>
+          )}
         </div>
       </div>
-      <div onClick={() => setMark("")} className={`relative px-2 py-2 text-black font-normal rounded shadow chat-bubble max-w-[80%] ${msg?.sender === user?._id ? " bg-[#180d60] text-white" : "bg-gray-100"}`}>
-        <LinkifyText text={msg?.message} />
-        {msg.image && <Image width={200} src={msg?.image} />}
-        {msg.video &&
-          (playing ? (
-            <video width={300} controls autoPlay={false} className="rounded-lg">
-              <source src={msg.video} type="video/mp4" />
-            </video>
-          ) : (
-            <div className="w-[300px] h-[140px] flex items-center justify-center flex-col">
-              <PlayCircleFilled className="text-4xl cursor-pointer" onClick={() => setPlaying(true)} />
-              <h2 className="text-sm mt-2">Click To Play</h2>
-            </div>
-          ))}
-        {msg.audio && (
-          <div className="flex items-center gap-x-2">
-            <button className="text-xl" onClick={() => setPlay((p) => !p)}>
-              {!play && <PlayCircleOutlined />}
-            </button>
-            {play ? (
-              <audio controls src={msg.audio}></audio>
-            ) : (
-              <img width={130} height={40} src="/message-wave.png" alt="voice" />
-            )}
-          </div>
-        )}
-      </div>
-      <p className="text-[8px] w-auto text-white mt-1">
-        {fmtTime(msg?.createdAt)}
-        {msg?.sender === user?._id && (
-          <span className={`ml-2 ${msg?.seen ? "text-green-300" : "text-gray-100"}`}>
-            {msg?.seen ? "Seen" : "Sent"}
-          </span>
-        )}
-      </p>
     </div>
   );
 });
 
 export const LinkifyText = ({ text }) => {
+  if (!text) return null;
   const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const parts = text?.split(urlRegex);
+  const parts = text.split(urlRegex);
   return (
-    <p className="text-xs">
-      {parts?.map((part, index) =>
+    <p className="text-sm whitespace-pre-wrap break-words">
+      {parts.map((part, index) =>
         urlRegex.test(part) ? (
-          <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="text-primary">
+          <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline">
             {part}
           </a>
         ) : (

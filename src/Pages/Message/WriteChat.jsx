@@ -24,6 +24,19 @@ const WriteChat = ({ socket, chat, reply, setReply }) => {
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
 
+  const typingTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (message && chat && connected) {
+      socket.emit("typing", { chat: chat?._id, sender: chat?.owner?._id, receiver: chat?.user?._id });
+      clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => {
+        socket.emit("typing", { chat: chat?._id, sender: chat?.owner?._id, receiver: chat?.user?._id, stop: true });
+      }, 2000);
+    }
+    return () => clearTimeout(typingTimerRef.current);
+  }, [message]);
+
   useEffect(() => {
     if (isRecording) {
       intervalRef.current = setInterval(() => {
@@ -160,87 +173,97 @@ const WriteChat = ({ socket, chat, reply, setReply }) => {
   }
 
   return (
-    <form onSubmit={sendMessage} className="flex items-center justify-between w-full p-3 border border-gray-300 relative shrink-0">
+    <form onSubmit={sendMessage} className="relative shrink-0">
       {reply && (
-        <div className="absolute top-[-42px] text-black text-[11px] bg-gray-100 px-2 py-1 rounded min-w-[200px]">
-          <h2 className="border-b">Reply to</h2>
-          <p>
-            {reply.message
-              ? reply.message.slice(0, 50)
-              : reply.audio ? "Voice Message" : reply.video ? "A Video" : "Image"}
-          </p>
-          <div className="absolute top-[0px] right-[3px] text-sm" onClick={() => setReply(null)}>
-            <FontAwesomeIcon icon={faXmark} />
+        <div className="flex items-center justify-between px-3 py-1.5 bg-gray-100 border-t border-gray-200 text-xs text-gray-600">
+          <div className="truncate min-w-0">
+            <span className="font-medium">Reply to: </span>
+            <span>
+              {reply.message
+                ? reply.message.slice(0, 50)
+                : reply.audio ? "Voice Message" : reply.video ? "A Video" : "Image"}
+            </span>
           </div>
+          <button type="button" onClick={() => setReply(null)} className="shrink-0 ml-2 text-gray-400 hover:text-gray-600">
+            <FontAwesomeIcon icon={faXmark} />
+          </button>
         </div>
       )}
-      <Input
-        onChange={(e) => setMessage(e.target.value)}
-        value={message}
-        type="text"
-        placeholder="Message"
-        className="block w-full py-2 pl-4 mx-3 bg-gray-100 outline-none focus:text-gray-700 text-xs"
-        name="message"
-        required
-      />
-      <input onChange={uploadIMage} accept="image/*" type="file" id="file" className="hidden" />
-      <Popover
-        trigger={"click"}
-        content={
-          <div className="flex items-center gap-x-3 text-lg text-red-400">
-            <CameraFilled onClick={openCamera} />
-            <FileImageFilled onClick={openGallery} />
-          </div>
-        }
-      >
-        <button className="mr-3 text-white text-xl cursor-pointer" type="button">
-          {loading ? <Spin /> : <CameraFilled />}
-        </button>
-      </Popover>
-      <label htmlFor="video" className="mr-3 text-white text-xl cursor-pointer">
-        {uploadingVideo ? <Spin /> : <VideoCameraFilled />}
-        <input onChange={uploadVideo} accept="video/*" type="file" id="video" className="hidden" />
-      </label>
-      <Popover
-        trigger={"click"}
-        content={
-          <div className="min-w-[250px] min-h-[150px] flex flex-col justify-center items-center">
-            <div onClick={isRecording ? stopRecording : startRecording}>
-              {isRecording ? (
-                <div className="waveform">
-                  <div className="wave"></div>
-                  <div className="wave"></div>
-                  <div className="wave"></div>
-                  <div className="wave"></div>
-                  <div className="wave"></div>
-                  {recordLength}s
-                </div>
-              ) : audioBlob ? null : (
-                "Start Recording"
-              )}
-            </div>
-            {audioBlob && (
-              <div>
-                <audio controls src={URL.createObjectURL(audioBlob)}></audio>
-                <div onClick={() => setAudioBlob(null)} className="text-red-500 text-sm mt-2 cursor-pointer">Cancel</div>
-                <div onClick={uploadAudio} className="text-green-600 text-base flex items-center gap-x-2 mt-2 cursor-pointer">
-                  Send Voice
-                  <svg className="w-3 h-3 origin-center transform rotate-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                  </svg>
-                </div>
+      <div className="flex items-end gap-2 p-2 bg-white border-t border-gray-200">
+        <div className="flex items-center gap-1 shrink-0">
+          <input onChange={uploadIMage} accept="image/*" type="file" id="file" className="hidden" />
+          <Popover
+            trigger={"click"}
+            content={
+              <div className="flex items-center gap-x-3 text-lg text-red-400">
+                <CameraFilled onClick={openCamera} />
+                <FileImageFilled onClick={openGallery} />
               </div>
-            )}
-          </div>
-        }
-      >
-        <span className="text-xl text-white mr-4"><AudioOutlined /></span>
-      </Popover>
-      <button type="submit">
-        <svg className="w-5 h-5 text-gray-100 origin-center transform rotate-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-        </svg>
-      </button>
+            }
+          >
+            <button className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-base cursor-pointer" type="button">
+              {loading ? <Spin /> : <CameraFilled />}
+            </button>
+          </Popover>
+          <label className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-base cursor-pointer">
+            {uploadingVideo ? <Spin /> : <VideoCameraFilled />}
+            <input onChange={uploadVideo} accept="video/*" type="file" id="video" className="hidden" />
+          </label>
+          <Popover
+            trigger={"click"}
+            content={
+              <div className="min-w-[250px] min-h-[150px] flex flex-col justify-center items-center">
+                <div onClick={isRecording ? stopRecording : startRecording}>
+                  {isRecording ? (
+                    <div className="waveform">
+                      <div className="wave"></div>
+                      <div className="wave"></div>
+                      <div className="wave"></div>
+                      <div className="wave"></div>
+                      <div className="wave"></div>
+                      {recordLength}s
+                    </div>
+                  ) : audioBlob ? null : (
+                    "Start Recording"
+                  )}
+                </div>
+                {audioBlob && (
+                  <div>
+                    <audio controls src={URL.createObjectURL(audioBlob)}></audio>
+                    <div onClick={() => setAudioBlob(null)} className="text-red-500 text-sm mt-2 cursor-pointer">Cancel</div>
+                    <div onClick={uploadAudio} className="text-green-600 text-base flex items-center gap-x-2 mt-2 cursor-pointer">
+                      Send Voice
+                      <svg className="w-3 h-3 origin-center transform rotate-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+              </div>
+            }
+          >
+            <button type="button" className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-base">
+              <AudioOutlined />
+            </button>
+          </Popover>
+        </div>
+        <div className="flex-1 relative">
+          <Input
+            onChange={(e) => setMessage(e.target.value)}
+            value={message}
+            type="text"
+            placeholder="Type a message..."
+            className="!border-0 !shadow-none !rounded-2xl bg-gray-100 px-4 py-2.5 text-sm focus:bg-gray-50 !outline-none"
+            name="message"
+            required
+          />
+        </div>
+        <button type="submit" className="flex items-center justify-center w-9 h-9 rounded-full bg-[#180d60] hover:bg-[#2a1a8a] text-white shrink-0">
+          <svg className="w-4 h-4 origin-center transform rotate-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+          </svg>
+        </button>
+      </div>
     </form>
   );
 };
