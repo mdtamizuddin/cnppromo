@@ -1,0 +1,19 @@
+{
+  "name": "cnppromo-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CNP-PROMO Monorepo - Micro-tasks, referral MLM, video monetization & real-time messaging platform",
+  "scripts": {
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
+    "dev:backend": "pnpm --filter server dev",
+    "dev:frontend": "pnpm --filter client dev",
+    "build": "pnpm --filter client build",
+    "build:all": "pnpm -r build",
+    "start": "pnpm --filter server start",
+    "lint": "pnpm --filter client lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
