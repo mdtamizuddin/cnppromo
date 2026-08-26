@@ -75,8 +75,11 @@ const NavList = ({ user, onLinkClick }) => {
               <Link
                 to={item.to}
                 onClick={onLinkClick}
-                className={`flex items-center px-4 py-2 transition-colors rounded-lg text-[15px] ${isActive(item.to) ? "text-[#5a32fa] font-bold bg-indigo-50/50 lg:bg-transparent" : "text-[#0b0c2a] hover:text-[#5a32fa]"
-                  }`}
+                className={`relative flex items-center px-3 py-2 transition-all text-[15px] font-medium ${
+                  isActive(item.to)
+                    ? "text-[#5a32fa] font-bold lg:after:content-[''] lg:after:absolute lg:after:-bottom-1 lg:after:left-2 lg:after:right-2 lg:after:h-[2.5px] lg:after:bg-[#5a32fa] lg:after:rounded-full bg-indigo-50/50 lg:bg-transparent"
+                    : "text-[#0b0c2a] hover:text-[#5a32fa]"
+                }`}
               >
                 {item.label}
               </Link>

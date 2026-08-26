@@ -1,3 +1,5 @@
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -15,10 +17,8 @@ const Message = require("./Routes/message/message.model");
 const { createMessage } = require("./Routes/message/message.service");
 const Chat = require("./Routes/message/chat.model");
 const Refer = require("./Routes/Refer/refer.model");
-require("dotenv").config();
 const { instrument } = require("@socket.io/admin-ui");
 const morgan = require("morgan");
-const path = require("path");
 
 const app = express();
 const port = process.env.PORT || 4000;

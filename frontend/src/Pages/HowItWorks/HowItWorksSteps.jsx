@@ -6,36 +6,36 @@ import { motion } from 'framer-motion';
 const HowItWorksSteps = () => {
     const steps = [
         {
-            num: "01",
-            title: "Create Account",
-            desc: "Sign up with your details and verify your account to get started.",
+            num: "০১",
+            title: "অ্যাকাউন্ট তৈরি করুন",
+            desc: "আপনার সঠিক তথ্য দিয়ে রেজিস্ট্রেশন করুন এবং অ্যাকাউন্ট অ্যাক্টিভেশন সম্পন্ন করুন।",
             icon: faUserPlus,
             color: "purple",
             hex: "#5a32fa",
             lightHex: "#e8e4ff"
         },
         {
-            num: "02",
-            title: "Complete Tasks",
-            desc: "Complete simple tasks such as offers, surveys, and promotions.",
+            num: "০২",
+            title: "টাস্ক সম্পন্ন করুন",
+            desc: "সহজ টাস্ক, ভিডিও দেখা, অফার এবং সোশ্যাল মিডিয়া ওয়ার্ক সম্পন্ন করে আয় করুন।",
             icon: faClipboardList,
             color: "blue",
             hex: "#1b84ff",
             lightHex: "#e0efff"
         },
         {
-            num: "03",
-            title: "Refer & Earn",
-            desc: "Invite your friends and earn commissions from their earnings.",
+            num: "০৩",
+            title: "রেফার ও অতিরিক্ত ইনকাম",
+            desc: "বন্ধুদের ইনভাইট করুন এবং ৬-জেনারেশন মাল্টি-লেভেল রেফারেল কমিশন উপভোগ করুন।",
             icon: faUsers,
             color: "green",
             hex: "#00c853",
             lightHex: "#e0f8e9"
         },
         {
-            num: "04",
-            title: "Withdraw Money",
-            desc: "Request withdrawal and receive your money quickly and securely.",
+            num: "০৪",
+            title: "টাকা উইথড্র করুন",
+            desc: "আপনার উপার্জিত টাকা বিকাশ, নগদ বা রকেটের মাধ্যমে খুব দ্রুত ও নিরাপদে উত্তোলন করুন।",
             icon: faWallet,
             color: "orange",
             hex: "#ff9100",

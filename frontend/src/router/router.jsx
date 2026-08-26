@@ -43,6 +43,8 @@ const SocialWorkDetails = lazy(() => import("../Pages/SocialWork/WorkDetails"));
 const AddWork = lazy(() => import("../Pages/SocialWork/AddWork"));
 const WorkHistory = lazy(() => import("../Pages/SocialWork/WorkHistory"));
 const LoginWithoutPass = lazy(() => import("../Pages/Auth/Login/WithOutPass"));
+const PaymentProof = lazy(() => import("../Pages/PaymentProof/PaymentProof"));
+const Features = lazy(() => import("../Pages/Features/Features"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -62,6 +64,18 @@ const router = createBrowserRouter([
       {
         path: "how-it-works",
         element: <Lazy><HowItWorks /></Lazy>,
+      },
+      {
+        path: "features",
+        element: <Lazy><Features /></Lazy>,
+      },
+      {
+        path: "payment-proof",
+        element: <Lazy><PaymentProof /></Lazy>,
+      },
+      {
+        path: "payment-proofs",
+        element: <Lazy><PaymentProof /></Lazy>,
       },
       {
         path: "message",

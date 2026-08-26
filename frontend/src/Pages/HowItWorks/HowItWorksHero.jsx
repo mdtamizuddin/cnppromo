@@ -13,19 +13,24 @@ const HowItWorksHero = () => {
                     transition={{ duration: 0.6 }}
                     className="flex-1 text-center md:text-left"
                 >
-                    <h3 className="text-[#5a32fa] font-bold text-sm tracking-wider uppercase mb-2">HOW IT WORKS</h3>
-                    <h1 className="text-4xl md:text-[44px] font-extrabold mb-6 leading-tight tracking-tight text-[#0b0c2a]">
-                        How Does <span className="text-[#5a32fa]">CNP-PROMO</span> Work?
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-100/80 border border-purple-200/60 text-[#5a32fa] text-xs font-bold tracking-wide mb-3">
+                        <span className="w-2 h-2 rounded-full bg-[#5a32fa] animate-pulse"></span>
+                        কিভাবে কাজ করে
+                    </div>
+
+                    <h1 className="text-3xl sm:text-4xl md:text-[44px] font-extrabold mb-6 leading-tight tracking-tight text-[#0b0c2a]">
+                        কিভাবে <span className="text-[#5a32fa]">CNP-PROMO</span> কাজ করে?
                     </h1>
+
                     <p className="text-gray-600 leading-relaxed text-[15px] mb-4 max-w-[500px] mx-auto md:mx-0 font-medium">
-                        CNP-PROMO is a trusted platform where you can earn real money online by completing simple tasks, referring others and growing with our community.
+                        CNP-PROMO একটি নির্ভরযোগ্য প্ল্যাটফর্ম যেখানে আপনি সহজ টাস্ক সম্পন্ন করে, বন্ধুদের রেফার করে এবং আমাদের কমিউনিটির সাথে যুক্ত হয়ে ঘরে বসেই রিয়েল ইনকাম করতে পারবেন।
                     </p>
                     <p className="text-gray-600 leading-relaxed text-[15px] max-w-[500px] mx-auto md:mx-0 font-medium">
-                        Follow the simple steps below and start your earning journey today!
+                        নিচের সহজ ধাপগুলো অনুসরণ করুন এবং আজই আপনার আয়ের যাত্রা শুরু করুন!
                     </p>
                 </motion.div>
 
-                {/* Right Illustration (Reusing CSS from About page but scaled appropriately) */}
+                {/* Right Illustration */}
                 <motion.div 
                     initial={{ opacity: 0, x: 30 }}
                     animate={{ opacity: 1, x: 0 }}

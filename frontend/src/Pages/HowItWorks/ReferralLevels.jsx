@@ -9,49 +9,49 @@ const ReferralLevels = () => {
 
     const levels = [
         {
-            gen: 1,
+            gen: "১",
             taka: settings?.ref_comm?.gen1 || 30,
-            label: "Highest Earning Level",
+            label: "সর্বোচ্চ আয়ের লেভেল",
             color: "text-green-500",
             borderColor: "border-green-500",
             lightBg: "bg-green-50"
         },
         {
-            gen: 2,
+            gen: "২",
             taka: settings?.ref_comm?.gen2 || 8,
-            label: "Second Level",
+            label: "দ্বিতীয় লেভেল কমিশন",
             color: "text-blue-500",
             borderColor: "border-blue-500",
             lightBg: "bg-blue-50"
         },
         {
-            gen: 3,
+            gen: "৩",
             taka: settings?.ref_comm?.gen3 || 6,
-            label: "Third Level",
+            label: "তৃতীয় লেভেল কমিশন",
             color: "text-pink-500",
             borderColor: "border-pink-500",
             lightBg: "bg-pink-50"
         },
         {
-            gen: 4,
+            gen: "৪",
             taka: settings?.ref_comm?.gen4 || 5,
-            label: "Fourth Level",
+            label: "চতুর্থ লেভেল কমিশন",
             color: "text-yellow-500",
             borderColor: "border-yellow-500",
             lightBg: "bg-yellow-50"
         },
         {
-            gen: 5,
+            gen: "৫",
             taka: settings?.ref_comm?.gen5 || 2,
-            label: "Fifth Level",
+            label: "পঞ্চম লেভেল কমিশন",
             color: "text-purple-500",
             borderColor: "border-purple-500",
             lightBg: "bg-purple-50"
         },
         {
-            gen: 6,
+            gen: "৬",
             taka: settings?.ref_comm?.gen6 || 0,
-            label: "Sixth Level",
+            label: "ষষ্ঠ লেভেল কমিশন",
             color: "text-red-500",
             borderColor: "border-red-500",
             lightBg: "bg-red-50"
@@ -61,10 +61,15 @@ const ReferralLevels = () => {
     return (
         <section className="mb-20">
             <div className="text-center mb-10">
-                <h3 className="text-[#5a32fa] font-bold text-sm tracking-wider uppercase mb-2">YOUR REFERRAL GENERATIONS</h3>
-                <h2 className="text-3xl font-extrabold text-[#0b0c2a] mb-4">Generations (Referral Levels)</h2>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-100/80 border border-purple-200/60 text-[#5a32fa] text-xs font-bold tracking-wide mb-3">
+                    <span className="w-2 h-2 rounded-full bg-[#5a32fa] animate-pulse"></span>
+                    আপনার রেফারেল জেনারেশনসমূহ
+                </div>
+                <h2 className="text-3xl font-extrabold text-[#0b0c2a] mb-4">
+                    জেনারেশনভিত্তিক রেফারেল কমিশন
+                </h2>
                 <p className="text-gray-500 font-medium text-[15px] max-w-[600px] mx-auto leading-relaxed">
-                    You earn from multiple levels of your referrals. The deeper your network, the more you earn from every generation.
+                    আপনি আপনার রেফারেল নেটওয়ার্কের একাধিক লেভেল থেকে কমিশন লাভ করবেন। আপনার নেটওয়ার্ক যত গভীর হবে, প্রতিটি জেনারেশন থেকে আপনার আয় তত বাড়বে।
                 </p>
             </div>
 
@@ -80,7 +85,7 @@ const ReferralLevels = () => {
                     >
                         <div className={`flex items-center gap-2 mb-6 ${level.color}`}>
                             <FontAwesomeIcon icon={faUsers} />
-                            <span className="font-bold text-[17px] text-[#0b0c2a]">Generation {level.gen}</span>
+                            <span className="font-bold text-[17px] text-[#0b0c2a]">জেনারেশন {level.gen}</span>
                         </div>
 
                         {/* Circular Progress Design */}
@@ -100,8 +105,8 @@ const ReferralLevels = () => {
                                 />
                             </svg>
                             <div className="flex flex-col items-center">
-                                <span className="text-4xl font-black text-[#0b0c2a] leading-none">{level.taka}</span>
-                                <span className="text-xs font-semibold text-gray-500 mt-1 uppercase tracking-widest">Taka</span>
+                                <span className="text-4xl font-black text-[#0b0c2a] leading-none">৳{level.taka}</span>
+                                <span className="text-xs font-semibold text-gray-500 mt-1 uppercase tracking-widest">টাকা</span>
                             </div>
                         </div>
 

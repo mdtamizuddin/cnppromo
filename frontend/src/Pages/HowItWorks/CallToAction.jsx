@@ -36,9 +36,9 @@ const CallToAction = () => {
                 </div>
 
                 <div>
-                    <h2 className="text-white text-2xl md:text-3xl font-bold mb-2">Start Your Earning Journey Today!</h2>
+                    <h2 className="text-white text-2xl md:text-3xl font-bold mb-2">আজই আপনার আয়ের যাত্রা শুরু করুন!</h2>
                     <p className="text-gray-400 text-[15px] max-w-[450px]">
-                        Join thousands of smart earners and make money online with CNP-PROMO.
+                        হাজারো সক্রিয় মেম্বারদের সাথে যুক্ত হন এবং CNP-PROMO থেকে ঘরে বসেই সহজ উপায়ে আয় করুন।
                     </p>
                 </div>
             </div>
@@ -47,7 +47,7 @@ const CallToAction = () => {
                 to="/register" 
                 className="bg-white text-[#0b0c2a] hover:text-[#5a32fa] font-bold text-[17px] py-3.5 px-8 rounded-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md shrink-0"
             >
-                Join Now
+                এখনই যোগ দিন
                 <FontAwesomeIcon icon={faArrowRight} />
             </Link>
         </motion.div>

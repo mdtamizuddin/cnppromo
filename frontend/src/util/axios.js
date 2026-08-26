@@ -1,12 +1,15 @@
-import axios from 'axios'
-import Cookie from 'js-cookie'
+import axios from 'axios';
+import Cookie from 'js-cookie';
 
-const serverUrl = 'https://server.cnppromo.com/api/v1'
-const localUrl = 'http://localhost:4000/api/v1'
-export const socketUrl = "https://server.cnppromo.com"
+const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+export const serverUrl = 'https://server.cnppromo.com/api/v1';
+export const localUrl = 'http://localhost:4400/api/v1';
+export const socketUrl = isLocal ? "http://localhost:4400" : "https://server.cnppromo.com";
+
 // axios configuration
 export const api = axios.create({
-    baseURL: serverUrl,
+    baseURL: isLocal ? localUrl : serverUrl,
 });
 
 // Add request interceptor
@@ -30,6 +33,3 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
-
-
