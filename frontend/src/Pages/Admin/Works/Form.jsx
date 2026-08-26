@@ -7,18 +7,20 @@ import { api } from '../../../util/axios';
 import { Select } from '@material-tailwind/react';
 import { category } from './AllWorks';
 
-const Form = () => {
+const Form = ({ refetch }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
-            const res = await api.post('/work', data)
-            toast.success("Work Add Successfull")
+            const res = await api.post('/work', data);
+            toast.success("Work Added Successfully!");
+            e.target.reset();
+            if (refetch) refetch();
         } catch (error) {
-            toast.error(error?.response?.data?.message || error?.message || "Something went wrong")
+            toast.error(error?.response?.data?.message || error?.message || "Something went wrong");
         }
-    }
+    };
     return (
         <form className='flex flex-col gap-y-4 p-5 my-4 bg-white' onSubmit={handleSubmit}>
             <h2 className='text-xl mt-3'>Add Work</h2>

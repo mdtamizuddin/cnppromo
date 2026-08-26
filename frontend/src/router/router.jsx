@@ -29,7 +29,6 @@ const ReferHistory = lazy(() => import("../Pages/Admin/RefHistory/RefHistory"));
 const Check = lazy(() => import("../Pages/Admin/Check/Check"));
 const Reset = lazy(() => import("../Pages/Auth/Reset/Reset"));
 const Welcome = lazy(() => import("../Pages/Welcome/Welcome"));
-const Home2 = lazy(() => import("../Pages/Home2/Home2"));
 const WorkDetails = lazy(() => import("../Pages/Admin/Works/WorkDetails"));
 const LeaderBoard = lazy(() => import("../Pages/LeaderBoard/LeaderBoard"));
 const Tips = lazy(() => import("../Pages/Tips/Tips"));
@@ -136,7 +135,7 @@ const router = createBrowserRouter([
         path: "home",
         element: (
           <AuthChecker>
-            <Lazy><Home2 /></Lazy>
+            <Lazy><Welcome /></Lazy>
           </AuthChecker>
         ),
       },
