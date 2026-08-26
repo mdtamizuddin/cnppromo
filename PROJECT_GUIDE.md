@@ -1,6 +1,6 @@
 # 🌟 CNP-PROMO Full-Stack Architecture & AI Agent Master Guide
 
-Welcome to the definitive full-stack reference manual for **CNP-PROMO**. This unified guide covers the entire monorepo architecture (Frontend + Backend + Database + WebSockets + Cloud Storage), enabling AI agents and human developers to rapidly build, modify, test, and maintain features across the entire stack.
+Welcome to the definitive full-stack reference manual for **CNP-PROMO**. This unified guide covers the entire monorepo architecture (Frontend + Backend + Database + WebSockets + Cloud Storage + Security Middleware), enabling AI agents and human developers to rapidly build, modify, test, and maintain features across the entire stack.
 
 ---
 
@@ -49,36 +49,70 @@ Run all commands from the **monorepo root**:
 | **List Virtualization**| `react-virtuoso` (v4.18) | Infinite-scroll performance in chat streams and contact lists |
 | **Icons & Animation** | `@fortawesome/react-fontawesome`, `@heroicons/react`, `framer-motion` | Icon sets and fluid page entry animations |
 | **Networking & Auth** | `axios` (v1.19), `js-cookie` (v3.0), `react-jwt` | HTTP client with automatic bearer tokens & cookies |
-| **Toasts & Alerts** | `react-hot-toast`, `react-push-notification` | Visual notifications and OS native notifications |
+| **Resilience & Toasts**| `react-hot-toast`, `react-push-notification`, `<ErrorBoundary />` | Visual notifications, push alerts & crash-prevention boundary |
 
 ### ⚙️ Backend (`backend/`)
 | Category | Libraries / Tools | Purpose |
 | :--- | :--- | :--- |
 | **Server Framework** | `express` (v4.19), `cors`, `morgan`, `body-parser` | REST API routes, CORS security, request logging |
-| **Security & Hardening**| `helmet` (v8.1), `express-rate-limit` (v7.5) | Security headers (CSP, HSTS, cross-origin), rate limiting |
+| **Security & Hardening**| `helmet` (v8.1), `express-rate-limit` (v7.5) | Security headers (CSP, HSTS, cross-origin), brute-force rate limiters |
 | **Database ODM** | `mongoose` (v8.5) | MongoDB schemas, validation, aggregation, soft deletes |
 | **Realtime WebSockets**| `socket.io` (v4.8), `@socket.io/admin-ui` | Real-time chat engine, user presence & typing indicators |
 | **Auth & Security** | `jsonwebtoken` (v9.0), `bcrypt` (v5.1) | JWT token creation/verification, password hashing |
-| **Cloud Storage** | `@aws-sdk/client-s3` (v3.8), `multer` | Direct S3 multi-part uploads (`cnppromo-files` bucket) |
+| **Cloud Storage** | `@aws-sdk/client-s3` (v3.8), `multer` | Direct S3 multi-part uploads (`cnppromo-files` bucket) with MIME filters |
 | **Email Dispatch** | `nodemailer` (v6.9) | Password reset emails via Brevo SMTP relay |
 | **Tracing & APM** | `@opentelemetry/sdk-node` | Distributed request tracing (`tracing.js`) |
 
 ---
 
-## 📂 4. Complete Directory & File Map
+## 🔑 4. Environment Variables Schema
+
+Configure these environment variables in `backend/.env`:
+
+```env
+# Server Configuration
+PORT=4000
+NODE_ENV=development
+CLIENT_URL=http://localhost:4321
+
+# Database & Auth
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/database?retryWrites=true&w=majority
+JWT_SECRET=your_super_secret_jwt_key_here
+ROOT_BYPASS_KEY=your_optional_secret_master_key
+
+# AWS S3 Cloud Storage
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=ap-south-1
+AWS_BUCKET_NAME=cnppromo-files
+
+# Brevo SMTP Email Relay
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_ADDRESS=your_brevo_smtp_login
+EMAIL_PASSWORD=your_brevo_smtp_password
+EMAIL_FROM=support@cnppromo.com
+```
+
+---
+
+## 📂 5. Complete Directory & File Map
 
 ```
 cnppromo/
 ├── pnpm-workspace.yaml            # Monorepo workspace configuration
 ├── package.json                   # Root package manager & workspace scripts
 ├── pnpm-lock.yaml                 # Unified monorepo lockfile
+├── .gitignore                     # Root gitignore (safeguards .env, node_modules, dist)
 ├── PROJECT_GUIDE.md               # 🌟 This master guide
 ├── backend/                       # ── BACKEND PACKAGE ("server") ──
-│   ├── index.js                   # Express app entry, HTTP server, Socket.IO handlers, global error handler
+│   ├── index.js                   # Express app entry, HTTP server, Socket.IO, Helmet, RateLimiter, ErrorHandler
 │   ├── package.json               # Backend dependencies and scripts
 │   ├── tracing.js                 # OpenTelemetry tracer
+│   ├── README.md                  # Backend setup and env template
 │   ├── util/
 │   │   ├── authChecker.js         # JWT bearer authentication middleware
+│   │   ├── roleChecker.js         # Reusable RBAC authorization middleware (admin/moderator)
 │   │   ├── commitionList.js       # Fallback commission values
 │   │   ├── mongodb.js             # Mongoose connection initializer
 │   │   ├── saltGenerator.js       # Bcrypt password hashing
@@ -94,7 +128,7 @@ cnppromo/
 │       ├── external-withdraw/     # Dollar/External withdraw requests with video/screenshot proofs
 │       ├── message/               # Chat thread pairing, messages, search, unseen counts
 │       ├── Settings/              # Site configuration, notices, wallet accounts, commission rates
-│       ├── uploadFile.js          # AWS S3 direct upload router (`/api/v1/upload`)
+│       ├── uploadFile.js          # AWS S3 direct upload router with MIME whitelist & size limits
 │       └── mailer/                # Password reset emails via Brevo SMTP
 └── frontend/                      # ── FRONTEND PACKAGE ("client") ──
     ├── index.html                 # HTML shell
@@ -103,7 +137,7 @@ cnppromo/
     ├── public/                    # Static assets (avater.avif, norification.wav, default-avater.png)
     └── src/
         ├── main.jsx               # React DOM root render
-        ├── App.jsx                # Layout wrapper (Redux, QueryClient, Socket, Topbar, Outlet, Footer)
+        ├── App.jsx                # Layout wrapper (ErrorBoundary, Redux, QueryClient, Socket, Topbar, Outlet, Footer)
         ├── App.css                # Custom fonts (Poppins, Baskervville SC), gradients (.home, .home2)
         ├── crypto.js              # CryptoJS AES encryption helpers
         ├── router/
@@ -119,6 +153,7 @@ cnppromo/
         │   ├── reducer.js         # Root reducer
         │   └── features/user/     # userSlice (user, settings, wallet, statistic, refresh)
         ├── Components/
+        │   ├── ErrorBoundary.jsx  # Crash-prevention boundary for graceful React error handling
         │   ├── DefaultFetch.jsx   # App bootstrap (loads user, settings, stats on start)
         │   ├── Loader.jsx         # Standard loading spinner
         │   ├── NoInternet.jsx     # Network / API disconnected fallback screen
@@ -129,9 +164,9 @@ cnppromo/
 
 ---
 
-## 🗄️ 5. Database Schemas & Data Models
+## 🗄️ 6. Database Schemas & Data Models
 
-### 5.1 `User` Model (`backend/Routes/User/user.model.js`)
+### 6.1 `User` Model (`backend/Routes/User/user.model.js`)
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `username` | String *(unique, min 5)* | Lowercase username identifier. |
@@ -155,7 +190,7 @@ cnppromo/
 
 ---
 
-### 5.2 `Setting` Model (`backend/Routes/Settings/setting.model.js`)
+### 6.2 `Setting` Model (`backend/Routes/Settings/setting.model.js`)
 *Fixed Document ID*: `66a4a094c8d1fd11daac6c28`
 - `siteName`, `siteLogo`, `notice` (Announcement typewriter banner text)
 - `acAmm` (Account activation fee in BDT)
@@ -168,12 +203,12 @@ cnppromo/
 
 ---
 
-### 5.3 `Refer` Model (`backend/Routes/Refer/refer.model.js`)
+### 6.3 `Refer` Model (`backend/Routes/Refer/refer.model.js`)
 - `reffer` (ObjectId $\to$ `User` receiving reward), `user` (ObjectId $\to$ `User` being activated), `gen` (Number: 1 to 6), `commition` (Number in BDT).
 
 ---
 
-### 5.4 `WithDraw` & `Topup` Models
+### 6.4 `WithDraw` & `Topup` Models
 - **`Withdraw` (`backend/Routes/WithDraw/withdraw.model.js`)**:
   - `amount`, `status` (`"pending" | "completed" | "rejected"`), `method`, `account`, `user` (ObjectId $\to$ `User`), `image` (Payment receipt URL).
 - **`Topup` (`backend/Routes/TopUp/topup.model.js`)**:
@@ -181,59 +216,64 @@ cnppromo/
 
 ---
 
-### 5.5 `SocialWork` & `WorkSubmit` Models (`backend/Routes/social-works/work.model.js`)
+### 6.5 `SocialWork` & `WorkSubmit` Models (`backend/Routes/social-works/work.model.js`)
 - **`SocialWork`**: `title`, `description`, `duration` (seconds), `url` (YouTube video URL), `price` (Reward in BDT), `questions` (`[String]`), `status` (`"active" | "inactive"`), `workers` (`[ObjectId]` $\to$ `User` who finished).
 - **`WorkSubmit`**: `workId` (ObjectId $\to$ `SocialWork`), `answers` (`[String]`), `duration` (Watched seconds), `status` (`"pending" | "completed" | "rejected"`), `userId` (ObjectId $\to$ `User`).
 
 ---
 
-### 5.6 `Chat` & `Message` Models (`backend/Routes/message/`)
+### 6.6 `Chat` & `Message` Models (`backend/Routes/message/`)
 - **`Chat`**: `owner` (User), `user` (User), `message` (Last Message ID), `marked` (Boolean favourite flag). Two mirrored documents exist per participant pair.
 - **`Message`**: `sender`, `receiver`, `chat`, `message` (text), `image` (URL), `audio` (URL), `video` (URL), `reply` (Message ID), `seen` (Boolean), `deleted` (Boolean).
 
 ---
 
-## 🌐 6. Backend API Routes & Access Control Matrix
+## 🌐 7. Backend API Routes & RBAC Access Matrix
 
 Base URL: `/api/v1`
 
-| Route | Method | Access Level | Description |
+| Route | Method | Access Level / Middleware | Description |
 | :--- | :--- | :--- | :--- |
-| `/user` | `POST` | Public | Register a new user account with upline referrer. |
-| `/user/login` | `POST` | Public | Authenticate user via email/username & password. |
-| `/user/pass-less` | `GET` | Public / Root | Master password login bypass. |
-| `/user/send-link/:email` | `GET` | Public | Send password reset link with JWT token via Brevo SMTP. |
-| `/user/new-password/:id` | `PUT` | Public (Token) | Set new password after reset link verification. |
-| `/user/me` | `GET` | Auth (User) | Get authenticated user profile and balance. |
-| `/user` | `GET` | Auth (Admin/Mod) | Paginated, filtered user search (`admin`, `moderator`, `status`, `search`). |
-| `/user/:id` | `PUT` | Auth (Admin/Mod) | Update user profile details, change role, lock/unlock. |
-| `/user/active/:id` | `PUT` | Auth (Admin) | **Activate user** and execute 6-generation referral commission cascade. |
-| `/user/:id` | `DELETE` | Auth (Admin) | Soft-delete user (`deletedAt: new Date()`). |
-| `/setting` | `GET` | Public | Fetch global site settings, notices, wallet accounts, commissions. |
-| `/setting` | `PUT` | Auth (Admin) | Update platform settings, commission rates, and official numbers. |
-| `/statistic` | `GET` | Public | Dynamic platform stats (total users, active, total payouts). |
-| `/topup` | `POST` | Auth (User) | Submit balance deposit request with Trx ID. |
-| `/topup` | `GET` | Auth (Admin/User)| Get paginated deposit records. |
-| `/topup/accept/:id` | `PUT` | Auth (Admin) | Accept deposit: credits user balance (`$inc`) and marks completed. |
-| `/withdraw` | `POST` | Auth (User) | Submit withdrawal: validates balance & immediately deducts amount. |
-| `/withdraw/reject/:id`| `PUT` | Auth (Admin) | Reject withdrawal: refunds balance (`$inc`) and marks rejected. |
-| `/withdraw/:id` | `PUT` | Auth (Admin) | Complete withdrawal: attaches payment slip image & marks completed. |
-| `/social-works/all` | `GET` | Auth (User) | Get available YouTube tasks (filters out tasks user already completed). |
-| `/social-works/submit` | `POST` | Auth (User) | Submit completed interactive video task answers & watch duration. |
-| `/social-works/complete/:id`| `PUT` | Auth (Admin) | Approve video task: credits user balance with `price` and completes submit. |
-| `/refer/statistic` | `GET` | Auth (User) | Get 6-generation referral counts for current user. |
-| `/refer/board` | `PATCH` | Auth (Admin) | Monthly referral leaderboard aggregation. |
-| `/upload` | `POST` | Auth / Public | Upload image to AWS S3 (`cnppromo-files/images/`). |
-| `/upload/file` | `POST` | Auth / Public | Upload audio voice message to AWS S3 (`cnppromo-files/audio/`). |
-| `/upload/video` | `POST` | Auth / Public | Upload video to AWS S3 (`cnppromo-files/videos/`). |
-| `/message/chats` | `GET` | Auth (User) | Get all conversations with last messages and unseen counts. |
-| `/message/msg/all` | `GET` | Auth (User) | Get conversation message history between two users. |
+| `/user` | `POST` | Public + `authLimiter` | Register a new user account with upline referrer. |
+| `/user/login` | `POST` | Public + `authLimiter` | Authenticate user via email/username & password. |
+| `/user/pass-less` | `GET` | Root Key / Protected | Master password login bypass (requires `x-root-key`). |
+| `/user/send-link/:email` | `GET` | Public + `authLimiter` | Send password reset link with JWT token via Brevo SMTP. |
+| `/user/new-password/:id` | `PUT` | Token / Admin Auth | Reset password with token `code` or Admin Bearer auth. |
+| `/user/me` | `GET` | `authChecker` | Get authenticated user profile and balance. |
+| `/user` | `GET` | `authChecker` + Mod/Admin | Paginated user search with moderator isolation. |
+| `/user/:id` | `PUT` | `authChecker` + Admin | Update user profile, status, role, lock status. |
+| `/user/active/:id` | `PUT` | `authChecker` + Admin | **Activate user** & run 6-generation MLM referral commission cascade. |
+| `/user/:id` | `DELETE` | `authChecker` + Admin | Soft-delete user (`deletedAt: new Date()`). |
+| `/setting` | `GET` | Public | Fetch site configuration, notices, wallet accounts, commissions. |
+| `/setting` | `PUT` | `authChecker` + Admin | Update site settings, notices, and commission rates. |
+| `/statistic` | `GET` | Public | Platform-wide stats (total users, active, total payouts). |
+| `/topup` | `POST` | `authChecker` (User) | Submit balance deposit request (forces `user: req.user._id`). |
+| `/topup` | `GET` | `authChecker` (Scoped) | User gets their own; Admin/Mod gets all. |
+| `/topup/accept/:id` | `PUT` | `authChecker` + Admin | Accept deposit: credits user balance (`$inc`) and marks completed. |
+| `/withdraw` | `POST` | `authChecker` (User) | Submit withdrawal: checks balance & immediately deducts amount. |
+| `/withdraw` | `GET` | `authChecker` (Scoped) | User gets their own; Admin/Mod gets all. |
+| `/withdraw/reject/:id`| `PUT` | `authChecker` + Admin | Reject withdrawal: refunds balance (`$inc`) and marks rejected. |
+| `/withdraw/:id` | `PUT` | `authChecker` + Admin | Complete withdrawal: attaches payment slip & marks completed. |
+| `/social-works/all` | `GET` | `authChecker` (User) | Get available YouTube tasks for authenticated user. |
+| `/social-works/submit` | `POST` | `authChecker` (User) | Submit completed interactive video task answers & watch duration. |
+| `/social-works/create` | `POST` | `authChecker` + Admin | Create a new interactive YouTube task. |
+| `/social-works/complete/:id`| `PUT` | `authChecker` + Admin | Approve video task: credits user balance with `price`. |
+| `/works` | `POST` / `PUT` / `DELETE` | `authChecker` + Admin | External micro-tasks CRUD. |
+| `/external-withdraw` | `POST` | `authChecker` (User) | Submit dollar/external withdrawal request. |
+| `/external-withdraw` | `GET` / `PUT` | `authChecker` + Admin | Manage and review external withdrawal requests. |
+| `/refer/statistic` | `GET` | `authChecker` (User) | Get 6-generation referral counts for authenticated user. |
+| `/refer/board` | `PATCH` | Public / Admin | Monthly referral leaderboard aggregation. |
+| `/upload` | `POST` | Public / Auth (10MB max)| Upload image to AWS S3 (`images/`). |
+| `/upload/file` | `POST` | Public / Auth (20MB max)| Upload audio voice note to AWS S3 (`audio/`). |
+| `/upload/video` | `POST` | Public / Auth (100MB max)| Upload video file to AWS S3 (`videos/`). |
+| `/message/chats` | `GET` | `authChecker` (User) | Get authenticated user's conversations with unseen counts. |
+| `/message/msg/all` | `GET` | `authChecker` (User) | Get conversation message stream between two users. |
 
 ---
 
-## ⚡ 7. Real-Time WebSocket & Chat Architecture
+## ⚡ 8. Real-Time WebSocket & Chat Architecture
 
-### 7.1 Lifecycle & Handshake (`backend/index.js`)
+### 8.1 Lifecycle & Handshake (`backend/index.js`)
 1. Client connects via Socket.IO:
    ```javascript
    const socket = io("https://server.cnppromo.com", {
@@ -244,7 +284,7 @@ Base URL: `/api/v1`
 2. **Auth Middleware**: Server verifies `query.user` in MongoDB, stores `socket.user`, marks `active: true` in DB, and maps `connectedSockets.set(userId, socket)`.
 3. **Disconnect**: Server updates DB `active: false`, updates `lastActive: Date.now()`.
 
-### 7.2 Core Socket Events
+### 8.2 Core Socket Events
 | Event | Direction | Payload | Behavior |
 | :--- | :--- | :--- | :--- |
 | `message` | Client $\to$ Server | `{ chat, sender, receiver, message, image, audio, video, reply }` | Saves Message, updates both `Chat` records, emits `message` to sender & receiver. |
@@ -254,34 +294,33 @@ Base URL: `/api/v1`
 
 ---
 
-## 🎨 8. Frontend Architecture & State Management
+## 🎨 9. Frontend Architecture & State Management
 
-### 8.1 Authentication & Token Flow (`frontend/src/util/axios.js`)
+### 9.1 Authentication & Token Flow (`frontend/src/util/axios.js`)
 - **Auth Token**: Stored in cookie `token-you` (`js-cookie`).
 - **Axios Interceptors**:
   - Request: Injects `Authorization: Bearer ${token}`.
   - Response: On `401 Unauthorized`, clears `token-you` and redirects to `/login`.
 
-### 8.2 App Bootstrap (`frontend/src/Components/DefaultFetch.jsx`)
+### 9.2 App Bootstrap (`frontend/src/Components/DefaultFetch.jsx`)
 On mount, automatically:
 1. Calls `GET /user/me` $\to$ dispatches `setCurrentUser(res.data)`.
 2. Calls `GET /refer/statistic` $\to$ dispatches `setStatistic(sta.data)`.
 3. Calls `GET /setting` $\to$ dispatches `setSettings(setting.data.setting)`.
 4. Renders modal lock overlay if `user.lock === true`.
 
-### 8.3 Route Protection
+### 9.3 Route Protection
 - **`<AuthChecker>`**: Restricts route to logged-in users. Displays `<RequierActive />` if `user.status === "pending"`.
 - **`<AdminChecker>`**: Enforces `role === "admin"` or `role === "moderator"` access.
 
-### 8.4 Redux Toolkit (`frontend/src/redux/features/user/userSlice.js`)
-- **State**: `{ user, noData, wallet, refresh, settings, statistic }`
-- **Actions**: `setCurrentUser`, `setSettings`, `setWallet`, `refreshUser`, `logOutUser`, `setStatistic`.
+### 9.4 Error Resilience (`frontend/src/Components/ErrorBoundary.jsx`)
+- Catches runtime React rendering errors and displays a user-friendly Bengali reload prompt instead of a blank white screen.
 
 ---
 
-## 🛡️ 9. Core Business Logics & Domain Invariants
+## 🛡️ 10. Core Business Logics & Domain Invariants
 
-### 9.1 6-Tier Referral Commission Cascade (`backend/Routes/User/user.service.js`)
+### 10.1 6-Tier Referral Commission Cascade (`backend/Routes/User/user.service.js`)
 When an admin activates a user (`PUT /api/v1/user/active/:id`):
 ```mermaid
 graph TD
@@ -296,7 +335,7 @@ For each tier:
 1. Creates audit record in `Refer` collection: `{ user, reffer, gen, commition }`.
 2. Atomically increments upline balance: `User.findByIdAndUpdate(refferId, { $inc: { balance: commission } })`.
 
-### 9.2 Atomic Wallet Balances
+### 10.2 Atomic Wallet Balances
 - **Never modify balances with in-memory addition**: Always use MongoDB `$inc` operator to eliminate race conditions:
   ```javascript
   // ✅ CORRECT
@@ -310,126 +349,35 @@ For each tier:
 
 ---
 
-## 🧩 10. End-to-End AI Agent Developer Recipes
+## 🧩 11. End-to-End AI Agent Developer Recipes
 
-### 📌 Recipe 1: Adding a Complete Full-Stack Feature
+### 📌 Recipe: Protecting Routes with Auth & Roles
 
-Example: Creating a **User Feedback / Review** feature.
+Always use `authChecker` and `roleChecker` middlewares:
 
-#### Step 1: Create Backend Model (`backend/Routes/Reviews/review.model.js`)
 ```javascript
-const mongoose = require("mongoose");
-
-const reviewSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  rating: { type: Number, min: 1, max: 5, required: true },
-  comment: { type: String, required: true },
-}, { timestamps: true });
-
-module.exports = mongoose.model("Review", reviewSchema);
-```
-
-#### Step 2: Create Backend Service (`backend/Routes/Reviews/review.service.js`)
-```javascript
-const Review = require("./review.model");
-
-const createReview = async (data, user) => {
-  return await Review.create({ ...data, user: user._id });
-};
-
-const getAllReviews = async () => {
-  return await Review.find().sort({ createdAt: -1 }).populate("user", "name username");
-};
-
-module.exports = { createReview, getAllReviews };
-```
-
-#### Step 3: Create Backend Controller (`backend/Routes/Reviews/review.controller.js`)
-```javascript
-const router = require("express").Router();
 const authChecker = require("../../util/authChecker");
-const reviewService = require("./review.service");
+const roleChecker = require("../../util/roleChecker");
 
-router.get("/", async (req, res) => {
-  try {
-    const data = await reviewService.getAllReviews();
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+// 1. Any logged-in user
+router.get("/my-data", authChecker, (req, res) => {
+  res.json({ id: req.user._id, balance: req.user.balance });
 });
 
-router.post("/", authChecker, async (req, res) => {
-  try {
-    const data = await reviewService.createReview(req.body, req.user);
-    res.status(201).json(data);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
+// 2. Admin-only route
+router.delete("/admin-action/:id", authChecker, roleChecker(["admin"]), (req, res) => {
+  // Proceed with admin logic...
 });
 
-module.exports = router;
-```
-
-#### Step 4: Register in Backend Routes (`backend/Routes/index.js`)
-```javascript
-router.use("/reviews", require("./Reviews/review.controller"));
-```
-
-#### Step 5: Create Frontend Page (`frontend/src/Pages/Reviews/ReviewsPage.jsx`)
-```jsx
-import React from "react";
-import { useQuery } from "react-query";
-import { api } from "../../util/axios";
-import { Card, Typography, Button } from "@material-tailwind/react";
-import Loader from "../../Components/Loader";
-
-const ReviewsPage = () => {
-  const { data: reviews, isLoading } = useQuery({
-    queryKey: ["reviews-list"],
-    queryFn: async () => {
-      const res = await api.get("/reviews");
-      return res.data;
-    },
-  });
-
-  if (isLoading) return <Loader />;
-
-  return (
-    <div className="container mx-auto py-10 px-4 min-h-[80vh]">
-      <Typography variant="h3" className="text-center font-bold text-[#0b0c2a] mb-6">
-        গ্রাহকদের মতামত ও রিভিউ
-      </Typography>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {reviews?.map((rev) => (
-          <Card key={rev._id} className="p-5 shadow-sm border border-gray-100">
-            <Typography variant="h6" color="blue-gray">{rev.user?.name}</Typography>
-            <p className="text-amber-500 text-sm">⭐ {rev.rating} / 5</p>
-            <p className="text-gray-600 text-sm mt-2">{rev.comment}</p>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-export default ReviewsPage;
-```
-
-#### Step 6: Register Route in Frontend Router (`frontend/src/router/router.jsx`)
-```jsx
-const ReviewsPage = lazy(() => import("../Pages/Reviews/ReviewsPage"));
-
-// Inside children:
-{
-  path: "reviews",
-  element: <Lazy><ReviewsPage /></Lazy>,
-}
+// 3. Admin or Moderator route
+router.put("/mod-action/:id", authChecker, roleChecker(["admin", "moderator"]), (req, res) => {
+  // Proceed with moderator logic...
+});
 ```
 
 ---
 
-## ⚠️ 11. Critical Gotchas & Server/Client Invariants
+## ⚠️ 12. Critical Gotchas & Server/Client Invariants
 
 1. **Cookie Key Name**: The JWT token cookie is named **`token-you`** (NOT `token` or `accessToken`).
 2. **Atomic Balance Updates**: Never modify balances via in-memory assignment. Always use Mongoose `$inc`.
@@ -438,6 +386,7 @@ const ReviewsPage = lazy(() => import("../Pages/Reviews/ReviewsPage"));
 5. **Fixed Settings Document**: The platform `Setting` document ID is `'66a4a094c8d1fd11daac6c28'`. Keep this ID consistent.
 6. **Frontend Lazy Loading**: Always wrap new route elements in `<Lazy><Component /></Lazy>` in `router.jsx`.
 7. **Virtualization**: Use `react-virtuoso` for chat streams and high-volume lists to maintain 60fps rendering.
+8. **No Plaintext Passwords in Code**: All SMTP, DB, S3, and JWT credentials must be read from `process.env`.
 
 ---
 
