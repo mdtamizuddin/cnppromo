@@ -20,70 +20,124 @@ const getReferHintory = async (user, gen) => {
         throw new Error(error)
     }
 }
-const statistic_board = async (date) => {
-    try {
-        // Get the first and last day of the month
-        const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-        const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+const Withdraw = require("../WithDraw/withdraw.model");
 
-        const data = await Refer.aggregate([
-            // Match documents within the month
-            {
-                $match: {
-                    createdAt: {
-                        $gte: startOfMonth,
-                        $lt: endOfMonth
-                    }
-                }
-            },
-            // Group data by reffer
+const statistic_board = async (options = {}) => {
+    try {
+        let date = options?.date ? new Date(options.date) : new Date();
+        const type = options?.type || "earners"; // "earners", "referrers", "withdrawers"
+        const timeframe = options?.timeframe || "month"; // "today", "week", "month", "all"
+
+        let matchStage = {};
+
+        if (timeframe === "today") {
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+            const endOfToday = new Date();
+            endOfToday.setHours(23, 59, 59, 999);
+            matchStage.createdAt = { $gte: startOfToday, $lte: endOfToday };
+        } else if (timeframe === "week") {
+            const past7Days = new Date();
+            past7Days.setDate(past7Days.getDate() - 7);
+            matchStage.createdAt = { $gte: past7Days };
+        } else if (timeframe === "month") {
+            const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+            const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+            matchStage.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+        }
+        // If timeframe === "all", no createdAt filter is added
+
+        if (type === "withdrawers") {
+            const withdrawMatch = { status: "completed", ...matchStage };
+            const withdrawData = await Withdraw.aggregate([
+                { $match: withdrawMatch },
+                {
+                    $group: {
+                        _id: "$user",
+                        totalAmount: { $sum: "$amount" },
+                        count: { $sum: 1 },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "_id",
+                        foreignField: "_id",
+                        as: "user",
+                    },
+                },
+                { $unwind: "$user" },
+                {
+                    $project: {
+                        _id: 1,
+                        totalAmount: 1,
+                        count: 1,
+                        "user.name": 1,
+                        "user.username": 1,
+                        "user.gender": 1,
+                        "user.level": 1,
+                    },
+                },
+                { $sort: { totalAmount: -1 } },
+                { $limit: 50 },
+            ]);
+
+            return withdrawData.map((item, index) => ({
+                position: index + 1,
+                earnings: item.totalAmount,
+                ...item,
+            }));
+        }
+
+        // Default: Referrers & Earners
+        const referMatch = Object.keys(matchStage).length > 0 ? matchStage : {};
+        const pipeline = [];
+
+        if (Object.keys(referMatch).length > 0) {
+            pipeline.push({ $match: referMatch });
+        }
+
+        pipeline.push(
             {
                 $group: {
                     _id: "$reffer",
                     gen1: {
                         $sum: {
-                            $cond: [{ $eq: ["$gen", 1] }, 1, 0]
-                        }
+                            $cond: [{ $eq: ["$gen", 1] }, 1, 0],
+                        },
                     },
-                }
+                },
             },
-            // Lookup user details and return as an object
             {
                 $lookup: {
                     from: "users",
                     localField: "_id",
                     foreignField: "_id",
-                    as: "user"
-                }
+                    as: "user",
+                },
             },
-            // Unwind the user array to get a single user object
-            {
-                $unwind: "$user"
-            },
-            // Project only the fields we need
+            { $unwind: "$user" },
             {
                 $project: {
-                    _id: 1,         // keep the _id (reffer ID)
-                    gen1: 1,        // keep the gen1 value
-                    "user.name": 1, // only select the name field from user
-                    "user.username": 1 // only select the username field from user
-                }
+                    _id: 1,
+                    gen1: 1,
+                    "user.name": 1,
+                    "user.username": 1,
+                    "user.gender": 1,
+                    "user.level": 1,
+                },
             },
-            // Sort data by gen1 count
-            {
-                $sort: {
-                    gen1: -1
-                }
-            }
-        ]);
+            { $sort: { gen1: -1 } },
+            { $limit: 50 }
+        );
 
-        // Add position (rank) field to each entry
-        const rankedData = data.map((item, index) => ({
-            position: index + 1, // start position from 1
-            ...item
+        const data = await Refer.aggregate(pipeline);
+
+        return data.map((item, index) => ({
+            position: index + 1,
+            earnings: (item.gen1 || 0) * 30,
+            ...item,
         }));
-        
-        return rankedData.slice(0, 50); // limit to top 50
     } catch (error) {
         throw new Error(error);
     }

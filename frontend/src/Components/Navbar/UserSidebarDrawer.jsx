@@ -37,7 +37,7 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
   const navMenuItems = [
     { label: "ড্যাশবোর্ড", to: "/home", icon: HomeIcon },
     { label: "আমার টাস্ক", to: "/works", icon: ClipboardDocumentListIcon },
-    { label: "আমার আয়", to: "/account/withdraw", icon: BanknotesIcon },
+    { label: "আমার আয়", to: "/earnings", icon: BanknotesIcon },
     { label: "উইথড্র", to: "/account/withdraw", icon: CreditCardIcon },
     { label: "রেফার & আর্ন", to: "/refer", icon: UserGroupIcon },
     { label: "ওয়ালেট", to: "/account", icon: WalletIcon },

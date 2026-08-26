@@ -44,6 +44,7 @@ const WorkHistory = lazy(() => import("../Pages/SocialWork/WorkHistory"));
 const LoginWithoutPass = lazy(() => import("../Pages/Auth/Login/WithOutPass"));
 const PaymentProof = lazy(() => import("../Pages/PaymentProof/PaymentProof"));
 const Features = lazy(() => import("../Pages/Features/Features"));
+const Earnings = lazy(() => import("../Pages/Earnings/Earnings"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -120,6 +121,22 @@ const router = createBrowserRouter([
         element: (
           <AuthChecker>
             <Lazy><Profile /></Lazy>
+          </AuthChecker>
+        ),
+      },
+      {
+        path: "earnings",
+        element: (
+          <AuthChecker>
+            <Lazy><Earnings /></Lazy>
+          </AuthChecker>
+        ),
+      },
+      {
+        path: "my-earnings",
+        element: (
+          <AuthChecker>
+            <Lazy><Earnings /></Lazy>
           </AuthChecker>
         ),
       },

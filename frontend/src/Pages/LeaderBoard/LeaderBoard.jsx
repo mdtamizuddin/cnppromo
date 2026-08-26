@@ -61,9 +61,13 @@ const LeaderBoard = () => {
 
   // Fetch real leaderboard statistics from backend
   const { data: dbData, isLoading } = useQuery({
-    queryKey: ["leaderboard", date],
+    queryKey: ["leaderboard", date, activeTab, timeframe],
     queryFn: async () => {
-      const res = await api.patch("/refer/board", { date });
+      const res = await api.patch("/refer/board", {
+        date,
+        type: activeTab,
+        timeframe,
+      });
       return res.data;
     },
     refetchOnWindowFocus: false,
@@ -78,6 +82,9 @@ const LeaderBoard = () => {
   const remainingLeaders = leaders.slice(3);
 
   const getEarnings = (item, baseFallback) => {
+    if (item?.earnings !== undefined) {
+      return Number(item.earnings).toLocaleString("en-IN");
+    }
     if (item?.gen1) {
       return (item.gen1 * 30).toLocaleString("en-IN");
     }

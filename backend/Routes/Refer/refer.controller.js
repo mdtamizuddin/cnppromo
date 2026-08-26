@@ -24,10 +24,22 @@ router.get("/user/:id", authChecker, async (req, res) => {
     }
 });
 
+router.get("/board", async (req, res) => {
+    try {
+        const { date, type, timeframe } = req.query;
+        const response = await referService.statistic_board({ date, type, timeframe });
+        res.send(response);
+    } catch (error) {
+        res.status(500).send({
+            message: error.message
+        });
+    }
+});
+
 router.patch("/board", async (req, res) => {
     try {
-        const date = req.body.date ? new Date(req.body.date) : new Date();
-        const response = await referService.statistic_board(date);
+        const { date, type, timeframe } = req.body;
+        const response = await referService.statistic_board({ date, type, timeframe });
         res.send(response);
     } catch (error) {
         res.status(500).send({
