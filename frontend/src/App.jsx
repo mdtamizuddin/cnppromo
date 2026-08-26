@@ -4,7 +4,7 @@ import Topbar from "./Components/Navbar/Navbar";
 import "./App.css";
 import { Toaster } from "react-hot-toast";
 import store from "./redux/store";
-import { Provider } from "react-redux";
+import { Provider, useSelector } from "react-redux";
 import DefaultFetch from "./Components/DefaultFetch";
 import Footer from "./Pages/Footer/Footer";
 import NoInternet from "./Components/NoInternet";
@@ -12,10 +12,27 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { api } from "./util/axios";
 import { SocketProvider } from "./Components/SocketContext";
 import { Notifications } from "react-push-notification";
-
 import ErrorBoundary from "./Components/ErrorBoundary";
 
 const queryClient = new QueryClient();
+
+// Internal Layout wrapper to connect with Redux user state
+const MainLayout = () => {
+  const { user } = useSelector((state) => state.user);
+
+  return (
+    <>
+      <ScrollRestoration />
+      <DefaultFetch />
+      <Toaster />
+      <Topbar />
+      <div className={user ? "lg:pl-72 pb-20 lg:pb-6 transition-all min-h-screen" : "min-h-screen"}>
+        <Outlet />
+      </div>
+      <Footer />
+    </>
+  );
+};
 
 const App = () => {
   const [isServerRunning, setIsServerRunning] = useState(true);
@@ -42,18 +59,7 @@ const App = () => {
           <QueryClientProvider client={queryClient}>
             <SocketProvider>
               <Notifications />
-              {isServerRunning ? (
-                <>
-                  <ScrollRestoration />
-                  <DefaultFetch />
-                  <Toaster />
-                  <Topbar />
-                  <Outlet />
-                  <Footer />
-                </>
-              ) : (
-                <NoInternet />
-              )}
+              {isServerRunning ? <MainLayout /> : <NoInternet />}
             </SocketProvider>
           </QueryClientProvider>
         </Provider>

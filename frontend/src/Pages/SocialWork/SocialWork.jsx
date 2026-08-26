@@ -25,75 +25,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { api } from "../../util/axios";
 
-// Default template tasks if database collection is empty
-const fallbackSocialTasks = [
-  {
-    _id: "demo_1",
-    title: "Watch YouTube Video",
-    description: "Watch the full video and like it.",
-    category: "social",
-    categoryLabel: "Social Media",
-    duration: 60,
-    price: 20.0,
-    difficulty: "Easy",
-    icon: "youtube",
-    btnColor: "bg-gradient-to-r from-[#ff416c] to-[#ff4b2b]",
-    status: "active",
-  },
-  {
-    _id: "demo_2",
-    title: "Like Facebook Page",
-    description: "Like and follow the Facebook page.",
-    category: "social",
-    categoryLabel: "Social Media",
-    duration: 30,
-    price: 15.0,
-    difficulty: "Easy",
-    icon: "facebook",
-    btnColor: "bg-gradient-to-r from-[#2193b0] to-[#6dd5ed]",
-    status: "active",
-  },
-  {
-    _id: "demo_3",
-    title: "Complete Survey",
-    description: "Complete the survey honestly.",
-    category: "surveys",
-    categoryLabel: "Surveys",
-    duration: 360,
-    price: 75.0,
-    difficulty: "Medium",
-    icon: "survey",
-    btnColor: "bg-gradient-to-r from-[#8e2de2] to-[#4a00e0]",
-    status: "active",
-  },
-  {
-    _id: "demo_4",
-    title: "Install Mobile App",
-    description: "Install and open the app.",
-    category: "apps",
-    categoryLabel: "Apps",
-    duration: 120,
-    price: 40.0,
-    difficulty: "Medium",
-    icon: "app",
-    btnColor: "bg-gradient-to-r from-[#f12711] to-[#f5af19]",
-    status: "active",
-  },
-  {
-    _id: "demo_5",
-    title: "Visit Website",
-    description: "Visit the website and stay for 1 minute.",
-    category: "website",
-    categoryLabel: "Website",
-    duration: 60,
-    price: 10.0,
-    difficulty: "Easy",
-    icon: "website",
-    btnColor: "bg-gradient-to-r from-[#11998e] to-[#38ef7d]",
-    status: "active",
-  },
-];
-
 const categoryTabs = [
   { id: "all", label: "All Tasks", icon: ClipboardDocumentCheckIcon },
   { id: "social", label: "Social Media", icon: HandThumbUpIcon },
@@ -120,9 +51,8 @@ const SocialWork = () => {
     staleTime: 30000,
   });
 
-  // Combine DB works with fallback templates
   const allTasks = useMemo(() => {
-    if (Array.isArray(dbWorks) && dbWorks.length > 0) {
+    if (Array.isArray(dbWorks)) {
       return dbWorks.map((work) => ({
         ...work,
         difficulty: work.difficulty || (work.duration > 180 ? "Medium" : "Easy"),
@@ -130,7 +60,7 @@ const SocialWork = () => {
         category: (work.category || "social").toLowerCase(),
       }));
     }
-    return fallbackSocialTasks;
+    return [];
   }, [dbWorks]);
 
   // Filter & Sort Logic

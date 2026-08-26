@@ -1,107 +1,159 @@
-
-import React from 'react';
-
-import { Card, Typography } from "@material-tailwind/react";
-import { useQuery } from 'react-query';
-import { api } from '../../util/axios';
-import Loader from '../../Components/Loader';
-import { useSelector } from 'react-redux';
-import moment from 'moment/moment';
-
-const TABLE_HEAD = ["REGISTRATION TIME", "NAME", "EMAIL", "WHATSAPP", "Commission", "Generation"];
-
-
+import React, { useState, useMemo } from "react";
+import { Card, Typography, Button } from "@material-tailwind/react";
+import { useQuery } from "react-query";
+import { api } from "../../util/axios";
+import Loader from "../../Components/Loader";
+import { useSelector } from "react-redux";
+import moment from "moment";
+import {
+  MagnifyingGlassIcon,
+  UserGroupIcon,
+  CheckBadgeIcon,
+  BanknotesIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
 
 export function TableWithStripedRows() {
-    const { user } = useSelector(state => state.user)
-    const { data, isLoading } = useQuery({
-        queryFn: async () => {
-            const res = await api.get(`/refer/user/${user?._id}`)
-            return res.data
-        },
-        queryKey: ["all-refer-all", user?._id]
-    })
-    if (isLoading) {
-        <Loader />
-    }
-    return (
-        <Card className="h-full rounded-none w-full overflow-auto mt-5">
-            <table className="w-full  table-auto text-left">
-                <thead>
-                    <tr>
-                        {TABLE_HEAD.map((head) => (
-                            <th key={head} className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
-                                <Typography
-                                    variant="small"
-                                    color="blue-gray"
-                                    className="font-normal leading-none opacity-70"
-                                >
-                                    {head}
-                                </Typography>
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {
-                        data?.length === 0 && <tr><td colSpan={5} className="p-4 text-center">No Data Available</td></tr>
-                    }
-                    {data?.map(({ user, reffer, commition, gen, createdAt }, index) => (
-                        <tr key={index} className="even:bg-blue-gray-50/50">
-                            <td className="p-4">
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {moment(createdAt).format('DD/MM/YYYY')}
-                                </Typography>
-                            </td>
-                            <td className="p-4">
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {reffer?.name}
-                                </Typography>
-                            </td>
-                            <td className="p-4">
+  const { user } = useSelector((state) => state.user);
+  const [search, setSearch] = useState("");
 
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {user?.email}
-                                </Typography>
-                            </td>
-                            <td>
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {user?.phone}
-                                </Typography>
-                            </td>
-                            <td className="p-4">
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {commition}TK
-                                </Typography>
-                            </td>
-                            <td className="p-4">
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {gen}
-                                </Typography>
-                            </td>
+  const { data, isLoading } = useQuery({
+    queryFn: async () => {
+      const res = await api.get(`/refer/user/${user?._id}`);
+      return res.data;
+    },
+    queryKey: ["all-refer-all", user?._id],
+    enabled: !!user?._id,
+  });
 
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </Card>
+  const referList = Array.isArray(data) ? data : [];
+
+  const filteredData = useMemo(() => {
+    if (!search.trim()) return referList;
+    const q = search.toLowerCase();
+    return referList.filter(
+      (item) =>
+        item.reffer?.name?.toLowerCase().includes(q) ||
+        item.user?.email?.toLowerCase().includes(q) ||
+        item.user?.phone?.toLowerCase().includes(q)
     );
-}
-const ReferHistory = () => {
-    return (
-        <div>
-            <Card className='rounded mt-7'>
-                <div className="bg-primary px-7 py-2">
-                    <h2 className='text-base text-white font-semibold text-center'>
-                        Referral History
-                    </h2>
-                </div>
-                <div className='flex justify-between items-center'>
-                    <TableWithStripedRows />
-                </div>
-            </Card>
+  }, [referList, search]);
+
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  return (
+    <Card className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden p-5 sm:p-6 space-y-4">
+      {/* Search and Table Count */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative w-full sm:w-72">
+          <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="রেফারেল মেম্বার খুঁজুন..."
+            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-[#5a32fa]"
+          />
         </div>
-    );
+
+        <div className="text-xs font-semibold text-gray-500">
+          মোট জয়েনিং: <span className="text-[#5a32fa] font-black">{referList.length}</span> জন
+        </div>
+      </div>
+
+      {/* Table Container */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50/70 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              <th className="py-3.5 px-4 rounded-l-xl">তারিখ ও সময়</th>
+              <th className="py-3.5 px-4">মেম্বারের নাম</th>
+              <th className="py-3.5 px-4">ইমেইল</th>
+              <th className="py-3.5 px-4">ফোন / WhatsApp</th>
+              <th className="py-3.5 px-4">কমিশন (৳)</th>
+              <th className="py-3.5 px-4 rounded-r-xl">জেনারেশন</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50 text-xs">
+            {filteredData.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-10 text-center text-gray-400">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <UserGroupIcon className="w-10 h-10 text-gray-300" />
+                    <p className="font-semibold text-gray-500">এখনো কোনো রেফারেল রেকর্ড পাওয়া যায়নি</p>
+                    <p className="text-[11px] text-gray-400">
+                      আপনার রেফারেল লিংক শেয়ার করে বন্ধুদের ইনভাইট করুন।
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              filteredData.map(({ user: referredUser, reffer, commition, gen, createdAt }, index) => (
+                <tr key={index} className="hover:bg-purple-50/30 transition-colors">
+                  {/* Date */}
+                  <td className="py-3.5 px-4 font-medium text-gray-600">
+                    <span className="flex items-center gap-1.5">
+                      <CalendarIcon className="w-3.5 h-3.5 text-gray-400" />
+                      {moment(createdAt).format("DD MMM, YYYY")}
+                    </span>
+                  </td>
+
+                  {/* Name */}
+                  <td className="py-3.5 px-4 font-bold text-[#0b0c2a]">
+                    <span className="flex items-center gap-1.5">
+                      <span>{reffer?.name || referredUser?.name || "Member"}</span>
+                      <CheckBadgeIcon className="w-3.5 h-3.5 text-[#5a32fa]" />
+                    </span>
+                  </td>
+
+                  {/* Email */}
+                  <td className="py-3.5 px-4 text-gray-500 font-mono text-[11px]">
+                    {referredUser?.email || "N/A"}
+                  </td>
+
+                  {/* Phone */}
+                  <td className="py-3.5 px-4 text-gray-600">
+                    {referredUser?.phone ? (
+                      <a
+                        href={`https://wa.me/${referredUser?.phone}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#25D366] hover:underline font-semibold flex items-center gap-1"
+                      >
+                        <span>{referredUser?.phone}</span>
+                      </a>
+                    ) : (
+                      "N/A"
+                    )}
+                  </td>
+
+                  {/* Commission */}
+                  <td className="py-3.5 px-4">
+                    <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-600 font-black text-xs">
+                      +৳{commition}
+                    </span>
+                  </td>
+
+                  {/* Generation */}
+                  <td className="py-3.5 px-4">
+                    <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-[#5a32fa] font-bold text-[11px] border border-purple-100">
+                      Gen {gen || 1}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+const ReferHistory = () => {
+  return <TableWithStripedRows />;
 };
 
 export default ReferHistory;
