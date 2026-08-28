@@ -9,8 +9,7 @@ const User = require("./user.model");
 const bcrypt = require("bcrypt");
 const mailerService = require("../mailer/mailer");
 const Refer = require("../Refer/refer.model");
-const createUser = async (req, res) =>
-{
+const createUser = async (req, res) => {
     try {
         req.body.email = req.body.email.toLowerCase();
         const isExist = await User.findOne({ email: req.body.email, username: req.body.username });
@@ -61,8 +60,7 @@ const createUser = async (req, res) =>
     }
 }
 
-const loginUser = async (req, res) =>
-{
+const loginUser = async (req, res) => {
     try {
         req.body.email = req.body.email.toLowerCase();
         const user = await User.findOne({
@@ -99,8 +97,7 @@ const loginUser = async (req, res) =>
 }
 
 
-const withoutPass = async (req, res) =>
-{
+const withoutPass = async (req, res) => {
     try {
         req.query.email = req.query.email.toLowerCase();
         const user = await User.findOne({
@@ -130,139 +127,142 @@ const withoutPass = async (req, res) =>
     }
 }
 const getAllData = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
-  const skip = (page - 1) * limit;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
 
-  const filters = {};
+    const filters = {};
 
-  // Role filtering
-  if (req.query.admin === "true") {
-    filters.role = "admin";
-  } else if (req.query.moderator === "true") {
-    filters.role = "moderator";
-  } else {
-    filters.role = "user";
-  }
-
-  // Status filter
-  if (req.query.status) {
-    filters.status = req.query.status;
-  }
-
-  // Initialize search filter
-  const searchConditions = [];
-  if (req.query.search) {
-    const regex = new RegExp(req.query.search, "i");
-    searchConditions.push(
-      { username: { $regex: regex } },
-      { name: { $regex: regex } },
-      { email: { $regex: regex } },
-      { phone: { $regex: regex } }
-    );
-  }
-
-  // Moderator filter
-  const refferConditions = [];
-  if (req.user?.role === "moderator") {
-    refferConditions.push(
-      { reffer: { $in: req.user.allowedUsers || [] } },
-      { reffer: { $exists: false } },
-      { reffer: null }
-    );
-  }
-
-  // Combine all filters properly
-  if (searchConditions.length && refferConditions.length) {
-    filters.$and = [
-      { $or: refferConditions },
-      { $or: searchConditions }
-    ];
-  } else if (refferConditions.length) {
-    filters.$or = refferConditions;
-  } else if (searchConditions.length) {
-    filters.$or = searchConditions;
-  }
-
-  // Date range filtering
-  if (req.query.startDate || req.query.endDate) {
-    const dateField = req.query.status === "active" ? "activatedAt" : "createdAt";
-    filters[dateField] = {};
-    if (req.query.startDate) {
-      filters[dateField].$gte = new Date(req.query.startDate);
-    }
-    if (req.query.endDate) {
-      const end = new Date(req.query.endDate);
-      end.setHours(23, 59, 59, 999); // Include the whole day
-      filters[dateField].$lte = end;
-    }
-  }
-
-  // Cursor pagination support
-  if (req.query.cursor) {
-    if (req.query.reverse === 'true') {
-      filters._id = { $lt: req.query.cursor };
+    // Role filtering
+    if (req.query.admin === "true") {
+        filters.role = "admin";
+    } else if (req.query.moderator === "true") {
+        filters.role = "moderator";
     } else {
-      filters._id = { $gt: req.query.cursor };
-    }
-  }
-
-  try {
-    const query = User.find(filters)
-      .select("-password")
-      .populate("reffer", "-password")
-      .populate("allowedUsers", "name username email phone")
-      .sort({ _id: req.query.reverse === 'true' ? -1 : 1 })
-      .limit(limit);
-
-    if (!req.query.cursor) {
-      query.skip(skip);
+        filters.role = "user";
     }
 
-    const users = await query;
-
-    const total = await User.countDocuments(filters);
-    const grandTotal = await User.countDocuments({ role: "user" });
-    const active = await User.countDocuments({ status: "active" });
-    const pending = await User.countDocuments({ status: "pending" });
-
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    
-    let todayAdded = 0;
-    if (req.query.status === "active") {
-      todayAdded = await User.countDocuments({
-        status: "active",
-        activatedAt: { $gte: startOfToday }
-      });
-    } else {
-      todayAdded = await User.countDocuments({
-        status: "pending",
-        createdAt: { $gte: startOfToday }
-      });
+    // Status filter
+    if (req.query.status) {
+        filters.status = req.query.status;
     }
 
-    const nextCursor = users.length === limit ? users[users.length - 1]._id : null;
+    // Lock (Banned) filter
+    if (req.query.lock === "true") {
+        filters.lock = true;
+    }
 
-    res.send({
-      total,
-      page,
-      pages: Math.ceil(total / limit),
-      grandTotal,
-      active,
-      pending,
-      todayAdded,
-      users,
-      nextCursor,
-    });
-  } catch (error) {
-    res.status(500).send({
-      message: error.message,
-    });
-  }
+    // Initialize search filter
+    const searchConditions = [];
+    if (req.query.search) {
+        const regex = new RegExp(req.query.search, "i");
+        searchConditions.push(
+            { username: { $regex: regex } },
+            { name: { $regex: regex } },
+            { email: { $regex: regex } },
+            { phone: { $regex: regex } }
+        );
+    }
+
+    // Moderator filter
+    const refferConditions = [];
+    if (req.user?.role === "moderator") {
+        refferConditions.push(
+            { reffer: { $in: req.user.allowedUsers || [] } },
+            { reffer: { $exists: false } },
+            { reffer: null }
+        );
+    }
+
+    // Combine all filters properly
+    if (searchConditions.length && refferConditions.length) {
+        filters.$and = [
+            { $or: refferConditions },
+            { $or: searchConditions }
+        ];
+    } else if (refferConditions.length) {
+        filters.$or = refferConditions;
+    } else if (searchConditions.length) {
+        filters.$or = searchConditions;
+    }
+
+    // Date range filtering
+    if (req.query.startDate || req.query.endDate) {
+        const dateField = req.query.status === "active" ? "activatedAt" : "createdAt";
+        filters[dateField] = {};
+        if (req.query.startDate) {
+            filters[dateField].$gte = new Date(req.query.startDate);
+        }
+        if (req.query.endDate) {
+            const end = new Date(req.query.endDate);
+            end.setHours(23, 59, 59, 999); // Include the whole day
+            filters[dateField].$lte = end;
+        }
+    }
+
+    // Cursor pagination support
+    if (req.query.cursor) {
+        if (req.query.reverse === 'true') {
+            filters._id = { $lt: req.query.cursor };
+        } else {
+            filters._id = { $gt: req.query.cursor };
+        }
+    }
+
+    try {
+        const query = User.find(filters)
+            .select("_id avatar name username email phone balance status role lock createdAt activatedAt reffer")
+            .populate("reffer", "name username")
+            .sort({ _id: req.query.reverse === 'true' ? -1 : 1 })
+            .limit(limit);
+
+        if (!req.query.cursor) {
+            query.skip(skip);
+        }
+
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+
+        const todayQuery = req.query.status === "active" 
+            ? { status: "active", activatedAt: { $gte: startOfToday } }
+            : { status: "pending", createdAt: { $gte: startOfToday } };
+
+        const [
+            users,
+            total,
+            grandTotal,
+            active,
+            pending,
+            todayAdded
+        ] = await Promise.all([
+            query,
+            User.countDocuments(filters),
+            User.countDocuments({ role: "user" }),
+            User.countDocuments({ status: "active" }),
+            User.countDocuments({ status: "pending" }),
+            User.countDocuments(todayQuery)
+        ]);
+
+        const nextCursor = users.length === limit ? users[users.length - 1]._id : null;
+
+        res.send({
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            grandTotal,
+            active,
+            pending,
+            todayAdded,
+            users,
+            nextCursor,
+        });
+    } catch (error) {
+        res.status(500).send({
+            message: error.message,
+        });
+    }
 };
-const giveAccess = async (req, res) =>
-{
+const giveAccess = async (req, res) => {
     if (req.user.role !== 'admin') {
         return res.status(403).send({
             message: 'You are not authorized to access this route',
@@ -306,8 +306,7 @@ const giveAccess = async (req, res) =>
         });
     }
 };
-const getSingle = async (req, res) =>
-{
+const getSingle = async (req, res) => {
     try {
         const user = await User.findById(req.params.id)
             .select("-password")
@@ -322,8 +321,7 @@ const getSingle = async (req, res) =>
         });
     }
 }
-const searchUser = async (req, res) =>
-{
+const searchUser = async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.id })
             .select("-password")
@@ -342,8 +340,7 @@ const searchUser = async (req, res) =>
         });
     }
 }
-const updateUser = async (req, res) =>
-{
+const updateUser = async (req, res) => {
     try {
         if (req.body.status === "active") {
             req.body.activatedAt = new Date();
@@ -362,8 +359,7 @@ const updateUser = async (req, res) =>
         });
     }
 }
-const updatePassword = async (req, res) =>
-{
+const updatePassword = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) {
@@ -392,8 +388,7 @@ const updatePassword = async (req, res) =>
         });
     }
 }
-const password = async (req, res) =>
-{
+const password = async (req, res) => {
     try {
         const userId = req.params.id;
         const newPasswordRaw = req.body.password;
@@ -439,8 +434,7 @@ const password = async (req, res) =>
         });
     }
 }
-const deleteUser = async (req, res) =>
-{
+const deleteUser = async (req, res) => {
     if (req.user.role !== "admin") {
         return res.status(403).send({
             message: "You are not authorized to access this route"
@@ -468,12 +462,10 @@ const deleteUser = async (req, res) =>
     }
 }
 
-const getCurrentUser = async (req, res) =>
-{
+const getCurrentUser = async (req, res) => {
     res.send(req.user);
 }
-const checkUser = async (req, res) =>
-{
+const checkUser = async (req, res) => {
     try {
 
         // Opt out of the soft-delete hook: a deleted user still reserves
@@ -497,8 +489,7 @@ const checkUser = async (req, res) =>
         });
     }
 }
-const activeAnUser = async (req, res) =>
-{
+const activeAnUser = async (req, res) => {
     // const roles = [
     //     "admin",
     //     "moderator"
@@ -598,8 +589,7 @@ const activeAnUser = async (req, res) =>
         });
     }
 }
-const getStatistic = async (req, res) =>
-{
+const getStatistic = async (req, res) => {
     try {
         const total = User.countDocuments();
         const active = User.countDocuments({ status: "active" });
@@ -619,8 +609,7 @@ const getStatistic = async (req, res) =>
         });
     }
 }
-const resetPassword = async (req, res) =>
-{
+const resetPassword = async (req, res) => {
     try {
         const text = req.params.id;
         const user = await User.findOne({

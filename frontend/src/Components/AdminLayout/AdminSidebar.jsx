@@ -28,7 +28,7 @@ const sidebarData = [
     items: [
       { label: "Non-Active User", icon: UserMinusIcon, to: "/admin/non-active-users", color: "text-purple-500" },
       { label: "Active User", icon: UsersIcon, to: "/admin/users", color: "text-green-500" },
-      { label: "Banned User", icon: NoSymbolIcon, to: "/admin/users?status=banned", color: "text-red-500" },
+      { label: "Banned User", icon: NoSymbolIcon, to: "/admin/banned-users", color: "text-red-500" },
     ]
   },
   {

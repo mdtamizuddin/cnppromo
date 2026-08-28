@@ -29,7 +29,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass, bgClass }) => (
   </Card>
 );
 
-const PremiumUsersTable = ({ status = "pending", title = "Users", subtitle = "Manage users in the system." }) => {
+const PremiumUsersTable = ({ status = "pending", lock = false, title = "Users", subtitle = "Manage users in the system." }) => {
   const [option, setOption] = useState({ limit: 50 });
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
@@ -47,9 +47,11 @@ const PremiumUsersTable = ({ status = "pending", title = "Users", subtitle = "Ma
   };
 
   const { data, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
-    ["Premium Users Table", status, option.limit, search, dateRange],
+    ["Premium Users Table", status, lock, option.limit, search, dateRange],
     async ({ pageParam = null }) => {
-      let url = `/user?limit=${option.limit}&reverse=true&status=${status}`;
+      let url = `/user?limit=${option.limit}&reverse=true`;
+      if (status) url += `&status=${status}`;
+      if (lock) url += `&lock=true`;
       if (search) url += `&search=${search}`;
       if (pageParam) url += `&cursor=${pageParam}`;
       if (dateRange.start) url += `&startDate=${dateRange.start}`;
@@ -100,7 +102,7 @@ const PremiumUsersTable = ({ status = "pending", title = "Users", subtitle = "Ma
           bgClass="bg-green-50" 
         />
         <StatCard 
-          title={status === 'pending' ? "Total Pending" : "Total Active"} 
+          title={lock ? "Total Banned" : status === 'pending' ? "Total Pending" : "Total Active"} 
           value={status === 'pending' ? totalPending : totalActive} 
           icon={CalendarDaysIcon} 
           colorClass="text-blue-500" 

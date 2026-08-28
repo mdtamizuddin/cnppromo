@@ -8,6 +8,7 @@ const ReferHistory = lazy(() => import("../Pages/Admin/RefHistory/RefHistory"));
 const Check = lazy(() => import("../Pages/Admin/Check/Check"));
 const Users = lazy(() => import("../Pages/Admin/Users/Users"));
 const NonActiveUsers = lazy(() => import("../Pages/Admin/Users/NonActiveUsers"));
+const BannedUsers = lazy(() => import("../Pages/Admin/Users/BannedUsers"));
 const User = lazy(() => import("../Pages/Admin/Users/User"));
 const Topups = lazy(() => import("../Pages/Admin/TopUp/TopUp"));
 const Settings = lazy(() => import("../Pages/Settings/Settings"));
@@ -47,6 +48,10 @@ export const adminRoutes = [
   {
     path: "non-active-users",
     element: <AdminChecker><Lazy><NonActiveUsers /></Lazy></AdminChecker>,
+  },
+  {
+    path: "banned-users",
+    element: <AdminChecker><Lazy><BannedUsers /></Lazy></AdminChecker>,
   },
   {
     path: "user/:id",
