@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import Loader from "../Components/Loader";
 import AdminChecker from "../util/UserChecker";
 
+const AdminDashboard = lazy(() => import("../Pages/Admin/Dashboard/AdminDashboard"));
 const Admins = lazy(() => import("../Pages/Admin/Admins/Users"));
 const AddWork = lazy(() => import("../Pages/SocialWork/AddWork"));
 const ReferHistory = lazy(() => import("../Pages/Admin/RefHistory/RefHistory"));
@@ -16,12 +17,21 @@ const Withdrawals = lazy(() => import("../Pages/Admin/Withdraw/Withdraw"));
 const ExternalWithdrawals = lazy(() => import("../Pages/Admin/ExternalWithdrawals/ExternalWithdrawals"));
 const AdminWorks = lazy(() => import("../Pages/Admin/ManageWorks/AdminWorks"));
 const AdminSocialWorks = lazy(() => import("../Pages/Admin/ManageSocialWorks/AdminSocialWorks"));
+const PaymentGateway = lazy(() => import("../Pages/Admin/PaymentGateway/PaymentGateway"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
 export const adminRoutes = [
   {
     index: true,
+    element: <AdminChecker><Lazy><AdminDashboard /></Lazy></AdminChecker>,
+  },
+  {
+    path: "dashboard",
+    element: <AdminChecker><Lazy><AdminDashboard /></Lazy></AdminChecker>,
+  },
+  {
+    path: "admins",
     element: <AdminChecker><Lazy><Admins /></Lazy></AdminChecker>,
   },
   {
@@ -83,5 +93,9 @@ export const adminRoutes = [
   {
     path: "social-works",
     element: <AdminChecker><Lazy><AdminSocialWorks /></Lazy></AdminChecker>,
+  },
+  {
+    path: "payment-gateway",
+    element: <AdminChecker><Lazy><PaymentGateway /></Lazy></AdminChecker>,
   },
 ];

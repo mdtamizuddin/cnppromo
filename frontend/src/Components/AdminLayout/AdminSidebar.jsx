@@ -18,15 +18,22 @@ import {
   ChatBubbleLeftRightIcon,
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
-  XMarkIcon
+  XMarkIcon,
+  Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 import { IconButton } from "@material-tailwind/react";
 
 const sidebarData = [
   {
+    category: "OVERVIEW",
+    items: [
+      { label: "Dashboard", icon: Squares2X2Icon, to: "/admin/dashboard", color: "text-indigo-500" },
+    ]
+  },
+  {
     category: "USER MANAGEMENT",
     items: [
-      { label: "Admins", icon: UsersIcon, to: "/admin", color: "text-blue-500" },
+      { label: "Admins", icon: UsersIcon, to: "/admin/admins", color: "text-blue-500" },
       { label: "Moderators", icon: UsersIcon, to: "/admin/moderator", color: "text-indigo-500" },
       { label: "Non-Active User", icon: UserMinusIcon, to: "/admin/non-active-users", color: "text-purple-500" },
       { label: "Active User", icon: UsersIcon, to: "/admin/users", color: "text-green-500" },
@@ -40,7 +47,7 @@ const sidebarData = [
       { label: "External Withdraw", icon: ArrowsRightLeftIcon, to: "/admin/external-withdrawals", color: "text-purple-600" },
       { label: "TopUp / Transaction", icon: ArrowsRightLeftIcon, to: "/admin/topup", color: "text-blue-500" },
       { label: "Earning Overview", icon: ChartBarIcon, to: "#", color: "text-emerald-500" },
-      { label: "Payment Gateway", icon: CreditCardIcon, to: "#", color: "text-cyan-500" },
+      { label: "Payment Gateway", icon: CreditCardIcon, to: "/admin/payment-gateway", color: "text-cyan-500" },
     ]
   },
   {
@@ -48,8 +55,8 @@ const sidebarData = [
     items: [
       { label: "Works", icon: BriefcaseIcon, to: "/admin/works", color: "text-amber-500" },
       { label: "Social Works", icon: ClipboardDocumentCheckIcon, to: "/admin/social-works", color: "text-teal-500" },
-      { label: "Announcement", icon: MegaphoneIcon, to: "#", color: "text-blue-600" },
-      { label: "Work History", icon: ClipboardDocumentCheckIcon, to: "/user/work-history", color: "text-indigo-500" },
+      
+      
     ]
   },
   {
@@ -62,7 +69,7 @@ const sidebarData = [
   {
     category: "ACCOUNT",
     items: [
-      { label: "Profile", icon: UserCircleIcon, to: "/admin/settings", color: "text-purple-600" },
+      { label: "Settings", icon: UserCircleIcon, to: "/admin/settings", color: "text-purple-600" },
     ]
   }
 ];
