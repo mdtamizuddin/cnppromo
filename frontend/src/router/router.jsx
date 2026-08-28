@@ -10,7 +10,6 @@ const About = lazy(() => import("../Pages/About/About"));
 const HowItWorks = lazy(() => import("../Pages/HowItWorks/HowItWorks"));
 const Register = lazy(() => import("../Pages/Auth/Register/Register"));
 const Login = lazy(() => import("../Pages/Auth/Login/Login"));
-const Profile = lazy(() => import("../Pages/Profile/Profile"));
 const ReferInfo = lazy(() => import("../Pages/Refer/ReferInfo"));
 const Refer = lazy(() => import("../Pages/Refer/Refer"));
 const Account = lazy(() => import("../Pages/Account/Account"));
@@ -45,6 +44,8 @@ const LoginWithoutPass = lazy(() => import("../Pages/Auth/Login/WithOutPass"));
 const PaymentProof = lazy(() => import("../Pages/PaymentProof/PaymentProof"));
 const Features = lazy(() => import("../Pages/Features/Features"));
 const Earnings = lazy(() => import("../Pages/Earnings/Earnings"));
+const Notifications = lazy(() => import("../Pages/Notifications/Notifications"));
+const UserSettings = lazy(() => import("../Pages/Settings/UserSettings"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -79,7 +80,11 @@ const router = createBrowserRouter([
       },
       {
         path: "message",
-        element: <Lazy><Message /></Lazy>,
+        element: (
+          <AuthChecker requireActive={true}>
+            <Lazy><Message /></Lazy>
+          </AuthChecker>
+        ),
       },
       {
         path: "all-message",
@@ -116,14 +121,7 @@ const router = createBrowserRouter([
           </AuthChecker>
         ),
       },
-      {
-        path: "profile",
-        element: (
-          <AuthChecker>
-            <Lazy><Profile /></Lazy>
-          </AuthChecker>
-        ),
-      },
+
       {
         path: "earnings",
         element: (
@@ -137,6 +135,22 @@ const router = createBrowserRouter([
         element: (
           <AuthChecker>
             <Lazy><Earnings /></Lazy>
+          </AuthChecker>
+        ),
+      },
+      {
+        path: "notifications",
+        element: (
+          <AuthChecker>
+            <Lazy><Notifications /></Lazy>
+          </AuthChecker>
+        ),
+      },
+      {
+        path: "all-message",
+        element: (
+          <AuthChecker>
+            <Lazy><Notifications /></Lazy>
           </AuthChecker>
         ),
       },
@@ -327,6 +341,22 @@ const router = createBrowserRouter([
       },
       {
         path: "settings",
+        element: (
+          <AuthChecker>
+            <Lazy><UserSettings /></Lazy>
+          </AuthChecker>
+        ),
+      },
+      {
+        path: "user-settings",
+        element: (
+          <AuthChecker>
+            <Lazy><UserSettings /></Lazy>
+          </AuthChecker>
+        ),
+      },
+      {
+        path: "admin/settings",
         element: (
           <AdminChecker>
             <Lazy><Settings /></Lazy>

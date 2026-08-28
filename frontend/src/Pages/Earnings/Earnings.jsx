@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useQuery } from "react-query";
-import { Card, Button, Typography, Progress } from "@material-tailwind/react";
+import { Card, Button } from "@material-tailwind/react";
 import {
   BanknotesIcon,
   WalletIcon,
@@ -10,11 +10,8 @@ import {
   ClipboardDocumentCheckIcon,
   GiftIcon,
   ArrowRightIcon,
-  ArrowTrendingUpIcon,
-  ClockIcon,
   SparklesIcon,
   CreditCardIcon,
-  CheckBadgeIcon,
 } from "@heroicons/react/24/outline";
 import dayjs from "dayjs";
 import { api } from "../../util/axios";
@@ -22,7 +19,6 @@ import Loader from "../../Components/Loader";
 
 const Earnings = () => {
   const { user } = useSelector((state) => state.user);
-  const [activeTab, setActiveTab] = useState("referrals");
 
   // 1. Fetch Referral statistics
   const { data: stats } = useQuery({

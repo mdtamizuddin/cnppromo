@@ -5,7 +5,7 @@ import {
   ClipboardDocumentListIcon,
   PlusIcon,
   WalletIcon,
-  UserIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 
 const UserBottomBar = () => {
@@ -15,7 +15,7 @@ const UserBottomBar = () => {
   const isWorks = pathname.startsWith("/works");
   const isEarn = pathname.startsWith("/social-works");
   const isWallet = pathname.startsWith("/account");
-  const isProfile = pathname === "/profile" || pathname === "/level";
+  const isSettings = pathname === "/settings";
 
   return (
     <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md bg-white/95 backdrop-blur-xl border border-gray-200/80 rounded-full shadow-2xl px-3 py-2 flex items-center justify-between lg:hidden">
@@ -64,15 +64,15 @@ const UserBottomBar = () => {
         <span className="text-[10px]">ওয়ালেট</span>
       </Link>
 
-      {/* 5. Profile */}
+      {/* 5. Settings */}
       <Link
-        to="/profile"
+        to="/settings"
         className={`flex flex-col items-center gap-0.5 flex-1 transition-colors ${
-          isProfile ? "text-[#5a32fa] font-bold" : "text-gray-400 hover:text-gray-600"
+          isSettings ? "text-[#5a32fa] font-bold" : "text-gray-400 hover:text-gray-600"
         }`}
       >
-        <UserIcon className="w-5 h-5" />
-        <span className="text-[10px]">প্রোফাইল</span>
+        <Cog6ToothIcon className="w-5 h-5" />
+        <span className="text-[10px]">সেটিংস</span>
       </Link>
 
     </div>

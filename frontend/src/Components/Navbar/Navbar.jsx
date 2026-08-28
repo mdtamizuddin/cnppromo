@@ -90,7 +90,7 @@ const Topbar = () => {
               )}
 
               <Link
-                to="/all-message"
+                to="/notifications"
                 className="relative w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/15 transition-all flex items-center justify-center text-white border border-white/10 shadow-sm"
                 title="নোটিফিকেশন"
               >

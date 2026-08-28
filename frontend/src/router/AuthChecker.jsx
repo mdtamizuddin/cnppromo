@@ -6,16 +6,31 @@ import RequierActive from './RequierActive';
 
 const Login = lazy(() => import('../Pages/Auth/Login/Login'));
 
-const AuthChecker = ({ children }) => {
-    const { user } = useSelector(state => state.user)
-    const token = Cookie.get("token-you",);
+const AuthChecker = ({ children, requireActive = false }) => {
+    const { user } = useSelector((state) => state.user);
+    const token = Cookie.get("token-you");
+
+    // 1. If token exists but user profile is still loading from API
     if (token && !user) {
-        return <Loader />
+        return <Loader />;
     }
-    else if (user?.status === "pending") {
-        return <RequierActive />
+
+    // 2. If not logged in at all, show Login
+    if (!user) {
+        return (
+            <Suspense fallback={<Loader />}>
+                <Login />
+            </Suspense>
+        );
     }
-    return user ? children : <Suspense fallback={<Loader />}><Login /></Suspense>
+
+    // 3. If active status is required (e.g. for /message) and user is not active (non-admins)
+    if (requireActive && user.role !== "admin" && user.role !== "moderator" && user.status !== "active") {
+        return <RequierActive />;
+    }
+
+    // 4. Authenticated & Authorized user
+    return children;
 };
 
 export default AuthChecker;

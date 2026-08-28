@@ -8,13 +8,14 @@ import {
   CurrencyBangladeshiIcon,
   EnvelopeIcon,
   UserCircleIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import Cookie from "js-cookie";
 
 const items = [
   { label: "Account", icon: CurrencyBangladeshiIcon, to: "/account" },
   { label: "Message", icon: EnvelopeIcon, to: "/message" },
-  { label: "Profile", icon: UserCircleIcon, to: "/profile" },
+  { label: "Settings", icon: Cog6ToothIcon, to: "/settings" },
   { label: "Work History", icon: UserCircleIcon, to: "/work-history" },
 ];
 

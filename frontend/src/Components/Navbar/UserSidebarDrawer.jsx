@@ -14,9 +14,7 @@ import {
   AcademicCapIcon,
   BellIcon,
   Cog6ToothIcon,
-  GlobeAltIcon,
-  QuestionMarkCircleIcon,
-  PhoneIcon,
+  ChatBubbleLeftRightIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
@@ -45,19 +43,12 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
     { label: "ট্রেনিং & সাপোর্ট", to: "/training", icon: AcademicCapIcon },
     {
       label: "নোটিফিকেশন",
-      to: "/all-message",
+      to: "/notifications",
       icon: BellIcon,
       badge: 3,
     },
-    { label: "সেটিংস", to: "/profile", icon: Cog6ToothIcon },
-    {
-      label: "ভাষা",
-      to: null,
-      icon: GlobeAltIcon,
-      onClick: () => toast("ভাষা: বাংলা (সক্রিয়)", { icon: "🌐" }),
-    },
-    { label: "হেল্প সেন্টার", to: "/how-it-works", icon: QuestionMarkCircleIcon },
-    { label: "যোগাযোগ করুন", to: "/message", icon: PhoneIcon },
+    { label: "সেটিংস", to: "/settings", icon: Cog6ToothIcon },
+    { label: "Message", to: "/message", icon: ChatBubbleLeftRightIcon },
   ];
 
   return (

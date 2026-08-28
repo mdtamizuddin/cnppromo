@@ -54,7 +54,7 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <main className="w-screen overflow-x-hidden">
+      <main className="w-full overflow-x-hidden">
         <Provider store={store}>
           <QueryClientProvider client={queryClient}>
             <SocketProvider>
