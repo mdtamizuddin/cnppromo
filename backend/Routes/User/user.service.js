@@ -184,19 +184,42 @@ const getAllData = async (req, res) => {
     filters.$or = searchConditions;
   }
 
+  // Cursor pagination support
+  if (req.query.cursor) {
+    if (req.query.reverse === 'true') {
+      filters._id = { $lt: req.query.cursor };
+    } else {
+      filters._id = { $gt: req.query.cursor };
+    }
+  }
+
   try {
-    const users = await User.find(filters)
+    const query = User.find(filters)
       .select("-password")
       .populate("reffer", "-password")
       .populate("allowedUsers", "name username email phone")
-      .skip(skip)
-      .sort({ createdAt: req.query.reverse ? -1 : 1 })
+      .sort({ _id: req.query.reverse === 'true' ? -1 : 1 })
       .limit(limit);
+
+    if (!req.query.cursor) {
+      query.skip(skip);
+    }
+
+    const users = await query;
 
     const total = await User.countDocuments(filters);
     const grandTotal = await User.countDocuments({ role: "user" });
     const active = await User.countDocuments({ status: "active" });
     const pending = await User.countDocuments({ status: "pending" });
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayAdded = await User.countDocuments({
+      status: "pending",
+      createdAt: { $gte: startOfToday }
+    });
+
+    const nextCursor = users.length === limit ? users[users.length - 1]._id : null;
 
     res.send({
       total,
@@ -205,7 +228,9 @@ const getAllData = async (req, res) => {
       grandTotal,
       active,
       pending,
+      todayAdded,
       users,
+      nextCursor,
     });
   } catch (error) {
     res.status(500).send({

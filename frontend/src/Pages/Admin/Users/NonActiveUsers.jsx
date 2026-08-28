@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Card, Input, Button, Chip } from '@material-tailwind/react';
-import { useQuery } from 'react-query';
+import React, { useState, useEffect } from 'react';
+import { Card, Input, Button, Chip, Spinner } from '@material-tailwind/react';
+import { useQuery, useInfiniteQuery } from 'react-query';
+import { useInView } from 'react-intersection-observer';
 import { api } from '../../../util/axios';
 import moment from 'moment';
 import toast from 'react-hot-toast';
@@ -19,13 +20,16 @@ import {
 import Pagination from '../../Account/Pagination';
 
 const StatCard = ({ title, value, icon: Icon, colorClass, bgClass }) => (
-  <Card className="flex flex-row items-center p-5 shadow-sm border border-gray-100 h-28 gap-4">
-    <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${bgClass}`}>
-      <Icon className={`w-7 h-7 ${colorClass}`} />
+  <Card className="flex flex-col p-4 sm:p-5 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 rounded-2xl bg-white hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-white/0 to-gray-100/50 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110"></div>
+    <div className="flex items-center justify-between relative z-10">
+      <div className={`p-2.5 rounded-xl ${bgClass}`}>
+        <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${colorClass}`} />
+      </div>
     </div>
-    <div>
-      <p className="text-xs font-bold text-gray-500 uppercase">{title}</p>
-      <h3 className="text-2xl font-black text-[#0b0c2a] mt-1">{value}</h3>
+    <div className="mt-3 sm:mt-4 relative z-10">
+      <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{value}</h3>
+      <p className="text-[11px] sm:text-sm font-medium text-gray-500 mt-1 leading-tight">{title}</p>
     </div>
   </Card>
 );
@@ -34,182 +38,196 @@ const UserDetailsCard = ({ user, onClose, refetch }) => {
   if (!user) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-4xl bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-200 z-50 p-6 flex flex-col md:flex-row gap-8 animate-fade-in-up">
-      <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
-        <XMarkIcon className="w-6 h-6" />
-      </button>
+    <>
+      <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 transition-opacity" onClick={onClose}></div>
+      <div className="fixed bottom-0 left-0 right-0 max-h-[90vh] overflow-y-auto md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-3xl bg-white rounded-t-[2rem] md:rounded-3xl shadow-2xl border border-gray-200 z-50 p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:gap-8 animate-fade-in-up">
+        <button onClick={onClose} className="absolute top-4 right-4 md:top-6 md:right-6 p-2 bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors z-10">
+          <XMarkIcon className="w-5 h-5" />
+        </button>
 
-      {/* Left Profile Section */}
-      <div className="flex flex-col items-center justify-center w-full md:w-1/3 border-r border-gray-100 pr-0 md:pr-8">
-        <img
-          src={user.avatar || "/default-avater.png"}
-          alt={user.name}
-          className="w-24 h-24 rounded-full border-4 border-gray-100 object-cover shadow-sm mb-4"
-        />
-        <h2 className="text-xl font-bold text-[#0b0c2a]">{user.name}</h2>
-        <p className="text-sm text-gray-500 mt-1">ID: #{user.username}</p>
-        <div className="mt-3">
-          <Chip size="sm" value="PENDING" className="bg-amber-100 text-amber-800 font-bold px-4 rounded-full" />
+        {/* Left Profile Section */}
+        <div className="flex flex-col items-center md:justify-center w-full md:w-1/3 md:border-r border-gray-100 pr-0 md:pr-6 relative">
+          <div className="relative">
+             <img
+               src={user.avatar || "/default-avater.png"}
+               alt={user.name}
+               className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white shadow-md object-cover mb-3"
+             />
+             <span className="absolute bottom-4 right-1 md:bottom-5 md:right-2 w-4 h-4 rounded-full border-2 border-white bg-amber-500"></span>
+          </div>
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 text-center">{user.name}</h2>
+          <p className="text-sm text-gray-500 mt-0.5">#{user.username}</p>
+          <div className="mt-4 md:mt-6 w-full px-4 md:px-0">
+             <div className="w-full bg-amber-50 rounded-xl p-2.5 flex items-center justify-center gap-2 border border-amber-100/50">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span className="text-[11px] font-bold text-amber-700 tracking-wider">PENDING REVIEW</span>
+             </div>
+          </div>
+        </div>
+
+        {/* Right Details Section */}
+        <div className="flex-1 flex flex-col justify-between mt-2 md:mt-0">
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-4 hidden md:block">User Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 text-sm">
+              <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Referer ID</span>
+                <span className="text-gray-900 font-medium flex items-center gap-2">
+                  {user.reffer?.username || "Direct Signup"}
+                  {user.reffer?.username && (
+                    <DocumentDuplicateIcon 
+                      className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600 transition-colors" 
+                      onClick={() => {
+                        navigator.clipboard.writeText(user.reffer.username);
+                        toast.success("Copied Referer ID");
+                      }}
+                    />
+                  )}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Role</span>
+                <span className="text-gray-900 font-medium capitalize">{user.role}</span>
+              </div>
+              <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Email</span>
+                <span className="text-gray-900 font-medium truncate">{user.email}</span>
+              </div>
+              <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">WhatsApp</span>
+                <span className="text-gray-900 font-medium">{user.phone}</span>
+              </div>
+              <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Balance</span>
+                <span className="text-gray-900 font-bold text-base">৳ {user.balance}</span>
+              </div>
+              <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Joined Date</span>
+                <span className="text-gray-900 font-medium">{moment(user.createdAt).format("MMM DD, YYYY")}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-row gap-3 mt-6 pt-6 border-t border-gray-100 w-full">
+            <Button variant="outlined" color="red" className="flex-1 flex justify-center items-center border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 normal-case px-4 py-2.5 rounded-xl transition-colors focus:ring-0">
+              Reject
+            </Button>
+            <Button 
+              className="flex-1 flex justify-center items-center bg-blue-600 text-white normal-case px-4 py-2.5 hover:bg-blue-700 shadow-none hover:shadow-lg hover:shadow-blue-500/20 rounded-xl transition-all focus:ring-0"
+              onClick={async () => {
+                 try {
+                    await api.put(`/user/${user._id}`, { status: "active" });
+                    toast.success("User is now active");
+                    refetch();
+                    onClose();
+                 } catch (error) {
+                    toast.error("Failed to activate user");
+                 }
+              }}
+            >
+              Approve User
+            </Button>
+          </div>
         </div>
       </div>
-
-      {/* Right Details Section */}
-      <div className="flex-1 flex flex-col justify-between">
-        <h3 className="text-lg font-bold text-[#0b0c2a] mb-4">User Details</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm">
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500 font-medium inline-block w-28">Referer ID</span>
-            <span className="text-gray-900 font-semibold flex items-center gap-2">
-              : {user.reffer?.username || "N/A"}
-              {user.reffer?.username && (
-                <DocumentDuplicateIcon 
-                  className="w-4 h-4 text-gray-400 cursor-pointer hover:text-[#5a32fa]" 
-                  onClick={() => {
-                    navigator.clipboard.writeText(user.reffer.username);
-                    toast.success("Copied Referer ID");
-                  }}
-                />
-              )}
-            </span>
-          </div>
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500 font-medium inline-block w-28">Change Role</span>
-            <span className="text-gray-900 font-semibold">: {user.role}</span>
-          </div>
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500 font-medium inline-block w-28">Name</span>
-            <span className="text-gray-900 font-semibold">: {user.name}</span>
-          </div>
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500 font-medium inline-block w-28">Email</span>
-            <span className="text-gray-900 font-semibold">: {user.email}</span>
-          </div>
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500 font-medium inline-block w-28">User Name</span>
-            <span className="text-gray-900 font-semibold">: {user.username}</span>
-          </div>
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500 font-medium inline-block w-28">WhatsApp</span>
-            <span className="text-gray-900 font-semibold">: {user.phone}</span>
-          </div>
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500 font-medium inline-block w-28">Balance</span>
-            <span className="text-gray-900 font-semibold">: {user.balance}</span>
-          </div>
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500 font-medium inline-block w-28">Joined Date</span>
-            <span className="text-gray-900 font-semibold">: {moment(user.createdAt).format("MMM DD, YYYY hh:mm A")}</span>
-          </div>
-          <div className="flex justify-between sm:block col-span-2">
-            <span className="text-gray-500 font-medium inline-block w-28">Status</span>
-            <span className="text-gray-900 font-semibold">: Non-Active (Pending)</span>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 mt-6 justify-end">
-          <Button variant="outlined" className="flex items-center gap-2 border-gray-300 text-gray-700 normal-case px-4 py-2 bg-gray-50 hover:bg-gray-100">
-            <LockClosedIcon className="w-4 h-4" />
-            Lock Account
-          </Button>
-          <Button className="flex items-center gap-2 bg-rose-500 text-white normal-case px-4 py-2 hover:bg-rose-600 shadow-none">
-            <TrashIcon className="w-4 h-4" />
-            Delete Account
-          </Button>
-          <Button 
-            className="flex items-center gap-2 bg-emerald-500 text-white normal-case px-6 py-2 hover:bg-emerald-600 shadow-none"
-            onClick={async () => {
-               try {
-                  await api.put(`/user/${user._id}`, { status: "active" });
-                  toast.success("User is now active");
-                  refetch();
-                  onClose();
-               } catch (error) {
-                  toast.error("Failed to activate user");
-               }
-            }}
-          >
-            <CheckIcon className="w-4 h-4 stroke-[3]" />
-            Make Active
-          </Button>
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
 
 const NonActiveUsers = () => {
-  const [option, setOption] = useState({ page: 1, limit: 10 });
+  const [option, setOption] = useState({ limit: 50 });
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
+  const { ref, inView } = useInView({ threshold: 0.1 });
+
+  const handleCopy = (text, type) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${type} copied!`);
+  };
 
   const searchHandler = (e) => {
     e.preventDefault();
     setSearch(e.target.search.value);
   };
 
-  const { data, isLoading, refetch } = useQuery(
+  const { data, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
+    ["Non-Active Users", option.limit, search],
+    async ({ pageParam = null }) => {
+      let url = `/user?limit=${option.limit}&reverse=true&status=pending`;
+      if (search) url += `&search=${search}`;
+      if (pageParam) url += `&cursor=${pageParam}`;
+      const res = await api.get(url);
+      return res.data;
+    },
     {
-      queryKey: ["Non-Active Users", option, search],
-      queryFn: async () => {
-        const res = await api.get(`/user?page=${option.page}&limit=${option.limit}&reverse=true&${search && `search=${search}`}&status=pending`);
-        return res.data;
-      }
+      getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     }
   );
 
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const allUsers = data?.pages.flatMap((page) => page.users) || [];
+  const grandTotal = data?.pages[0]?.grandTotal || 0;
+  const todayAdded = data?.pages[0]?.todayAdded || 0;
+  const totalPending = data?.pages[0]?.pending || 0;
+
   return (
-    <div className="w-full pb-32">
+    <div className="w-full pb-10">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-black text-[#0b0c2a]">Non-Active Users</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage non-active users</p>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-gray-900">Pending Approvals</h1>
+        <p className="text-sm text-gray-500 mt-1">Review and manage users waiting for account activation.</p>
       </div>
 
       {/* Stat Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         <StatCard 
           title="Total Non-Active Users" 
-          value={data?.grandTotal || 0} 
+          value={totalPending} 
           icon={UsersIcon} 
           colorClass="text-orange-500" 
           bgClass="bg-orange-50" 
         />
         <StatCard 
           title="Today Added" 
-          value={data?.total || 42} 
+          value={todayAdded} 
           icon={UserPlusIcon} 
           colorClass="text-green-500" 
           bgClass="bg-green-50" 
         />
         <StatCard 
-          title="This Week" 
-          value="312" 
+          title="Pending Approvals" 
+          value={totalPending} 
           icon={CalendarDaysIcon} 
           colorClass="text-blue-500" 
           bgClass="bg-blue-50" 
         />
         <StatCard 
-          title="This Month" 
-          value={data?.grandTotal || 0} 
+          title="Total Users" 
+          value={grandTotal} 
           icon={CalendarDaysIcon} 
           colorClass="text-purple-500" 
           bgClass="bg-purple-50" 
         />
       </div>
 
-      <Card className="w-full shadow-sm border border-gray-100 overflow-hidden">
+      <Card className="w-full shadow-sm border border-gray-200 overflow-hidden rounded-xl">
         {/* Table Filters Header */}
-        <div className="p-5 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-100">
-          <form onSubmit={searchHandler} className="w-full md:w-96 relative">
+        <div className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-200 bg-white">
+          <form onSubmit={searchHandler} className="w-full md:w-80 relative">
             <Input
               name="search"
               placeholder="Search by name, email or ID..."
-              className="!border !border-gray-300 bg-white text-gray-900 shadow-sm shadow-gray-900/5 ring-4 ring-transparent placeholder:text-gray-500 focus:!border-[#5a32fa] focus:!border-t-[#5a32fa] focus:ring-indigo-500/20"
+              className="!border !border-gray-200 bg-gray-50 text-gray-900 shadow-none ring-0 placeholder:text-gray-400 focus:!border-blue-500 focus:bg-white transition-colors"
               labelProps={{
                 className: "hidden",
               }}
-              icon={<button type="submit"><MagnifyingGlassIcon className="h-5 w-5 text-gray-400" /></button>}
+              icon={<button type="submit"><MagnifyingGlassIcon className="h-4 w-4 text-gray-400" /></button>}
             />
           </form>
 
@@ -224,52 +242,79 @@ const NonActiveUsers = () => {
 
         {/* Data Table */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] table-auto text-left whitespace-nowrap">
+          <table className="w-full min-w-[800px] table-auto text-left whitespace-nowrap">
             <thead>
               <tr>
-                {["#", "User Info", "Email", "WhatsApp", "Balance", "Referer", "Joined Date", "Action"].map((head) => (
-                  <th key={head} className="border-b border-gray-100 bg-gray-50/50 p-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                {["User", "Contact Info", "Balance", "Referer", "Joined", "Action"].map((head) => (
+                  <th key={head} className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     {head}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
-              {isLoading ? (
-                <tr><td colSpan="8" className="text-center p-8 text-gray-500">Loading users...</td></tr>
-              ) : data?.users?.length === 0 ? (
-                <tr><td colSpan="8" className="text-center p-8 text-gray-500">No non-active users found</td></tr>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {isLoading && allUsers.length === 0 ? (
+                <tr><td colSpan="8" className="text-center p-12 text-gray-400 font-medium">Loading users...</td></tr>
+              ) : allUsers.length === 0 ? (
+                <tr><td colSpan="8" className="text-center p-12 text-gray-400 font-medium">No non-active users found</td></tr>
               ) : (
-                data?.users?.map((user, index) => (
-                  <tr key={user._id} className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0">
-                    <td className="p-4 text-sm text-gray-900 font-bold">
-                      {((option.page - 1) * option.limit) + index + 1}
-                    </td>
-                    <td className="p-4">
+                allUsers.map((user) => (
+                  <tr key={user._id} className="hover:bg-gray-50/80 hover:shadow-[0_2px_15px_-3px_rgba(6,81,237,0.08)] transition-all duration-300 relative z-0 hover:z-10 group border-b border-gray-100 last:border-0">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <img src={user.avatar || "/default-avater.png"} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
-                        <div>
-                          <p className="text-sm font-bold text-gray-900">{user.name}</p>
-                          <p className="text-[11px] text-gray-500 font-mono">ID: #{user.username}</p>
+                        <img 
+                          src={user.avatar || "/default-avater.png"} 
+                          alt={user.name} 
+                          className="w-8 h-8 rounded-full object-cover border border-gray-200 group-hover:ring-2 ring-blue-100 transition-all cursor-pointer"
+                          onClick={() => setSelectedUser(user)}
+                        />
+                        <div className="flex flex-col items-start">
+                          <span 
+                            className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => handleCopy(user.name, "Name")}
+                          >
+                            {user.name}
+                          </span>
+                          <span 
+                            className="text-xs text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => handleCopy(user.username, "Username")}
+                          >
+                            {user.username}
+                          </span>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-sm text-gray-700 font-medium">{user.email}</td>
-                    <td className="p-4 text-sm text-gray-700 font-medium">{user.phone}</td>
-                    <td className="p-4 text-sm font-black text-gray-900">{user.balance}</td>
-                    <td className="p-4 text-sm text-gray-700">{user.reffer ? user.reffer.name : "N/A"}</td>
-                    <td className="p-4 text-sm text-gray-700 font-medium">
-                      <p>{moment(user.createdAt).format("MMM DD, YYYY")}</p>
-                      <p className="text-xs text-gray-500">{moment(user.createdAt).format("hh:mm A")}</p>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col items-start">
+                        <span 
+                          className="text-sm text-gray-700 cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={() => handleCopy(user.email, "Email")}
+                        >
+                          {user.email}
+                        </span>
+                        <span 
+                          className="text-xs text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={() => handleCopy(user.phone, "Phone")}
+                        >
+                          {user.phone}
+                        </span>
+                      </div>
                     </td>
-                    <td className="p-4">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">৳ {user.balance}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{user.reffer ? user.reffer.name : "Direct"}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col">
+                        <span className="text-sm text-gray-700">{moment(user.createdAt).format("MMM DD, YYYY")}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
                       <Button
-                        variant="outlined"
-                        className="flex items-center gap-2 border-[#5a32fa] text-[#5a32fa] px-3 py-1.5 normal-case text-xs focus:ring-0 rounded-lg hover:bg-[#5a32fa]/10 transition-colors"
+                        variant="text"
+                        color="blue"
+                        className="px-3 py-1.5 normal-case text-xs focus:ring-0 rounded-md font-medium bg-blue-50/0 group-hover:bg-blue-50 transition-colors"
                         onClick={() => setSelectedUser(user)}
                       >
-                        <EyeIcon className="w-4 h-4" />
-                        View
+                        Review
                       </Button>
                     </td>
                   </tr>
@@ -279,15 +324,21 @@ const NonActiveUsers = () => {
           </table>
         </div>
 
-        {/* Pagination Footer */}
-        <div className="p-4 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500">
-            Showing {data?.users?.length ? ((option.page - 1) * option.limit) + 1 : 0} to {Math.min(option.page * option.limit, data?.total || 0)} of {data?.total || 0} users
-          </p>
-          <div className="flex items-center gap-2">
-            <Pagination setState={(e) => setOption({ ...option, page: e })} pages={data?.pages} active={option.page} />
+        {/* Infinite Scroll Footer */}
+        {allUsers.length > 0 && (
+          <div ref={ref} className="p-6 flex flex-col items-center justify-center border-t border-gray-100 bg-white">
+            {isFetchingNextPage ? (
+              <div className="flex items-center gap-3 text-blue-600">
+                <Spinner className="h-5 w-5" />
+                <span className="text-sm font-medium">Loading more...</span>
+              </div>
+            ) : hasNextPage ? (
+              <span className="text-sm font-medium text-gray-400">Scroll down to load more</span>
+            ) : (
+              <span className="text-sm font-medium text-gray-400">You've reached the end</span>
+            )}
           </div>
-        </div>
+        )}
       </Card>
 
       {/* Selected User Details Bottom Card */}
