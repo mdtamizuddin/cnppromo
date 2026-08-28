@@ -24,7 +24,7 @@ router.post("/", authChecker, async (req, res) => {
 // Admin gets all external withdrawals
 router.get("/", authChecker, roleChecker(['admin', 'moderator']), async (req, res) => {
     try {
-        const response = await externalWithdrawServices.getAll(req.query?.status);
+        const response = await externalWithdrawServices.getAll(req.query);
         res.send(response);
     } catch (error) {
         res.status(500).send({

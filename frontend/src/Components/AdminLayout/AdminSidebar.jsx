@@ -37,6 +37,7 @@ const sidebarData = [
     category: "FINANCIAL MANAGEMENT",
     items: [
       { label: "Withdrawal", icon: CurrencyDollarIcon, to: "/admin/withdrawals", color: "text-indigo-600" },
+      { label: "External Withdraw", icon: ArrowsRightLeftIcon, to: "/admin/external-withdrawals", color: "text-purple-600" },
       { label: "TopUp / Transaction", icon: ArrowsRightLeftIcon, to: "/admin/topup", color: "text-blue-500" },
       { label: "Earning Overview", icon: ChartBarIcon, to: "#", color: "text-emerald-500" },
       { label: "Payment Gateway", icon: CreditCardIcon, to: "#", color: "text-cyan-500" },

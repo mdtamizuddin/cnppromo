@@ -47,8 +47,8 @@ const getAllData = async (query) =>
         if (query.user) {
             filters.user = query.user
         }
-        if (query.search) {
-            const start = new Date(query.search);
+        if (query.dateSearch) {
+            const start = new Date(query.dateSearch);
             start.setHours(0, 0, 0, 0); // Start of the day
 
             const end = new Date(start);
@@ -58,6 +58,25 @@ const getAllData = async (query) =>
                 $gte: start,
                 $lt: end
             };
+        }
+        
+        if (query.textSearch) {
+            const regex = new RegExp(query.textSearch, "i");
+            // First find users matching the text search
+            const users = await User.find({
+                $or: [
+                    { username: { $regex: regex } },
+                    { email: { $regex: regex } },
+                    { phone: { $regex: regex } }
+                ]
+            }).select("_id");
+            const userIds = users.map(u => u._id);
+            
+            // Search either by user info or account number
+            filters.$or = [
+                { user: { $in: userIds } },
+                { account: { $regex: regex } }
+            ];
         }
         const withDraws = await Withdraw.find(filters)
             .populate("user", "-password")
