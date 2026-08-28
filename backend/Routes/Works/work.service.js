@@ -19,7 +19,18 @@ const getAllWork = async (params) => {
         if (params.category && params.category !== "all") {
             filters.category = params.category
         }
+        // Free-text search across the fields the admin table displays.
+        if (params.search) {
+            const escaped = String(params.search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const regex = new RegExp(escaped, "i");
+            filters.$or = [
+                { name: { $regex: regex } },
+                { desc: { $regex: regex } },
+                { link: { $regex: regex } }
+            ];
+        }
         const works = await Work.find(filters)
+            .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
         const total = await Work.countDocuments(filters);

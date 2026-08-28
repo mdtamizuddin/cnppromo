@@ -45,7 +45,10 @@ const getAllWorks = async (req, res) => {
 const getAllWorkSubmits = async (req, res) => {
     try {
         const status = req.query.status;
-        const result = await services.getAllWorkSubmits(status);
+        const result = await services.getAllWorkSubmits(status, {
+            page: req.query.page,
+            limit: req.query.limit,
+        });
         res.status(200).send(result);
     } catch (error) {
         res.status(500).send({

@@ -28,14 +28,26 @@ const completeWorkSubmit = async (workSubmitId, status) =>
         const workSubmit = await WorkSubmit.findById(workSubmitId)
             .populate('workId')
 
-        const price = workSubmit.workId.price;
-        const userId = workSubmit.userId;
-        await User.findByIdAndUpdate(userId, {
-            $inc: { balance: price }
-        }, { new: true });
-        const updatedWorkSubmit = await WorkSubmit.findByIdAndUpdate(workSubmitId, { status: "completed" }, { new: true });
-        if (!updatedWorkSubmit) {
+        if (!workSubmit) {
             throw new Error('Work submit not found');
+        }
+
+        // Flip the status first, and only if it is still pending. A second
+        // approval would otherwise credit the reward all over again.
+        const updatedWorkSubmit = await WorkSubmit.findOneAndUpdate(
+            { _id: workSubmitId, status: { $ne: "completed" } },
+            { status: "completed" },
+            { new: true }
+        );
+        if (!updatedWorkSubmit) {
+            throw new Error('This submission has already been approved');
+        }
+
+        const price = workSubmit.workId?.price || 0;
+        if (price > 0) {
+            await User.findByIdAndUpdate(workSubmit.userId, {
+                $inc: { balance: price }
+            }, { new: true });
         }
         return updatedWorkSubmit;
     }
@@ -98,14 +110,51 @@ const getAllWorks = async (user) =>
         throw new Error('Error fetching works: ' + error.message);
     }
 };
-const getAllWorkSubmits = async (status) =>
+/**
+ * List submissions for a status.
+ *
+ * Called without `page` it returns a plain array, which is what the user-facing
+ * work history expects. Called with `page` it returns a paginated envelope,
+ * including the total pending payout so the admin table can show it without
+ * pulling every row.
+ */
+const getAllWorkSubmits = async (status, options = {}) =>
 {
     try {
-        const workSubmits = await WorkSubmit.find({
-            status: status
-        }).populate('workId')
+        const filter = { status };
+        const query = WorkSubmit.find(filter)
+            .sort({ createdAt: -1 })
+            .populate('workId')
             .populate('userId', 'name username');
-        return workSubmits;
+
+        if (!options.page) {
+            return await query;
+        }
+
+        const page = parseInt(options.page) || 1;
+        const limit = parseInt(options.limit) || 50;
+        const skip = (page - 1) * limit;
+
+        const [data, total, sum] = await Promise.all([
+            query.skip(skip).limit(limit),
+            WorkSubmit.countDocuments(filter),
+            WorkSubmit.aggregate([
+                { $match: filter },
+                // Derive the collection name from the model: the SocialWork model
+                // maps to `socialworks`, not `works` (that is the other Work model).
+                { $lookup: { from: Work.collection.name, localField: 'workId', foreignField: '_id', as: 'work' } },
+                { $unwind: { path: '$work', preserveNullAndEmptyArrays: true } },
+                { $group: { _id: null, amount: { $sum: { $ifNull: ['$work.price', 0] } } } },
+            ]),
+        ]);
+
+        return {
+            data,
+            total,
+            totalAmount: sum[0]?.amount || 0,
+            page,
+            pages: Math.ceil(total / limit),
+        };
     } catch (error) {
         throw new Error('Error fetching work submits: ' + error.message);
     }
