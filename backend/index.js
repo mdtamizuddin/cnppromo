@@ -19,6 +19,9 @@ const Chat = require("./Routes/message/chat.model");
 const Refer = require("./Routes/Refer/refer.model");
 const { instrument } = require("@socket.io/admin-ui");
 const morgan = require("morgan");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const JWT_SECRET = require("./util/jwtSecret");
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -61,11 +64,21 @@ const io = new Server(server, {
   transports: ['websocket'],
 });
 
-instrument(io, {
-  auth: false,
-  namespaceName: '/admin',
-  namespacePath: '/socket.io',
-});
+// The Socket.IO Admin UI exposes every live socket, room and user. It is only
+// mounted outside production, and only when an explicit password is configured.
+if (process.env.NODE_ENV !== "production" && process.env.SOCKET_ADMIN_PASSWORD) {
+  instrument(io, {
+    auth: {
+      type: "basic",
+      username: process.env.SOCKET_ADMIN_USERNAME || "admin",
+      // bcrypt hash of SOCKET_ADMIN_PASSWORD
+      password: bcrypt.hashSync(process.env.SOCKET_ADMIN_PASSWORD, 10),
+    },
+    namespaceName: '/admin',
+    namespacePath: '/socket.io',
+    mode: "development",
+  });
+}
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -180,10 +193,11 @@ app.get("/api/v1/statistic", async (req, res) => {
     const active = await User.countDocuments({ status: "active" });
     const pending = await User.countDocuments({ status: "pending" });
     const blocked = await User.countDocuments({ lock: true });
-    const total_withdraw = await Withdraw.find({ status: "completed" });
-    const totalAmmount = total_withdraw
-      .map((withdraw) => withdraw.amount)
-      .reduce((a, b) => a + b, 0);
+    const [withdrawSum] = await Withdraw.aggregate([
+      { $match: { status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+    const totalAmmount = withdrawSum?.total || 0;
     res.send({
       total: 32000 + total,
       active: 30001 + active,
@@ -230,18 +244,35 @@ const sendToSpecificUser = (socketId, data, funname) => {
   }
 };
 
+// Socket handshakes must carry the same bearer token the REST API uses.
+// Trusting a plain `query.user` id would let any client connect as any account.
 io.use(async (socket, next) => {
   try {
-    const userId = socket.handshake.query.user;
-    if (!userId) {
-      return next(new Error("Authentication error: Missing user ID"));
+    const authHeader = socket.handshake.headers?.authorization;
+    const token =
+      socket.handshake.auth?.token ||
+      (typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : null);
+
+    if (!token) {
+      return next(new Error("Authentication error: Missing token"));
     }
-    const user = await User.findById(userId);
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return next(new Error("Authentication error: Invalid or expired token"));
+    }
+
+    const user = await User.findById(decoded.id);
     if (!user) {
-      return next(new Error("User not found"));
+      return next(new Error("Authentication error: User not found"));
     }
+
     socket.user = user;
-    socket.id = userId;
+    socket.userId = user._id.toString();
     next();
   } catch (error) {
     next(error);
@@ -261,22 +292,23 @@ const statusUpdater = async (socketId, status) => {
 };
 
 io.on("connection", (socket) => {
-  const userId = socket.handshake.query.user;
-  socket.id = userId;
-  connectedSockets.set(socket.id, socket);
+  const userId = socket.userId;
+  connectedSockets.set(userId, socket);
   statusUpdater(userId, true);
 
   socket.on("message", async (data) => {
     try {
-      if (!data || !data.chat || !data.receiver || !data.sender) {
+      if (!data || !data.chat || !data.receiver) {
         return socket.emit("message:error", {
-          error: "chat, receiver and sender are required",
+          error: "chat and receiver are required",
         });
       }
-      const result = await createMessage(data);
+      // The sender is whoever the handshake authenticated, never whatever the
+      // payload claims — otherwise anyone could post as another user.
+      const result = await createMessage({ ...data, sender: userId });
 
       sendToSpecificUser(data.receiver, result, "message");
-      sendToSpecificUser(data.sender, result, "message");
+      sendToSpecificUser(userId, result, "message");
     } catch (error) {
       console.error("socket message handler error:", error.message);
       socket.emit("message:error", { error: error.message || "Message failed" });
@@ -286,12 +318,18 @@ io.on("connection", (socket) => {
   socket.on('seen', async (data) => {
     try {
       if (!data?._id) return;
-      const result = await Message.findByIdAndUpdate(data._id, {
+      // Scope the update to the recipient so a socket cannot mark other
+      // people's conversations as read.
+      const result = await Message.findOneAndUpdate({
+        _id: data._id,
+        receiver: userId
+      }, {
         seen: true
       }, {
         new: true
       });
-      sendToSpecificUser(data.sender, result, "seen");
+      if (!result) return;
+      sendToSpecificUser(result.sender?.toString(), result, "seen");
     } catch (error) {
       console.error("socket seen handler error:", error.message);
       socket.emit("seen:error", { error: error.message || "Seen failed" });
@@ -304,8 +342,11 @@ io.on("connection", (socket) => {
       if (!chat) {
         return socket.emit("seen:error", { error: "Chat not found" });
       }
-      sendToSpecificUser(chat.owner, { message: "seen" }, "seen");
-      sendToSpecificUser(chat.user, { message: "seen" }, "seen");
+      if (chat.owner?.toString() !== userId && chat.user?.toString() !== userId) {
+        return socket.emit("seen:error", { error: "Not a participant of this chat" });
+      }
+      sendToSpecificUser(chat.owner?.toString(), { message: "seen" }, "seen");
+      sendToSpecificUser(chat.user?.toString(), { message: "seen" }, "seen");
     } catch (error) {
       console.error("socket seenOnly handler error:", error.message);
       socket.emit("seen:error", { error: error.message || "Seen failed" });
@@ -313,8 +354,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    statusUpdater(userId, false);
+    // A second tab may already have replaced this entry; only tear down our own.
+    if (connectedSockets.get(userId) !== socket) return;
     connectedSockets.delete(userId);
+    statusUpdater(userId, false);
   });
 });
 

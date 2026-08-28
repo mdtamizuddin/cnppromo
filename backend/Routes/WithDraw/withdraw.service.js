@@ -11,20 +11,35 @@ const createWithDraw = async (data) =>
         // if (lastWithdraw) {
         //     throw new Error("You can't withdraw again today. Your Dayly withdraw limit is exceeded")
         // }
+        // A negative or non-numeric amount would sail past the balance check
+        // below and then CREDIT the account via `$inc: { balance: -amount }`.
+        const numericAmount = Number(amount);
+        if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+            throw new Error("Withdraw amount must be a positive number")
+        }
         const userData = await User.findById(user);
         if (!userData) {
             throw new Error("User not found")
         }
-        if (amount > userData.balance) {
+        if (numericAmount > userData.balance) {
             throw new Error("Insufficient balance")
         }
 
-        const withDraw = new Withdraw(data);
+        const withDraw = new Withdraw({ ...data, amount: numericAmount });
         await withDraw.save();
-        // deduct amount from user balance
-        await User.findByIdAndUpdate(user, {
-            $inc: { balance: -amount }
-        })
+        // Deduct atomically, and only while the balance still covers it, so two
+        // concurrent requests cannot both pass the check above and overdraw.
+        const debited = await User.findOneAndUpdate({
+            _id: user,
+            balance: { $gte: numericAmount }
+        }, {
+            $inc: { balance: -numericAmount }
+        }, { new: true })
+
+        if (!debited) {
+            await Withdraw.findByIdAndDelete(withDraw._id);
+            throw new Error("Insufficient balance")
+        }
         // userData.balance = userData.balance - amount;
         // await userData.save();
         return withDraw

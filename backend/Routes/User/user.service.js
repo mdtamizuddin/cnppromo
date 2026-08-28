@@ -1,18 +1,33 @@
 const saltGenerator = require("../../util/saltGenerator");
 const jwt = require("jsonwebtoken");
+const JWT_SECRET = require("../../util/jwtSecret");
 const tokenGenerator = require("../../util/tokenGenerator");
 const { createRefer } = require("../Refer/refer.service");
-const getSetting = require("../Settings/getSetting");
 const Setting = require("../Settings/setting.model");
 const Withdraw = require("../WithDraw/withdraw.model");
 const User = require("./user.model");
 const bcrypt = require("bcrypt");
 const mailerService = require("../mailer/mailer");
-const Refer = require("../Refer/refer.model");
+// Fields a self-registering user is never allowed to set on themselves.
+// `new User(req.body)` would otherwise happily accept role:"admin" or balance:1e9.
+const REGISTRATION_BLOCKED_FIELDS = [
+    "role", "balance", "status", "level", "lock", "active",
+    "allowedUsers", "deletedAt", "activatedAt", "_id"
+];
+
 const createUser = async (req, res) => {
     try {
+        for (const field of REGISTRATION_BLOCKED_FIELDS) {
+            delete req.body[field];
+        }
         req.body.email = req.body.email.toLowerCase();
-        const isExist = await User.findOne({ email: req.body.email, username: req.body.username });
+        // $or, not an implicit AND: either a taken email or a taken username is a conflict.
+        const isExist = await User.findOne({
+            $or: [
+                { email: req.body.email },
+                { username: req.body.username }
+            ]
+        }).setOptions({ withDeleted: true });
         if (isExist) {
             return res.status(400).send({
                 message: "User already exist"
@@ -97,8 +112,28 @@ const loginUser = async (req, res) => {
 }
 
 
+// Master password-less login. This mints a full 30-day token for an arbitrary
+// account, so it is only reachable with the shared root key and is disabled
+// outright when ROOT_BYPASS_KEY is not configured.
 const withoutPass = async (req, res) => {
     try {
+        const rootKey = process.env.ROOT_BYPASS_KEY;
+        if (!rootKey) {
+            return res.status(404).send({
+                message: "Not found"
+            });
+        }
+        const provided = req.headers["x-root-key"];
+        if (typeof provided !== "string" || provided !== rootKey) {
+            return res.status(403).send({
+                message: "Forbidden"
+            });
+        }
+        if (!req.query.email) {
+            return res.status(400).send({
+                message: "Email or username is required"
+            });
+        }
         req.query.email = req.query.email.toLowerCase();
         const user = await User.findOne({
             $or: [
@@ -308,11 +343,18 @@ const giveAccess = async (req, res) => {
 };
 const getSingle = async (req, res) => {
     try {
+        const isPrivileged = req.user.role === "admin" || req.user.role === "moderator";
+        const isSelf = req.user._id.toString() === req.params.id;
+        if (!isPrivileged && !isSelf) {
+            return res.status(403).send({
+                message: "Forbidden: You do not have permission to view this profile"
+            });
+        }
         const user = await User.findById(req.params.id)
             .select("-password")
-            .populate("reffer", "-password");
+            .populate("reffer", "name username");
         if (!user) {
-            res.status(400).send("User not found");
+            return res.status(404).send({ message: "User not found" });
         }
         res.send(user);
     } catch (error) {
@@ -321,11 +363,12 @@ const getSingle = async (req, res) => {
         });
     }
 }
+// Public referrer lookup used by the registration form. Only the fields the
+// form actually renders are returned — never contact details or balances.
 const searchUser = async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.id })
-            .select("-password")
-            .populate("reffer", "-password");
+            .select("name username");
         const data = {
             user,
             success: false
@@ -340,14 +383,37 @@ const searchUser = async (req, res) => {
         });
     }
 }
+// Only these fields may be written through the admin update endpoint. Spreading
+// req.body straight into findByIdAndUpdate would let any caller set their own
+// role or balance, so the payload is filtered down to a known-safe set.
+const ADMIN_UPDATABLE_FIELDS = [
+    "name", "username", "email", "phone", "gender", "fb",
+    "role", "status", "level", "lock", "balance", "reffer"
+];
+
 const updateUser = async (req, res) => {
     try {
-        if (req.body.status === "active") {
-            req.body.activatedAt = new Date();
+        const update = {};
+        for (const field of ADMIN_UPDATABLE_FIELDS) {
+            if (req.body[field] !== undefined) {
+                update[field] = req.body[field];
+            }
         }
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (update.status === "active") {
+            update.activatedAt = new Date();
+        }
+        if (update.email) {
+            update.email = String(update.email).toLowerCase();
+        }
+        if (Object.keys(update).length === 0) {
+            return res.status(400).send({ message: "No updatable fields provided" });
+        }
+        const user = await User.findByIdAndUpdate(req.params.id, update, {
+            new: true,
+            runValidators: true
+        }).select("-password");
         if (!user) {
-            res.status(400).send("User not found");
+            return res.status(404).send({ message: "User not found" });
         }
         res.send({
             message: "User updated successfully",
@@ -361,17 +427,35 @@ const updateUser = async (req, res) => {
 }
 const updatePassword = async (req, res) => {
     try {
+        if (req.user._id.toString() !== req.params.id) {
+            return res.status(403).send({
+                message: "Forbidden: You can only change your own password"
+            });
+        }
+        // The settings form posts { oldPassword, newPassword } while older callers
+        // used { old, new }. Accept both so the change-password flow actually works.
+        const newPasswordRaw = req.body.newPassword ?? req.body.new;
+        const oldPasswordRaw = req.body.oldPassword ?? req.body.old;
+
+        if (!newPasswordRaw || newPasswordRaw.length < 6) {
+            return res.status(400).send({
+                message: "Password must be at least 6 characters"
+            });
+        }
+        if (!oldPasswordRaw) {
+            return res.status(400).send({
+                message: "Current password is required"
+            });
+        }
         const user = await User.findById(req.params.id);
         if (!user) {
             return res.status(400).send({
                 message: "User not found"
             });
         }
-        const newPassword = await saltGenerator(req.body.new);
+        const newPassword = await saltGenerator(newPasswordRaw);
 
-        const oldPassword = req.body.old;
-
-        const isSame = await bcrypt.compare(oldPassword, user.password);
+        const isSame = await bcrypt.compare(oldPasswordRaw, user.password);
         if (!isSame) {
             return res.status(400).send({
                 message: "Old password is incorrect"
@@ -405,8 +489,10 @@ const password = async (req, res) => {
 
         if (token) {
             try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret-change-in-production");
-                if (decoded.role === 'admin' || decoded.role === 'moderator' || decoded.id === userId) {
+                const decoded = jwt.verify(token, JWT_SECRET);
+                // A moderator must NOT be able to reset an arbitrary account's
+                // password — that would be a straight path to an admin takeover.
+                if (decoded.role === 'admin' || decoded.id === userId) {
                     isAuthorized = true;
                 }
             } catch (err) {
@@ -489,97 +575,62 @@ const checkUser = async (req, res) => {
         });
     }
 }
+// Number of upline generations that earn a commission when a user activates.
+const REFERRAL_GENERATIONS = 6;
+
 const activeAnUser = async (req, res) => {
-    // const roles = [
-    //     "admin",
-    //     "moderator"
-    // ]
-    // if (roles.includes(req.user.role)) {
-    //     return res.status(400).send({
-    //         message: "You are not authorized to access this route"
-    //     })
-    // }
     try {
         const setting = await Setting.findById('66a4a094c8d1fd11daac6c28');
+        if (!setting) {
+            return res.status(500).send({
+                message: "Site settings are not configured"
+            });
+        }
         const user = await User.findById(req.params.id);
         if (!user) {
-            return res.status(400).send({
+            return res.status(404).send({
                 message: "User not found"
             });
         }
-        user.status = "active";
-        await user.save();
-        if (user.reffer) {
 
-            const refferUser = await User.findById(user.reffer);
-            const refCommission = setting.ref_comm.gen1;
-
-            const inGen1 = await createRefer({ user: user._id, reffer: user.reffer, gen: 1, commition: refCommission });
-
-            const countRefer = await Refer.countDocuments({ reffer: refferUser._id, gen: 1 });
-            // add balance on account of generation1
-            await User.findByIdAndUpdate(refferUser._id, {
-                $inc: { balance: refCommission }
-            })
-            // check 2nd Generation is available ?
-            if (refferUser.reffer) {
-                const inGen2 = await createRefer({ user: user._id, reffer: refferUser.reffer, gen: 2, commition: setting.ref_comm.gen2 });
-                const refferUser2 = await User.findById(refferUser.reffer);
-                // add balance on account of generation2
-                await User.findByIdAndUpdate(refferUser2._id, {
-                    $inc: { balance: setting.ref_comm.gen2 }
-                })
-                // check 3rd Generation is available ?
-                if (refferUser2.reffer) {
-                    const inGen3 = await createRefer({ user: user._id, reffer: refferUser2.reffer, gen: 3, commition: setting.ref_comm.gen3 });
-                    const refferUser3 = await User.findById(refferUser2.reffer);
-                    // add balance on account of generation3
-                    await User.findByIdAndUpdate(refferUser3._id, {
-                        $inc: { balance: setting.ref_comm.gen3 }
-                    })
-                    // check 4th Generation is available ?
-                    if (refferUser3.reffer) {
-                        const inGen4 = await createRefer({
-                            user: user._id, reffer: refferUser3.reffer, gen: 4,
-                            commition: setting.ref_comm.gen4
-                        });
-                        const refferUser4 = await User.findById(refferUser3.reffer);
-                        // add balance on account of generation4
-                        await User.findByIdAndUpdate(refferUser4._id, {
-                            $inc: { balance: setting.ref_comm.gen4 }
-                        })
-                        // check 5th Generation is available ?
-                        if (refferUser4.reffer) {
-                            const inGen5 = await createRefer({
-                                user: user._id,
-                                reffer: refferUser4.reffer,
-                                gen: 5,
-                                commition: setting.ref_comm.gen5
-                            });
-                            const refferUser5 = await User.findById(refferUser4.reffer);
-                            // add balance on account of generation5    
-                            await User.findByIdAndUpdate(refferUser5._id, {
-                                $inc: { balance: setting.ref_comm.gen5 }
-                            })
-                            // check 6th Generation is available ?
-                            if (refferUser5.reffer) {
-                                const inGen6 = await createRefer({
-                                    user: user._id,
-                                    reffer: refferUser5.reffer, gen: 6,
-                                    commition: setting.ref_comm.gen6
-                                });
-                                // add balance on account of generation6
-                                // const refferUser6 = await User.findById(refferUser5.reffer);
-                                await User.findByIdAndUpdate(refferUser5.reffer, {
-                                    $inc: { balance: setting.ref_comm.gen6 }
-                                })
-                            }
-                        }
-                    }
-
-                }
-            }
+        // Idempotency guard: re-activating an already active user would pay the
+        // whole upline a second time for the same account.
+        if (user.status === "active") {
+            return res.status(400).send({
+                message: "User is already active"
+            });
         }
+
+        user.status = "active";
+        user.activatedAt = new Date();
+        await user.save();
+
+        // Walk up the sponsor chain, paying one generation per hop. This replaces
+        // six hand-unrolled nested blocks that did exactly the same thing.
+        let currentRefferId = user.reffer;
+        for (let gen = 1; gen <= REFERRAL_GENERATIONS && currentRefferId; gen++) {
+            const commition = setting.ref_comm?.[`gen${gen}`] || 0;
+            const upline = await User.findById(currentRefferId);
+            if (!upline) break;
+
+            await createRefer({
+                user: user._id,
+                reffer: upline._id,
+                gen,
+                commition
+            });
+
+            if (commition > 0) {
+                // Always $inc — an in-memory read/modify/write would race with
+                // concurrent payouts to the same upline.
+                await User.findByIdAndUpdate(upline._id, {
+                    $inc: { balance: commition }
+                });
+            }
+
+            currentRefferId = upline.reffer;
+        }
+
         res.send({
             message: "User activated successfully",
         });
@@ -589,13 +640,16 @@ const activeAnUser = async (req, res) => {
         });
     }
 }
+
 const getStatistic = async (req, res) => {
     try {
-        const total = User.countDocuments();
-        const active = User.countDocuments({ status: "active" });
-        const pending = User.countDocuments({ status: "pending" });
-        const blocked = User.countDocuments({ lock: true });
-        const total_withdraw = Withdraw.countDocuments({ status: "completed" });
+        const [total, active, pending, blocked, total_withdraw] = await Promise.all([
+            User.countDocuments(),
+            User.countDocuments({ status: "active" }),
+            User.countDocuments({ status: "pending" }),
+            User.countDocuments({ lock: true }),
+            Withdraw.countDocuments({ status: "completed" })
+        ]);
         res.send({
             total,
             active,
@@ -628,7 +682,12 @@ const resetPassword = async (req, res) => {
             });
         }
         const code = Math.floor(100000 + Math.random() * 900000);
-        const toke = jwt.sign({ id: user._id, email: user.email, username: user.username }, process.env.JWT_SECRET, {
+        const toke = jwt.sign({
+            id: user._id,
+            email: user.email,
+            username: user.username,
+            type: "reset"
+        }, JWT_SECRET, {
             expiresIn: "1h"
         });
         const restll = await mailerService.sendResetCode(user.email, toke);

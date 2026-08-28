@@ -3,9 +3,12 @@ import Cookie from 'js-cookie';
 
 const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
+// Must match PORT in backend/.env. Override per-machine with VITE_API_PORT.
+const localPort = import.meta.env.VITE_API_PORT || 4400;
+
 export const serverUrl = 'https://server.cnppromo.com/api/v1';
-export const localUrl = 'http://localhost:4400/api/v1';
-export const socketUrl = isLocal ? "http://localhost:4400" : "https://server.cnppromo.com";
+export const localUrl = `http://localhost:${localPort}/api/v1`;
+export const socketUrl = isLocal ? `http://localhost:${localPort}` : "https://server.cnppromo.com";
 
 // axios configuration
 export const api = axios.create({

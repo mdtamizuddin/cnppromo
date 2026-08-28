@@ -1,7 +1,6 @@
 const User = require("../Routes/User/user.model");
 const jwt = require("jsonwebtoken");
-
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-change-in-production";
+const JWT_SECRET = require("./jwtSecret");
 
 const authChecker = async (req, res, next) => {
     try {

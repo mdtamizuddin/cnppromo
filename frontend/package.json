@@ -13,8 +13,6 @@
   "dependencies": {
     "@alptugidin/react-circular-progress-bar": "^1.1.4",
     "@ant-design/icons": "^5.6.1",
-    "@cloudinary/react": "^1.14.4",
-    "@cloudinary/url-gen": "^1.22.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
@@ -26,7 +24,6 @@
     "antd": "^5.29.3",
     "axios": "^1.19.0",
     "compression": "^1.8.1",
-    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.23",
     "express": "^5.2.1",
     "framer-motion": "^13.1.1",
@@ -51,9 +48,7 @@
     "socket.io-client": "^4.8.3",
     "swiper": "^11.2.10",
     "use-react-countries": "^2.0.1",
-    "vite-plugin-pwa": "^0.21.2",
-    "xml2js": "^0.6.2",
-    "ytdl-core": "^4.11.5"
+    "vite-plugin-pwa": "^0.21.2"
   },
   "devDependencies": {
     "@types/react": "^18.3.31",

@@ -4,6 +4,7 @@ const withdrawSchema = new mongoose.Schema({
     amount: {
         type: Number,
         required: [true, "Withdraw amount is required"],
+        min: [1, "Withdraw amount must be greater than 0"],
     },
     status: {
         type: String,

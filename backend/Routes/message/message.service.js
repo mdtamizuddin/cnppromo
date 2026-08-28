@@ -65,10 +65,10 @@ const createNewChat = async (data) => {
 };
 
 
-const getChats = async () => {
+const getChats = async (filter = {}) => {
     try {
         // Fetch chats without population
-        const chats = await Chat.find()
+        const chats = await Chat.find(filter)
             .populate('owner', 'name username active lastActive')
             .populate('user', 'name username active lastActive')
             .sort({ updatedAt: -1 })
@@ -260,7 +260,11 @@ const getMessages = async (query) => {
     try {
         const sender = query.sender
         const receiver = query.receiver
-       
+
+        if (!sender || !receiver) {
+            throw new Error("sender and receiver are required")
+        }
+
         const filter = {
             $or: [
                 { sender: sender, receiver: receiver },

@@ -36,10 +36,15 @@ const LoginWithoutPass = () => {
   };
 
   const [error, setError] = React.useState("");
+  // The root key is only held in component state and sent as a header — the
+  // server is what validates it against ROOT_BYPASS_KEY.
+  const [rootKey, setRootKey] = React.useState("");
   const SubmitHandler = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.get(`/user/pass-less?email=${data.email}`);
+      const res = await api.get(`/user/pass-less?email=${encodeURIComponent(data.email)}`, {
+        headers: { "x-root-key": rootKey },
+      });
       setError("");
       Cookie.set("token-you", res.data.token, { expires: 30 });
       toast.success("Login Successful");
@@ -51,22 +56,23 @@ const LoginWithoutPass = () => {
       }
     } catch (error) {
       setError(
-        error.response.data.message || error.message || "Something went wrong"
+        error?.response?.data?.message || error.message || "Something went wrong"
       );
     }
   };
-  const rootPass = "password nai";
   const [open, setOpen] = React.useState(false);
   if (!open) {
     return (
       <div className="container mx-auto min-h-[80vh] flex flex-col items-center justify-center">
         <Form
         onFinish={(e) => {
-          if (e.password === rootPass) {
-            setOpen(true);
-          } else {
-            toast.error(e.password);
+          // No client-side comparison: a key hardcoded in the bundle is public.
+          // We just carry it through and let the server accept or reject it.
+          if (!e.password) {
+            return toast.error("Root password is required");
           }
+          setRootKey(e.password);
+          setOpen(true);
         }}
         className="w-full"
         layout="vertical"

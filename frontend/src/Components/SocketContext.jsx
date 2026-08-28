@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState } from "react";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
+import Cookie from "js-cookie";
 import { socketUrl } from "../util/axios";
 import addNotification from "react-push-notification";
 
@@ -17,9 +18,11 @@ export const SocketProvider = ({ children }) => {
 
   const sound = new Audio("/norification.wav");
   useEffect(() => {
-    if (user?._id) {
+    const token = Cookie.get("token-you");
+    if (user?._id && token) {
       const newSocket = io(socketUrl, {
-        query: { user: user?._id },
+        // The handshake is authenticated by this token, not by the user id.
+        auth: { token },
         perMessageDeflate: false, // Disable WebSocket compression
         transports: ["websocket", "polling"],
         autoConnect: false,

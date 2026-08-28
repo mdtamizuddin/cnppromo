@@ -2,40 +2,47 @@ import React from 'react';
 import Loader from '../Components/Loader';
 import { useQuery } from 'react-query';
 import { api } from './axios';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+
+// Admin routes are nested under /admin, so these must be full router paths.
+// A bare "/users" here never matches useLocation().pathname and would lock
+// moderators out of every admin page.
+const MODERATOR_ACCESS = [
+    "/admin/users",
+    "/admin/non-active-users",
+    "/admin/banned-users",
+];
+
+// Where a moderator lands when they hit an admin page they may not open.
+// Sending them to "/" would bounce off AuthChecker straight back to /admin.
+const MODERATOR_HOME = "/admin/users";
 
 const AdminChecker = ({ children }) => {
-    const moderatorAccess = [
-        "/users",
-    ]
     const path = useLocation().pathname;
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, isError } = useQuery({
         queryFn: async () => {
             const res = await api.get('/user/me')
             return res.data
         },
         queryKey: 'user'
     })
+
     if (isLoading) {
         return <Loader />
     }
-    if (!data) {
-        return window.location.href = "/login"
+    if (isError || !data) {
+        return <Navigate to="/login" replace />
     }
-    if (data?.role === "admin") {
+    if (data.role === "admin") {
         return children
     }
-    else if (data?.role === "moderator") {
-        if (moderatorAccess.includes(path)) {
+    if (data.role === "moderator") {
+        if (MODERATOR_ACCESS.includes(path)) {
             return children
         }
-        else {
-            return window.location.href = "/"
-        }
+        return <Navigate to={MODERATOR_HOME} replace />
     }
-    else if (data?.role === "user") {
-        return window.location.href = "/user/home"
-    }
+    return <Navigate to="/user/home" replace />
 };
 
 export default AdminChecker;

@@ -26,7 +26,7 @@ export default defineConfig({
           "vendor-query": ["react-query"],
           "vendor-swiper": ["swiper/react", "swiper/modules", "swiper/css"],
 
-          "vendor-utils": ["axios", "dayjs", "moment", "js-cookie", "crypto-js"],
+          "vendor-utils": ["axios", "dayjs", "moment", "js-cookie"],
         },
       },
     },

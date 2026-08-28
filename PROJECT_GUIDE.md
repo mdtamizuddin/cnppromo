@@ -13,7 +13,8 @@ Welcome to the definitive full-stack reference manual for **CNP-PROMO**. This un
   - **Backend**: Node.js + Express 4, MongoDB + Mongoose 8, Socket.IO v4, AWS S3.
 - **Default Ports**:
   - Frontend Client: `http://localhost:4321` (Vite)
-  - Backend Server: `http://localhost:4000` (Express + Socket.IO)
+  - Backend Server: `http://localhost:4400` (Express + Socket.IO) — set by `PORT` in `backend/.env`.
+    The client derives its dev API URL from the same number; override per-machine with `VITE_API_PORT`.
 
 ---
 
@@ -26,7 +27,7 @@ Run all commands from the **monorepo root**:
 | `pnpm install` | Installs and links dependencies across both `backend` and `frontend` packages. |
 | `pnpm dev` | Starts **both** the backend server and frontend client concurrently with colored logs. |
 | `pnpm dev:frontend` | Starts only the frontend Vite development server (`http://localhost:4321`). |
-| `pnpm dev:backend` | Starts only the backend Express + Socket.IO server (`http://localhost:4000`) with `nodemon`. |
+| `pnpm dev:backend` | Starts only the backend Express + Socket.IO server (`http://localhost:4400`) with `node --watch`. |
 | `pnpm build` | Builds the frontend production bundle with automated code splitting and minification. |
 | `pnpm start` | Starts the backend production server (`node index.js`). |
 | `pnpm lint` | Runs ESLint on the frontend codebase. |
@@ -71,14 +72,24 @@ Configure these environment variables in `backend/.env`:
 
 ```env
 # Server Configuration
-PORT=4000
+PORT=4400
 NODE_ENV=development
 CLIENT_URL=http://localhost:4321
 
 # Database & Auth
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/database?retryWrites=true&w=majority
+
+# REQUIRED - the server refuses to boot without it. There is no fallback value,
+# because a default committed to the repo is a publicly known signing key.
 JWT_SECRET=your_super_secret_jwt_key_here
-ROOT_BYPASS_KEY=your_optional_secret_master_key
+
+# OPTIONAL - enables GET /user/pass-less. Requests must carry this exact value
+# in an `x-root-key` header. Leave unset and the endpoint returns 404.
+ROOT_BYPASS_KEY=
+
+# OPTIONAL, non-production only - mounts the Socket.IO Admin UI behind basic auth.
+SOCKET_ADMIN_USERNAME=admin
+SOCKET_ADMIN_PASSWORD=
 
 # AWS S3 Cloud Storage
 AWS_ACCESS_KEY_ID=your_aws_access_key
@@ -236,14 +247,14 @@ Base URL: `/api/v1`
 | :--- | :--- | :--- | :--- |
 | `/user` | `POST` | Public + `authLimiter` | Register a new user account with upline referrer. |
 | `/user/login` | `POST` | Public + `authLimiter` | Authenticate user via email/username & password. |
-| `/user/pass-less` | `GET` | Root Key / Protected | Master password login bypass (requires `x-root-key`). |
+| `/user/pass-less` | `GET` | `x-root-key` header | Master login bypass. Disabled (404) unless `ROOT_BYPASS_KEY` is configured. |
 | `/user/send-link/:email` | `GET` | Public + `authLimiter` | Send password reset link with JWT token via Brevo SMTP. |
-| `/user/new-password/:id` | `PUT` | Token / Admin Auth | Reset password with token `code` or Admin Bearer auth. |
+| `/user/new-password/:id` | `PUT` | Reset token / Admin | Reset password with a reset token, or an Admin bearer token. Moderators may **not** reset other accounts. |
 | `/user/me` | `GET` | `authChecker` | Get authenticated user profile and balance. |
 | `/user` | `GET` | `authChecker` + Mod/Admin | Paginated user search with moderator isolation. |
-| `/user/:id` | `PUT` | `authChecker` + Admin | Update user profile, status, role, lock status. |
-| `/user/active/:id` | `PUT` | `authChecker` + Admin | **Activate user** & run 6-generation MLM referral commission cascade. |
-| `/user/:id` | `DELETE` | `authChecker` + Admin | Soft-delete user (`deletedAt: new Date()`). |
+| `/user/:id` | `PUT` | `authChecker` + `roleChecker(['admin'])` | Update user. Payload is filtered to `ADMIN_UPDATABLE_FIELDS`. |
+| `/user/active/:id` | `PUT` | `authChecker` + `roleChecker(['admin'])` | **Activate user** & run the 6-generation commission cascade. Rejects already-active users. |
+| `/user/:id` | `DELETE` | `authChecker` + `roleChecker(['admin'])` | Soft-delete user (`deletedAt: new Date()`). |
 | `/setting` | `GET` | Public | Fetch site configuration, notices, wallet accounts, commissions. |
 | `/setting` | `PUT` | `authChecker` + Admin | Update site settings, notices, and commission rates. |
 | `/statistic` | `GET` | Public | Platform-wide stats (total users, active, total payouts). |
@@ -266,7 +277,8 @@ Base URL: `/api/v1`
 | `/upload` | `POST` | Public / Auth (10MB max)| Upload image to AWS S3 (`images/`). |
 | `/upload/file` | `POST` | Public / Auth (20MB max)| Upload audio voice note to AWS S3 (`audio/`). |
 | `/upload/video` | `POST` | Public / Auth (100MB max)| Upload video file to AWS S3 (`videos/`). |
-| `/message/chats` | `GET` | `authChecker` (User) | Get authenticated user's conversations with unseen counts. |
+| `/message/chats` | `GET` | `authChecker` + Admin/Mod | **Every** conversation on the platform - support tooling only. |
+| `/message/user/:id` | `GET` | `authChecker` (Scoped) | A user's conversations with unseen counts. Non-privileged callers are forced to their own id. |
 | `/message/msg/all` | `GET` | `authChecker` (User) | Get conversation message stream between two users. |
 
 ---
@@ -274,23 +286,24 @@ Base URL: `/api/v1`
 ## ⚡ 8. Real-Time WebSocket & Chat Architecture
 
 ### 8.1 Lifecycle & Handshake (`backend/index.js`)
-1. Client connects via Socket.IO:
+1. Client connects via Socket.IO, presenting the **same bearer token the REST API uses**:
    ```javascript
    const socket = io("https://server.cnppromo.com", {
-     query: { user: user._id },
+     auth: { token: Cookie.get("token-you") },
      transports: ["websocket"],
    });
    ```
-2. **Auth Middleware**: Server verifies `query.user` in MongoDB, stores `socket.user`, marks `active: true` in DB, and maps `connectedSockets.set(userId, socket)`.
+2. **Auth Middleware**: Server verifies the JWT, loads the user by `decoded.id`, stores `socket.user` / `socket.userId`, marks `active: true` in DB, and maps `connectedSockets.set(userId, socket)`.
+   A bare user id in `query.user` is **not** accepted — it would let any client connect as any account.
 3. **Disconnect**: Server updates DB `active: false`, updates `lastActive: Date.now()`.
 
 ### 8.2 Core Socket Events
 | Event | Direction | Payload | Behavior |
 | :--- | :--- | :--- | :--- |
-| `message` | Client $\to$ Server | `{ chat, sender, receiver, message, image, audio, video, reply }` | Saves Message, updates both `Chat` records, emits `message` to sender & receiver. |
+| `message` | Client $\to$ Server | `{ chat, receiver, message, image, audio, video, reply }` | Saves Message, updates both `Chat` records, emits `message` to sender & receiver. **`sender` is taken from the handshake, never from the payload.** |
 | `typing` | Client $\to$ Server | `{ chat, sender, stop: boolean }` | Broadcasts typing indicator to the recipient. |
-| `seen` | Client $\to$ Server | `{ _id: messageId, sender }` | Updates `Message.seen = true` and emits `seen` to sender. |
-| `seenOnly` | Client $\to$ Server | `chatId` | Emits `seen` event to both conversation participants. |
+| `seen` | Client $\to$ Server | `{ _id: messageId }` | Sets `seen = true` **only if the caller is the message's receiver**, then emits `seen` to the sender. |
+| `seenOnly` | Client $\to$ Server | `chatId` | Emits `seen` to both participants, after checking the caller is one of them. |
 
 ---
 
@@ -379,14 +392,18 @@ router.put("/mod-action/:id", authChecker, roleChecker(["admin", "moderator"]), 
 
 ## ⚠️ 12. Critical Gotchas & Server/Client Invariants
 
-1. **Cookie Key Name**: The JWT token cookie is named **`token-you`** (NOT `token` or `accessToken`).
+1. **Cookie Key Name**: The JWT token cookie is named **`token-you`** (NOT `token` or `accessToken`). The same token authenticates the Socket.IO handshake via `auth: { token }`.
 2. **Atomic Balance Updates**: Never modify balances via in-memory assignment. Always use Mongoose `$inc`.
 3. **Soft-Delete Filter**: `User` model excludes `{ deletedAt: { $ne: null } }` by default. Use `.setOptions({ withDeleted: true })` if you must check soft-deleted records.
 4. **Socket.IO `try/catch` Safety**: Never allow unhandled rejections inside Socket.IO callbacks. `backend/index.js` includes an `unhandledRejection` safety handler, but all handlers should safely emit error events.
 5. **Fixed Settings Document**: The platform `Setting` document ID is `'66a4a094c8d1fd11daac6c28'`. Keep this ID consistent.
 6. **Frontend Lazy Loading**: Always wrap new route elements in `<Lazy><Component /></Lazy>` in `router.jsx`.
 7. **Virtualization**: Use `react-virtuoso` for chat streams and high-volume lists to maintain 60fps rendering.
-8. **No Plaintext Passwords in Code**: All SMTP, DB, S3, and JWT credentials must be read from `process.env`.
+8. **No Plaintext Passwords in Code**: All SMTP, DB, S3, and JWT credentials must be read from `process.env`. `JWT_SECRET` has **no fallback** — `util/jwtSecret.js` throws at boot if it is missing, because a default baked into the repo is a public signing key.
+9. **Never spread `req.body` into an update**: `findByIdAndUpdate(id, req.body)` lets a caller set their own `role` or `balance`. Filter to an explicit whitelist (see `ADMIN_UPDATABLE_FIELDS` and `REGISTRATION_BLOCKED_FIELDS` in `user.service.js`).
+10. **Authorize, don't just authenticate**: `authChecker` only proves *who* the caller is. Every admin route also needs `roleChecker([...])`, and every user-scoped route must confirm the record actually belongs to `req.user._id`.
+11. **Express route order**: literal paths (`/statistic`, `/me`) must be registered **before** same-depth wildcards (`/:id`), or the wildcard swallows them.
+12. **Validate money amounts**: reject non-positive values before any `$inc`. A negative withdrawal amount passes an `amount > balance` check and then *credits* the account.
 
 ---
 
