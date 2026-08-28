@@ -11,9 +11,6 @@ import {
 } from "@heroicons/react/24/outline";
 
 const Works = () => {
-  const { user } = useSelector((state) => state.user);
-  const [showAdminForm, setShowAdminForm] = useState(false);
-
   return (
     <div className="bg-[#f8faff] min-h-screen pb-20 pt-6">
       <div className="container mx-auto px-4 max-w-6xl space-y-8">
@@ -67,44 +64,6 @@ const Works = () => {
             </div>
           </div>
         </div>
-
-        {/* 👑 Admin Manage Panel (If Admin) */}
-        {user?.role === "admin" && (
-          <Card className="p-5 sm:p-6 bg-white rounded-3xl border border-indigo-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="w-3 h-3 rounded-full bg-[#5a32fa] animate-pulse"></span>
-                <div>
-                  <h2 className="text-base font-bold text-gray-900">Manage Category Works</h2>
-                  <p className="text-xs text-gray-500">Add or manage tutorials and task links in categories</p>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                onClick={() => setShowAdminForm(!showAdminForm)}
-                className="bg-[#5a32fa] normal-case text-xs font-bold px-4 py-2 flex items-center gap-1.5 shadow-md shadow-indigo-500/20"
-              >
-                {showAdminForm ? (
-                  <>
-                    <ChevronUpIcon className="w-4 h-4" />
-                    <span>Hide Form</span>
-                  </>
-                ) : (
-                  <>
-                    <PlusIcon className="w-4 h-4" />
-                    <span>+ Add New Work</span>
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {showAdminForm && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <Form />
-              </div>
-            )}
-          </Card>
-        )}
 
         {/* 🎴 Category Directory Grid */}
         <AllWorks />

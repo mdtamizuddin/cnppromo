@@ -22,7 +22,7 @@ const getAllWork = async (params) => {
         const works = await Work.find(filters)
             .skip(skip)
             .limit(limit);
-        const total = await Work.countDocuments();
+        const total = await Work.countDocuments(filters);
         return {
             works,
             total,

@@ -46,7 +46,7 @@ const sidebarData = [
   {
     category: "WORK MANAGEMENT",
     items: [
-      { label: "Works", icon: BriefcaseIcon, to: "/user/works", color: "text-amber-500" },
+      { label: "Works", icon: BriefcaseIcon, to: "/admin/works", color: "text-amber-500" },
       { label: "Announcement", icon: MegaphoneIcon, to: "#", color: "text-blue-600" },
       { label: "Work History", icon: ClipboardDocumentCheckIcon, to: "/user/work-history", color: "text-indigo-500" },
     ]
