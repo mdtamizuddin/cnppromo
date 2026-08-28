@@ -20,8 +20,6 @@ import {
   EllipsisHorizontalIcon,
   HandThumbUpIcon,
   DocumentTextIcon,
-  PlusIcon,
-  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import { api } from "../../util/axios";
 
@@ -168,22 +166,6 @@ const SocialWork = () => {
     <div className="bg-[#f8faff] min-h-screen pb-20 pt-6">
       <div className="container mx-auto px-4 max-w-6xl space-y-8">
         
-        {/* Admin Manage Bar */}
-        {user?.role === "admin" && (
-          <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#5a32fa] animate-ping"></span>
-              <span className="text-sm font-bold text-gray-800">Admin Control Panel</span>
-            </div>
-            <Link to="/add-work">
-              <Button size="sm" className="bg-[#5a32fa] normal-case text-xs font-bold flex items-center gap-1">
-                <PlusIcon className="w-4 h-4" />
-                Add New Social Work
-              </Button>
-            </Link>
-          </div>
-        )}
-
         {/* 🌟 Top Hero Banner */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#d2fbf0] via-[#e2fbf6] to-[#d6f7ff] p-6 sm:p-8 lg:p-10 border border-teal-100/80 shadow-sm">
           {/* Ambient Glows */}
@@ -384,28 +366,7 @@ const SocialWork = () => {
                     <p className="text-[10px] text-gray-400 font-medium">Per Task</p>
                   </div>
 
-                  {user?.role === "admin" ? (
-                    <div className="flex items-center gap-2">
-                      <Link to={`/update-works/${task._id}`}>
-                        <Button
-                          size="sm"
-                          variant="outlined"
-                          className="border-gray-300 normal-case text-xs px-3 py-2 flex items-center gap-1"
-                        >
-                          <PencilSquareIcon className="w-4 h-4" />
-                          Edit
-                        </Button>
-                      </Link>
-                      <Link to={`/social-works/${task._id}`}>
-                        <Button
-                          size="sm"
-                          className={`${getBtnGradient(task)} text-white normal-case font-bold text-xs px-4 py-2 shadow-md`}
-                        >
-                          View
-                        </Button>
-                      </Link>
-                    </div>
-                  ) : (
+                  {task.status !== 'inactive' ? (
                     <Link to={`/social-works/${task._id}`}>
                       <Button
                         className={`${getBtnGradient(task)} text-white normal-case font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 transition-all hover:scale-105`}
@@ -414,6 +375,8 @@ const SocialWork = () => {
                         <ArrowRightIcon className="w-3.5 h-3.5" />
                       </Button>
                     </Link>
+                  ) : (
+                    <span className="text-xs text-gray-400 font-semibold">Inactive</span>
                   )}
                 </div>
               </Card>

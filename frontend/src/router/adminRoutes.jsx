@@ -15,6 +15,7 @@ const Settings = lazy(() => import("../Pages/Settings/Settings"));
 const Withdrawals = lazy(() => import("../Pages/Admin/Withdraw/Withdraw"));
 const ExternalWithdrawals = lazy(() => import("../Pages/Admin/ExternalWithdrawals/ExternalWithdrawals"));
 const AdminWorks = lazy(() => import("../Pages/Admin/ManageWorks/AdminWorks"));
+const AdminSocialWorks = lazy(() => import("../Pages/Admin/ManageSocialWorks/AdminSocialWorks"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -78,5 +79,9 @@ export const adminRoutes = [
   {
     path: "works",
     element: <AdminChecker><Lazy><AdminWorks /></Lazy></AdminChecker>,
+  },
+  {
+    path: "social-works",
+    element: <AdminChecker><Lazy><AdminSocialWorks /></Lazy></AdminChecker>,
   },
 ];
