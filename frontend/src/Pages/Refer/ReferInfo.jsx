@@ -152,7 +152,7 @@ const ReferInfo = () => {
       <div className="container mx-auto px-4 max-w-5xl space-y-6">
         {/* Navigation */}
         <div className="flex items-center justify-between">
-          <Link to="/refer">
+          <Link to="/user/refer">
             <Button
               variant="outlined"
               size="sm"

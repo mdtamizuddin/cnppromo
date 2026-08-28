@@ -103,7 +103,7 @@ const LeaderBoard = () => {
         <div className="flex items-center justify-between pb-1">
           <div className="flex items-center gap-3">
             <Link
-              to="/home"
+              to="/user/home"
               className="w-10 h-10 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:text-[#5a32fa] hover:border-[#5a32fa] transition-all"
             >
               <ChevronLeftIcon className="w-5 h-5 stroke-[2.5]" />

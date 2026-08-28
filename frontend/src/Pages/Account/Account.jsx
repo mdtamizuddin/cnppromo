@@ -88,7 +88,7 @@ const Account = () => {
         <div className="flex items-center justify-center">
           <div className="inline-flex p-1.5 bg-white rounded-2xl border border-gray-200 shadow-sm gap-1.5">
             <Link
-              to="/account/withdraw"
+              to="/user/account/withdraw"
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 isWithdraw
                   ? "bg-[#5a32fa] text-white shadow-md shadow-indigo-500/25"
@@ -100,7 +100,7 @@ const Account = () => {
             </Link>
 
             <Link
-              to="/account"
+              to="/user/account"
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 !isWithdraw
                   ? "bg-[#5a32fa] text-white shadow-md shadow-indigo-500/25"

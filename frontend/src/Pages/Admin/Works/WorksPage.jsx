@@ -72,11 +72,11 @@ const WorksPage = () => {
         {/* 🧭 Top Breadcrumb & Navigation */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs">
-            <Link to="/home" className="text-gray-400 hover:text-[#5a32fa] font-medium">
+            <Link to="/user/home" className="text-gray-400 hover:text-[#5a32fa] font-medium">
               হোম
             </Link>
             <span className="text-gray-300">/</span>
-            <Link to="/works" className="text-gray-400 hover:text-[#5a32fa] font-medium">
+            <Link to="/user/works" className="text-gray-400 hover:text-[#5a32fa] font-medium">
               কাজের ক্যাটাগরি
             </Link>
             <span className="text-gray-300">/</span>
@@ -84,7 +84,7 @@ const WorksPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link to="/works">
+            <Link to="/user/works">
               <Button
                 variant="outlined"
                 size="sm"
@@ -204,7 +204,7 @@ const WorksPage = () => {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-              <Link to="/works">
+              <Link to="/user/works">
                 <Button className="bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20">
                   অন্যান্য ক্যাটাগরি দেখুন
                 </Button>

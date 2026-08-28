@@ -264,7 +264,7 @@ const Training = () => {
             </div>
 
             <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-              <Link to="/message" className="w-full">
+              <Link to="/user/message" className="w-full">
                 <Button className="w-full bg-[#10b981] hover:bg-[#059669] normal-case text-xs font-bold py-3 rounded-xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2">
                   <ChatBubbleLeftRightIcon className="w-4 h-4" />
                   <span>মেসেঞ্জারে মেসেজ করুন</span>
@@ -390,7 +390,7 @@ const Training = () => {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-            <Link to="/message" className="w-full md:w-auto">
+            <Link to="/user/message" className="w-full md:w-auto">
               <Button className="w-full md:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-6 py-3 rounded-xl shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2">
                 <ChatBubbleLeftRightIcon className="w-4 h-4" />
                 <span>মেসেঞ্জারে মেসেজ করুন</span>
@@ -524,7 +524,7 @@ const Training = () => {
           >
             বন্ধ করুন
           </Button>
-          <Link to="/works">
+          <Link to="/user/works">
             <Button
               className="bg-[#5a32fa] normal-case text-xs px-6 py-2.5 rounded-xl flex items-center gap-1.5"
             >

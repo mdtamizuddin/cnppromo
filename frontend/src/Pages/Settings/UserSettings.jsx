@@ -125,7 +125,7 @@ const UserSettings = () => {
         <div className="flex items-center justify-between pb-2 border-b border-gray-200/70">
           <div className="flex items-center gap-2.5">
             <Link
-              to="/home"
+              to="/user/home"
               className="w-8 h-8 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:text-[#5a32fa] transition-colors"
             >
               <ChevronLeftIcon className="w-4 h-4 stroke-[2.5]" />

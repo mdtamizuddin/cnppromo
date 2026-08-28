@@ -30,7 +30,7 @@ const LoginWithoutPass = () => {
       setError("");
       Cookie.set("token-you", res.data.token, { expires: 30 });
       toast.success("Login Successful");
-      window.location.href = "/welcome";
+      window.location.href = "/user/welcome";
     } catch (error) {
       setError(
         error.response.data.message || error.message || "Something went wrong"

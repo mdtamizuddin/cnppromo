@@ -15,7 +15,7 @@ const Home = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/home"); // or wherever the logged-in user dashboard is
+      navigate("/user/home"); // or wherever the logged-in user dashboard is
     }
   }, [user, navigate]);
 

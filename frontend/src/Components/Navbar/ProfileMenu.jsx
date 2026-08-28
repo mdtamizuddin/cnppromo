@@ -13,10 +13,10 @@ import {
 import Cookie from "js-cookie";
 
 const items = [
-  { label: "Account", icon: CurrencyBangladeshiIcon, to: "/account" },
-  { label: "Message", icon: EnvelopeIcon, to: "/message" },
-  { label: "Settings", icon: Cog6ToothIcon, to: "/settings" },
-  { label: "Work History", icon: UserCircleIcon, to: "/work-history" },
+  { label: "Account", icon: CurrencyBangladeshiIcon, to: "/user/account" },
+  { label: "Message", icon: EnvelopeIcon, to: "/user/message" },
+  { label: "Settings", icon: Cog6ToothIcon, to: "/user/settings" },
+  { label: "Work History", icon: UserCircleIcon, to: "/user/work-history" },
 ];
 
 const ProfileMenu = ({ user }) => {

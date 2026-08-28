@@ -353,7 +353,7 @@ const Refer = () => {
               <BanknotesIcon className="w-5 h-5 text-[#5a32fa]" />
               <span>৬-জেনারেশন কমিশন তালিকা ও বর্তমান টিম</span>
             </h2>
-            <Link to="/refer-info" className="text-xs font-semibold text-[#5a32fa] hover:underline flex items-center gap-1">
+            <Link to="/user/refer-info" className="text-xs font-semibold text-[#5a32fa] hover:underline flex items-center gap-1">
               <span>বিস্তারিত পরিসংখ্যান</span>
               <ArrowRightIcon className="w-3 h-3" />
             </Link>

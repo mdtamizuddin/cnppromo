@@ -97,7 +97,8 @@ const router = createBrowserRouter([
       {
         path: "login",
         element: <Lazy><Login /></Lazy>,
-      }, {
+      }, 
+      {
         path: "without-pass",
         element: <Lazy><LoginWithoutPass /></Lazy>,
       },
@@ -105,279 +106,175 @@ const router = createBrowserRouter([
         path: "forgot-password",
         element: <Lazy><Reset /></Lazy>,
       },
+
       {
         path: "reviews",
         element: <Lazy><Reviews /></Lazy>,
       },
-      {
-        path: "leaderboard",
-        element: <Lazy><LeaderBoard /></Lazy>,
-      },
-      {
-        path: "level",
-        element: (
-          <AuthChecker>
-            <Lazy><Level /></Lazy>
-          </AuthChecker>
-        ),
-      },
 
+      // --- USER ROUTES ---
       {
-        path: "earnings",
-        element: (
-          <AuthChecker>
-            <Lazy><Earnings /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "my-earnings",
-        element: (
-          <AuthChecker>
-            <Lazy><Earnings /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "notifications",
-        element: (
-          <AuthChecker>
-            <Lazy><Notifications /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "all-message",
-        element: (
-          <AuthChecker>
-            <Lazy><Notifications /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "welcome",
-        element: (
-          <AuthChecker>
-            <Lazy><Welcome /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "home",
-        element: (
-          <AuthChecker>
-            <Lazy><Welcome /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "tips",
-        element: (
-          <AuthChecker>
-            <Lazy><Tips /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "refer",
-        element: (
-          <AuthChecker>
-            <Lazy><Refer /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "refer-info",
-        element: (
-          <AuthChecker>
-            <Lazy><ReferInfo /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "external-withdraw",
-        element: (
-          <AuthChecker>
-            <Lazy><ExternalWithdraw page={"user"} /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "account",
-        element: (
-          <AuthChecker>
-            <Lazy><Account /></Lazy>
-          </AuthChecker>
-        ),
+        path: "user",
         children: [
           {
-            index: true,
-            element: <TopUp />,
+            path: "message",
+            element: (
+              <AuthChecker requireActive={true}>
+                <Lazy><Message /></Lazy>
+              </AuthChecker>
+            ),
           },
           {
-            path: "withdraw",
-            element: <Withdraw />,
+            path: "all-message",
+            element: <Lazy><AllMessages /></Lazy>,
+          },
+
+          {
+            path: "leaderboard",
+            element: <AuthChecker><Lazy><LeaderBoard /></Lazy></AuthChecker>,
+          },
+          {
+            path: "level",
+            element: <AuthChecker><Lazy><Level /></Lazy></AuthChecker>,
+          },
+          {
+            path: "earnings",
+            element: <AuthChecker><Lazy><Earnings /></Lazy></AuthChecker>,
+          },
+          {
+            path: "my-earnings",
+            element: <AuthChecker><Lazy><Earnings /></Lazy></AuthChecker>,
+          },
+          {
+            path: "notifications",
+            element: <AuthChecker><Lazy><Notifications /></Lazy></AuthChecker>,
+          },
+          {
+            path: "welcome",
+            element: <AuthChecker><Lazy><Welcome /></Lazy></AuthChecker>,
+          },
+          {
+            path: "home",
+            element: <AuthChecker><Lazy><Welcome /></Lazy></AuthChecker>,
+          },
+          {
+            path: "tips",
+            element: <AuthChecker><Lazy><Tips /></Lazy></AuthChecker>,
+          },
+          {
+            path: "refer",
+            element: <AuthChecker><Lazy><Refer /></Lazy></AuthChecker>,
+          },
+          {
+            path: "refer-info",
+            element: <AuthChecker><Lazy><ReferInfo /></Lazy></AuthChecker>,
+          },
+          {
+            path: "external-withdraw",
+            element: <AuthChecker><Lazy><ExternalWithdraw page={"user"} /></Lazy></AuthChecker>,
+          },
+          {
+            path: "account",
+            element: <AuthChecker><Lazy><Account /></Lazy></AuthChecker>,
+            children: [
+              {
+                index: true,
+                element: <TopUp />,
+              },
+              {
+                path: "withdraw",
+                element: <Withdraw />,
+              },
+            ],
+          },
+          {
+            path: "works",
+            element: <AuthChecker><Lazy><Works /></Lazy></AuthChecker>,
+          },
+          {
+            path: "social-works",
+            element: <AuthChecker><Lazy><SocialWork /></Lazy></AuthChecker>,
+          },
+          {
+            path: "social-works/:id",
+            element: <AuthChecker><Lazy><SocialWorkDetails /></Lazy></AuthChecker>,
+          },
+          {
+            path: "works/:id",
+            element: <AuthChecker><Lazy><WorkDetails /></Lazy></AuthChecker>,
+          },
+          {
+            path: "works/category/:id",
+            element: <AuthChecker><Lazy><WorksPage /></Lazy></AuthChecker>,
+          },
+          {
+            path: "work-history",
+            element: <AuthChecker><Lazy><WorkHistory /></Lazy></AuthChecker>,
+          },
+          {
+            path: "settings",
+            element: <AuthChecker><Lazy><UserSettings /></Lazy></AuthChecker>,
+          },
+          {
+            path: "user-settings",
+            element: <AuthChecker><Lazy><UserSettings /></Lazy></AuthChecker>,
+          },
+          {
+            path: "training",
+            element: <AuthChecker><Lazy><Training /></Lazy></AuthChecker>,
           },
         ],
       },
-      {
-        path: "works",
-        element: (
-          <AuthChecker>
-            <Lazy><Works /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "social-works",
-        element: (
-          <AuthChecker>
-            <Lazy><SocialWork /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "social-works/:id",
-        element: (
-          <AuthChecker>
-            <Lazy><SocialWorkDetails /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "update-works/:id",
-        element: (
-          <AdminChecker>
-            <Lazy><AddWork /></Lazy>
-          </AdminChecker>
-        ),
-      },
-      {
-        path: "works/:id",
-        element: (
-          <AuthChecker>
-            <Lazy><WorkDetails /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "works/category/:id",
-        element: (
-          <AuthChecker>
-            <Lazy><WorksPage /></Lazy>
-          </AuthChecker>
-        ),
-      },
+
+      // --- ADMIN ROUTES ---
       {
         path: "admin",
-        element: (
-          <AdminChecker>
-            <Lazy><Admins /></Lazy>
-          </AdminChecker>
-        ),
-      },{
-        path: "moderator",
-        element: (
-          <AdminChecker>
-            <Lazy><Admins moderator={true} /></Lazy>
-          </AdminChecker>
-        ),
-      },
-      {
-        path: "add-work",
-        element: (
-          <AdminChecker>
-            <Lazy><AddWork /></Lazy>
-          </AdminChecker>
-        ),
-      },
-      {
-        path: "work-history",
-        element: (
-          <AuthChecker>
-            <Lazy><WorkHistory /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "refers",
-        element: (
-          <AdminChecker>
-            <Lazy><ReferHistory /></Lazy>
-          </AdminChecker>
-        ),
-      },
-      {
-        path: "check",
-        element: (
-          <AdminChecker>
-            <Lazy><Check /></Lazy>
-          </AdminChecker>
-        ),
-      },
-      {
-        path: "users",
-        element: (
-          <AdminChecker>
-            <Lazy><Users /></Lazy>
-          </AdminChecker>
-        ),
-      },
-      {
-        path: "user/:id",
-        element: (
-          <AdminChecker>
-            <Lazy><User /></Lazy>
-          </AdminChecker>
-        ),
-      },
-      {
-        path: "topup",
-        element: (
-          <AdminChecker>
-            <Lazy><Topups /></Lazy>
-          </AdminChecker>
-        ),
-      },
-      {
-        path: "settings",
-        element: (
-          <AuthChecker>
-            <Lazy><UserSettings /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "user-settings",
-        element: (
-          <AuthChecker>
-            <Lazy><UserSettings /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "admin/settings",
-        element: (
-          <AdminChecker>
-            <Lazy><Settings /></Lazy>
-          </AdminChecker>
-        ),
-      },
-      {
-        path: "training",
-        element: (
-          <AuthChecker>
-            <Lazy><Training /></Lazy>
-          </AuthChecker>
-        ),
-      },
-      {
-        path: "withdrawals",
-        element: (
-          <AdminChecker>
-            <Lazy><Withdrawals /></Lazy>
-          </AdminChecker>
-        ),
+        children: [
+          {
+            index: true,
+            element: <AdminChecker><Lazy><Admins /></Lazy></AdminChecker>,
+          },
+          {
+            path: "moderator",
+            element: <AdminChecker><Lazy><Admins moderator={true} /></Lazy></AdminChecker>,
+          },
+          {
+            path: "add-work",
+            element: <AdminChecker><Lazy><AddWork /></Lazy></AdminChecker>,
+          },
+          {
+            path: "update-works/:id",
+            element: <AdminChecker><Lazy><AddWork /></Lazy></AdminChecker>,
+          },
+          {
+            path: "refers",
+            element: <AdminChecker><Lazy><ReferHistory /></Lazy></AdminChecker>,
+          },
+          {
+            path: "check",
+            element: <AdminChecker><Lazy><Check /></Lazy></AdminChecker>,
+          },
+          {
+            path: "users",
+            element: <AdminChecker><Lazy><Users /></Lazy></AdminChecker>,
+          },
+          {
+            path: "user/:id",
+            element: <AdminChecker><Lazy><User /></Lazy></AdminChecker>,
+          },
+          {
+            path: "topup",
+            element: <AdminChecker><Lazy><Topups /></Lazy></AdminChecker>,
+          },
+          {
+            path: "settings",
+            element: <AdminChecker><Lazy><Settings /></Lazy></AdminChecker>,
+          },
+          {
+            path: "withdrawals",
+            element: <AdminChecker><Lazy><Withdrawals /></Lazy></AdminChecker>,
+          },
+        ],
       },
     ],
   },

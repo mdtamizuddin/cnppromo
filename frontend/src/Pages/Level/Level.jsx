@@ -338,7 +338,7 @@ const Level = () => {
                         ✓ আপনার সক্রিয় লেভেল
                       </div>
                     ) : tier.level > currentLevel ? (
-                      <Link to="/refer">
+                      <Link to="/user/refer">
                         <Button className="w-full bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold py-2.5 rounded-xl shadow-md shadow-indigo-500/20 flex items-center justify-center gap-1.5">
                           <span>রেফার করে আনলক করুন</span>
                           <ArrowRightIcon className="w-3.5 h-3.5" />
@@ -422,7 +422,7 @@ const Level = () => {
             </div>
           </div>
 
-          <Link to="/refer" className="w-full md:w-auto shrink-0">
+          <Link to="/user/refer" className="w-full md:w-auto shrink-0">
             <Button className="w-full md:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-6 py-3 rounded-xl shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2">
               <span>রেফারেল শুরু করুন</span>
               <ArrowRightIcon className="w-4 h-4" />

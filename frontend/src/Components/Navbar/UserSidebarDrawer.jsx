@@ -33,22 +33,22 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
   };
 
   const navMenuItems = [
-    { label: "ড্যাশবোর্ড", to: "/home", icon: HomeIcon },
-    { label: "আমার টাস্ক", to: "/works", icon: ClipboardDocumentListIcon },
-    { label: "আমার আয়", to: "/earnings", icon: BanknotesIcon },
-    { label: "উইথড্র", to: "/account/withdraw", icon: CreditCardIcon },
-    { label: "রেফার & আর্ন", to: "/refer", icon: UserGroupIcon },
-    { label: "ওয়ালেট", to: "/account", icon: WalletIcon },
-    { label: "লিডারবোর্ড", to: "/leaderboard", icon: TrophyIcon },
-    { label: "ট্রেনিং & সাপোর্ট", to: "/training", icon: AcademicCapIcon },
+    { label: "ড্যাশবোর্ড", to: "/user/home", icon: HomeIcon },
+    { label: "আমার টাস্ক", to: "/user/works", icon: ClipboardDocumentListIcon },
+    { label: "আমার আয়", to: "/user/earnings", icon: BanknotesIcon },
+    { label: "উইথড্র", to: "/user/account/withdraw", icon: CreditCardIcon },
+    { label: "রেফার & আর্ন", to: "/user/refer", icon: UserGroupIcon },
+    { label: "ওয়ালেট", to: "/user/account", icon: WalletIcon },
+    { label: "লিডারবোর্ড", to: "/user/leaderboard", icon: TrophyIcon },
+    { label: "ট্রেনিং & সাপোর্ট", to: "/user/training", icon: AcademicCapIcon },
     {
       label: "নোটিফিকেশন",
-      to: "/notifications",
+      to: "/user/notifications",
       icon: BellIcon,
       badge: 3,
     },
-    { label: "সেটিংস", to: "/settings", icon: Cog6ToothIcon },
-    { label: "Message", to: "/message", icon: ChatBubbleLeftRightIcon },
+    { label: "সেটিংস", to: "/user/settings", icon: Cog6ToothIcon },
+    { label: "Message", to: "/user/message", icon: ChatBubbleLeftRightIcon },
   ];
 
   return (
@@ -72,7 +72,7 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
           {/* Logo & Mobile Close Button */}
           <div className="flex items-center justify-between">
             <Link
-              to="/home"
+              to="/user/home"
               onClick={onClose}
               className="text-xl font-black tracking-wider text-white flex items-center gap-1.5"
             >

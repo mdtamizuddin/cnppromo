@@ -549,7 +549,7 @@ const Reviews = () => {
                 ফ্রি রেজিস্টার করুন
               </Button>
             </Link>
-            <Link to="/works">
+            <Link to="/user/works">
               <Button variant="outlined" className="border-gray-400 text-white normal-case font-bold text-xs px-6 py-3 rounded-xl hover:bg-white/10">
                 কাজের তালিকা দেখুন
               </Button>

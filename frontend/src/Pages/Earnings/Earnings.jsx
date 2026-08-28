@@ -77,7 +77,7 @@ const Earnings = () => {
 
               {/* Quick Actions */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Link to="/account/withdraw">
+                <Link to="/user/account/withdraw">
                   <Button className="bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/30 flex items-center gap-2">
                     <CreditCardIcon className="w-4 h-4" />
                     <span>উইথড্র করুন</span>
@@ -126,7 +126,7 @@ const Earnings = () => {
                 <span>✓ উইথড্রর জন্য প্রস্তুত</span>
               </p>
             </div>
-            <Link to="/account/withdraw" className="block pt-1">
+            <Link to="/user/account/withdraw" className="block pt-1">
               <span className="text-[11px] font-bold text-[#5a32fa] hover:underline flex items-center gap-1">
                 উইথড্র করতে যান &rarr;
               </span>
@@ -147,7 +147,7 @@ const Earnings = () => {
                 {directRefers} জন সফল রেফারেল
               </p>
             </div>
-            <Link to="/refer" className="block pt-1">
+            <Link to="/user/refer" className="block pt-1">
               <span className="text-[11px] font-bold text-emerald-600 hover:underline flex items-center gap-1">
                 রেফারেল টিম দেখুন &rarr;
               </span>
@@ -189,7 +189,7 @@ const Earnings = () => {
                 {user?.level === 3 ? "৳৪০/রেফার" : user?.level === 2 ? "৳৩৫/রেফার" : "৳৩০/রেফার"}
               </p>
             </div>
-            <Link to="/level" className="block pt-1">
+            <Link to="/user/level" className="block pt-1">
               <span className="text-[11px] font-bold text-amber-600 hover:underline flex items-center gap-1">
                 লেভেল আপগ্রেড &rarr;
               </span>
@@ -212,7 +212,7 @@ const Earnings = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <Link to="/refer">
+              <Link to="/user/refer">
                 <Button size="sm" className="bg-purple-50 text-[#5a32fa] hover:bg-purple-100 normal-case font-bold text-xs rounded-xl shadow-none">
                   রেফারেল সেন্টার
                 </Button>
@@ -272,7 +272,7 @@ const Earnings = () => {
               <p className="text-xs text-gray-500 max-w-sm mx-auto">
                 আপনার রেফারেল লিংক বন্ধুদের সাথে শেয়ার করে আজই প্রতি রেফারে ৩০ টাকা পর্যন্ত আয় শুরু করুন।
               </p>
-              <Link to="/refer">
+              <Link to="/user/refer">
                 <Button className="bg-[#5a32fa] text-white font-bold text-xs rounded-xl px-5 py-2.5 mt-2 normal-case shadow-md shadow-indigo-500/20">
                   রেফারেল শুরু করুন &rarr;
                 </Button>
@@ -297,7 +297,7 @@ const Earnings = () => {
             </div>
           </div>
 
-          <Link to="/works" className="w-full md:w-auto shrink-0">
+          <Link to="/user/works" className="w-full md:w-auto shrink-0">
             <button className="w-full md:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] text-white font-bold text-xs px-6 py-3.5 rounded-2xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all">
               <span>টাস্ক গ্যালারি দেখুন</span>
               <ArrowRightIcon className="w-4 h-4 stroke-[2.5]" />

@@ -9,18 +9,18 @@ import {
 } from "@heroicons/react/24/outline";
 
 const items = [
-  { label: "Message", icon: EnvelopeIcon, to: "/message" },
+  { label: "Message", icon: EnvelopeIcon, to: "/user/message" },
   { label: "All Admins", icon: UsersIcon, to: "/admin" },
-  { label: "All Moderators", icon: UsersIcon, to: "/moderator" },
-  { label: "All Users", icon: UsersIcon, to: "/users" },
-  { label: "Withdrawals", icon: CurrencyBangladeshiIcon, to: "/withdrawals" },
-  { label: "Dollar Withdrawals", icon: CurrencyBangladeshiIcon, to: "/external-withdraw" },
-  { label: "TopUp", icon: CurrencyBangladeshiIcon, to: "/topup" },
-  { label: "Works", icon: CurrencyBangladeshiIcon, to: "/works" },
-  { label: "Works History", icon: CurrencyBangladeshiIcon, to: "/work-history" },
-  { label: "Settings", icon: GlobeAmericasIcon, to: "/settings" },
-  { label: "Refer History", icon: UsersIcon, to: "/refers" },
-  { label: "Check User", icon: UsersIcon, to: "/check" },
+  { label: "All Moderators", icon: UsersIcon, to: "/admin/moderator" },
+  { label: "All Users", icon: UsersIcon, to: "/admin/users" },
+  { label: "Withdrawals", icon: CurrencyBangladeshiIcon, to: "/admin/withdrawals" },
+  { label: "Dollar Withdrawals", icon: CurrencyBangladeshiIcon, to: "/user/external-withdraw" },
+  { label: "TopUp", icon: CurrencyBangladeshiIcon, to: "/admin/topup" },
+  { label: "Works", icon: CurrencyBangladeshiIcon, to: "/user/works" },
+  { label: "Works History", icon: CurrencyBangladeshiIcon, to: "/user/work-history" },
+  { label: "Settings", icon: GlobeAmericasIcon, to: "/admin/settings" },
+  { label: "Refer History", icon: UsersIcon, to: "/admin/refers" },
+  { label: "Check User", icon: UsersIcon, to: "/admin/check" },
 ];
 
 const AdminDropdown = () => {

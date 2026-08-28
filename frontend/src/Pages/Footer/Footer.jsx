@@ -135,7 +135,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/training" className="hover:text-blue-400 transition-colors">
+                <Link to="/user/training" className="hover:text-blue-400 transition-colors">
                   সাপোর্ট সেন্টার
                 </Link>
               </li>
@@ -147,7 +147,7 @@ const Footer = () => {
             <h3 className="text-white text-lg font-medium mb-6">যোগাযোগ করুন</h3>
             <div className="space-y-6">
               <Link
-                to="/message"
+                to="/user/message"
                 className="flex items-center justify-between w-full max-w-[260px] bg-[#5a32fa] hover:bg-[#4b26e0] text-white px-5 py-3 rounded-md transition-colors text-[15px] font-medium shadow-lg shadow-indigo-500/20"
               >
                 <div className="flex items-center gap-3">

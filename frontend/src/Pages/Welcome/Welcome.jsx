@@ -272,7 +272,7 @@ const Welcome = () => {
                   </p>
                 </div>
 
-                <Link to="/account/withdraw">
+                <Link to="/user/account/withdraw">
                   <Button className="bg-gradient-to-r from-[#ff6b6b] to-[#ff8e53] hover:from-[#fa5252] hover:to-[#f76707] normal-case text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-lg shadow-orange-500/25 flex items-center gap-2 transition-all hover:scale-105">
                     <span>Withdraw Now</span>
                     <ArrowRightIcon className="w-4 h-4" />
@@ -370,7 +370,7 @@ const Welcome = () => {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-[#0b0c2a]">Quick Actions</h2>
-            <Link to="/works" className="text-xs font-semibold text-[#5a32fa] hover:underline">
+            <Link to="/user/works" className="text-xs font-semibold text-[#5a32fa] hover:underline">
               View All
             </Link>
           </div>
@@ -428,7 +428,7 @@ const Welcome = () => {
                 বেশি আয়ের সেরা কাজগুলো নির্বাচন করুন
               </h2>
             </div>
-            <Link to="/works" className="text-xs font-semibold text-[#5a32fa] hover:underline">
+            <Link to="/user/works" className="text-xs font-semibold text-[#5a32fa] hover:underline">
               সকল কাজ দেখুন →
             </Link>
           </div>
@@ -567,7 +567,7 @@ const Welcome = () => {
           <Card className="lg:col-span-7 p-6 bg-white rounded-3xl border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-[#0b0c2a]">Recent Activity</h3>
-              <Link to="/account/withdraw" className="text-xs font-semibold text-[#5a32fa] hover:underline">
+              <Link to="/user/account/withdraw" className="text-xs font-semibold text-[#5a32fa] hover:underline">
                 View All
               </Link>
             </div>
@@ -655,7 +655,7 @@ const Welcome = () => {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-bold text-[#0b0c2a]">Payment Methods</h3>
-                <Link to="/account/withdraw" className="text-xs font-semibold text-[#5a32fa] hover:underline">
+                <Link to="/user/account/withdraw" className="text-xs font-semibold text-[#5a32fa] hover:underline">
                   View All
                 </Link>
               </div>
@@ -689,7 +689,7 @@ const Welcome = () => {
                 </div>
 
                 {/* Add New */}
-                <Link to="/account/withdraw" className="p-3 rounded-2xl border-2 border-dashed border-gray-200 hover:border-[#5a32fa] flex flex-col items-center justify-center text-center transition-colors">
+                <Link to="/user/account/withdraw" className="p-3 rounded-2xl border-2 border-dashed border-gray-200 hover:border-[#5a32fa] flex flex-col items-center justify-center text-center transition-colors">
                   <PlusIcon className="w-5 h-5 text-gray-400 mb-1" />
                   <p className="text-[11px] font-bold text-gray-600">+ Add New</p>
                 </Link>
@@ -759,7 +759,7 @@ const Welcome = () => {
             </Card>
           </Link>
 
-          <Link to="/message">
+          <Link to="/user/message">
             <Card className="p-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center shrink-0">
                 <QuestionMarkCircleIcon className="w-5 h-5" />
