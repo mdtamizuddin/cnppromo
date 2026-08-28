@@ -267,7 +267,12 @@ const Register = () => {
             const res = await api.post('/user', submitData);
             Cookie.set("token-you", res.data.token, { expires: 30 });
             toast.success("Registration Successful");
-            window.location.href = "/";
+            const tokenPayload = JSON.parse(atob(res.data.token.split('.')[1]));
+            if (tokenPayload.role === 'admin' || tokenPayload.role === 'moderator') {
+                window.location.href = "/admin";
+            } else {
+                window.location.href = "/user/welcome";
+            }
             
         } catch (error) {
             setError(error?.response?.data?.message || "Something went wrong");

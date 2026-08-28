@@ -85,9 +85,8 @@ const AdminSidebar = ({ isOpen, onClose }) => {
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-screen bg-[#f8f9fa] border-r border-gray-200 z-50 w-[260px] flex flex-col transition-transform duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={`fixed top-0 left-0 h-screen bg-[#f8f9fa] border-r border-gray-200 z-50 w-[260px] flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
       >
         {/* Mobile Header (Hidden on Desktop since Topbar handles it) */}
         <div className="flex items-center justify-between p-4 lg:hidden border-b border-gray-200 bg-white">
@@ -98,7 +97,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* Profile Summary (Like the image) */}
-        <div className="flex items-center gap-3 p-5 border-b border-gray-200 bg-white shadow-sm mt-0 lg:mt-[72px]">
+        <div className="flex items-center gap-3 p-5 border-b border-gray-200 bg-white shadow-sm mt-0">
           <img
             src={user?.avatar || "/avater.avif"}
             alt="Profile"
@@ -111,7 +110,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* Scrollable Navigation */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 scrollbar-thin scrollbar-thumb-gray-300 bg-white">
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin scrollbar-thumb-gray-200 bg-white">
           {sidebarData.map((section, idx) => (
             <div key={idx}>
               <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">
@@ -126,11 +125,10 @@ const AdminSidebar = ({ isOpen, onClose }) => {
                       key={itemIdx}
                       to={item.to}
                       onClick={onClose}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors ${
-                        isActive
-                          ? "bg-[#f4f0ff] text-[#4d28e2]"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                      }`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors ${isActive
+                        ? "bg-[#f4f0ff] text-[#4d28e2]"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        }`}
                     >
                       <Icon className={`w-5 h-5 ${isActive ? "text-[#4d28e2]" : item.color}`} />
                       {item.label}

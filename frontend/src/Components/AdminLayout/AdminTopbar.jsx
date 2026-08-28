@@ -8,7 +8,7 @@ const AdminTopbar = ({ toggleSidebar }) => {
   const { user } = useSelector((state) => state.user);
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between px-6 py-3 bg-[#0a1157] text-white shadow-md w-full">
+    <header className="sticky top-0 z-40 flex items-center justify-between px-6 py-3 bg-[#0a1157] text-white shadow-sm w-full lg:ml-[260px] lg:w-[calc(100%-260px)]">
       <div className="flex items-center gap-4">
         {/* Mobile Sidebar Toggle */}
         <IconButton
@@ -18,20 +18,9 @@ const AdminTopbar = ({ toggleSidebar }) => {
         >
           <Bars3Icon className="h-6 w-6 stroke-2" />
         </IconButton>
-        
-        <div className="flex items-center gap-3">
-          <IconButton
-            variant="text"
-            className="text-white hover:bg-white/10 hidden lg:flex"
-            onClick={toggleSidebar}
-          >
-            <Bars3Icon className="h-6 w-6 stroke-2" />
-          </IconButton>
-          <h1 className="text-xl font-bold tracking-wider">CNP PROMO</h1>
-        </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 ml-auto">
         <div className="flex items-center gap-3">
           <img
             src={user?.avatar || "/avater.avif"}
