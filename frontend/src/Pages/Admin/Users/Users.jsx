@@ -1,16 +1,16 @@
-import { Card } from '@material-tailwind/react';
 import React from 'react';
-import Table from './_Ui/Table';
+import PremiumUsersTable from './components/PremiumUsersTable';
 
 const Users = () => {
-
-    return (
-        <div className='min-h-screen container mx-auto '>
-            <Card className='w-full overflow-x-auto'>
-                <Table />
-            </Card>
-        </div>
-    );
+  return (
+    <div className="container mx-auto">
+      <PremiumUsersTable 
+        status="active" 
+        title="Active Users" 
+        subtitle="Manage all active users in the system." 
+      />
+    </div>
+  );
 };
 
 export default Users;

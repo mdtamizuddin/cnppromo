@@ -184,6 +184,20 @@ const getAllData = async (req, res) => {
     filters.$or = searchConditions;
   }
 
+  // Date range filtering
+  if (req.query.startDate || req.query.endDate) {
+    const dateField = req.query.status === "active" ? "activatedAt" : "createdAt";
+    filters[dateField] = {};
+    if (req.query.startDate) {
+      filters[dateField].$gte = new Date(req.query.startDate);
+    }
+    if (req.query.endDate) {
+      const end = new Date(req.query.endDate);
+      end.setHours(23, 59, 59, 999); // Include the whole day
+      filters[dateField].$lte = end;
+    }
+  }
+
   // Cursor pagination support
   if (req.query.cursor) {
     if (req.query.reverse === 'true') {
@@ -214,10 +228,19 @@ const getAllData = async (req, res) => {
 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
-    const todayAdded = await User.countDocuments({
-      status: "pending",
-      createdAt: { $gte: startOfToday }
-    });
+    
+    let todayAdded = 0;
+    if (req.query.status === "active") {
+      todayAdded = await User.countDocuments({
+        status: "active",
+        activatedAt: { $gte: startOfToday }
+      });
+    } else {
+      todayAdded = await User.countDocuments({
+        status: "pending",
+        createdAt: { $gte: startOfToday }
+      });
+    }
 
     const nextCursor = users.length === limit ? users[users.length - 1]._id : null;
 
@@ -322,6 +345,9 @@ const searchUser = async (req, res) =>
 const updateUser = async (req, res) =>
 {
     try {
+        if (req.body.status === "active") {
+            req.body.activatedAt = new Date();
+        }
         const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!user) {
             res.status(400).send("User not found");
