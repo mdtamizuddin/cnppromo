@@ -29,7 +29,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass, bgClass }) => (
   </Card>
 );
 
-const PremiumUsersTable = ({ status = "pending", lock = false, title = "Users", subtitle = "Manage users in the system." }) => {
+const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", title = "Users", subtitle = "Manage users in the system." }) => {
   const [option, setOption] = useState({ limit: 50 });
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
@@ -47,11 +47,13 @@ const PremiumUsersTable = ({ status = "pending", lock = false, title = "Users", 
   };
 
   const { data, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
-    ["Premium Users Table", status, lock, option.limit, search, dateRange],
+    ["Premium Users Table", status, lock, role, option.limit, search, dateRange],
     async ({ pageParam = null }) => {
       let url = `/user?limit=${option.limit}&reverse=true`;
       if (status) url += `&status=${status}`;
       if (lock) url += `&lock=true`;
+      if (role === "admin") url += `&admin=true`;
+      if (role === "moderator") url += `&moderator=true`;
       if (search) url += `&search=${search}`;
       if (pageParam) url += `&cursor=${pageParam}`;
       if (dateRange.start) url += `&startDate=${dateRange.start}`;
@@ -86,7 +88,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, title = "Users", 
       </div>
 
       {/* Stat Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+      <div className={`grid gap-3 sm:gap-6 mb-6 sm:mb-8 ${role !== 'user' ? 'grid-cols-2 lg:grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'}`}>
         <StatCard 
           title="Filtered Results" 
           value={filteredCount} 
@@ -94,27 +96,42 @@ const PremiumUsersTable = ({ status = "pending", lock = false, title = "Users", 
           colorClass="text-orange-500" 
           bgClass="bg-orange-50" 
         />
-        <StatCard 
-          title={status === 'pending' ? "Today Added" : "Today Activated"} 
-          value={todayAdded} 
-          icon={UserPlusIcon} 
-          colorClass="text-green-500" 
-          bgClass="bg-green-50" 
-        />
-        <StatCard 
-          title={lock ? "Total Banned" : status === 'pending' ? "Total Pending" : "Total Active"} 
-          value={status === 'pending' ? totalPending : totalActive} 
-          icon={CalendarDaysIcon} 
-          colorClass="text-blue-500" 
-          bgClass="bg-blue-50" 
-        />
-        <StatCard 
-          title="Total Users (All)" 
-          value={grandTotal + totalPending}
-          icon={CalendarDaysIcon} 
-          colorClass="text-purple-500" 
-          bgClass="bg-purple-50" 
-        />
+        
+        {role === 'user' ? (
+          <>
+            {!lock && (
+              <StatCard 
+                title={status === 'pending' ? "Today Added" : "Today Activated"} 
+                value={todayAdded} 
+                icon={UserPlusIcon} 
+                colorClass="text-green-500" 
+                bgClass="bg-green-50" 
+              />
+            )}
+            <StatCard 
+              title={lock ? "Total Banned" : status === 'pending' ? "Total Pending" : "Total Active"} 
+              value={lock ? filteredCount : (status === 'pending' ? totalPending : totalActive)} 
+              icon={CalendarDaysIcon} 
+              colorClass="text-blue-500" 
+              bgClass="bg-blue-50" 
+            />
+            <StatCard 
+              title="Total Users (All)" 
+              value={grandTotal + totalPending}
+              icon={UsersIcon} 
+              colorClass="text-purple-500" 
+              bgClass="bg-purple-50" 
+            />
+          </>
+        ) : (
+          <StatCard 
+            title={`Total ${role === 'admin' ? 'Admins' : 'Moderators'}`} 
+            value={filteredCount}
+            icon={UserPlusIcon} 
+            colorClass="text-purple-500" 
+            bgClass="bg-purple-50" 
+          />
+        )}
       </div>
 
       <Card className="w-full shadow-sm border border-gray-200 overflow-hidden rounded-xl">

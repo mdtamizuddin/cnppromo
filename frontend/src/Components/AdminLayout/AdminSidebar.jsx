@@ -26,6 +26,8 @@ const sidebarData = [
   {
     category: "USER MANAGEMENT",
     items: [
+      { label: "Admins", icon: UsersIcon, to: "/admin", color: "text-blue-500" },
+      { label: "Moderators", icon: UsersIcon, to: "/admin/moderator", color: "text-indigo-500" },
       { label: "Non-Active User", icon: UserMinusIcon, to: "/admin/non-active-users", color: "text-purple-500" },
       { label: "Active User", icon: UsersIcon, to: "/admin/users", color: "text-green-500" },
       { label: "Banned User", icon: NoSymbolIcon, to: "/admin/banned-users", color: "text-red-500" },

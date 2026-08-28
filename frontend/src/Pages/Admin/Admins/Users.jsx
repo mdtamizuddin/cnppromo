@@ -1,14 +1,15 @@
-import { Card } from '@material-tailwind/react';
 import React from 'react';
-import Table from './_Ui/Table';
+import PremiumUsersTable from '../Users/components/PremiumUsersTable';
 
-const Admins = ({ moderator}) => {
-
+const Admins = ({ moderator }) => {
     return (
-        <div className='min-h-screen container mx-auto '>
-            <Card className='w-full overflow-x-auto'>
-                <Table moderator={moderator} />
-            </Card>
+        <div className="container mx-auto">
+            <PremiumUsersTable 
+                status="" 
+                role={moderator ? "moderator" : "admin"}
+                title={moderator ? "Moderators" : "Admins"} 
+                subtitle={`Manage all ${moderator ? "moderators" : "admins"} in the system.`} 
+            />
         </div>
     );
 };
