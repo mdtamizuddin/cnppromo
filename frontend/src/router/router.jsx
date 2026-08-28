@@ -46,6 +46,8 @@ const Features = lazy(() => import("../Pages/Features/Features"));
 const Earnings = lazy(() => import("../Pages/Earnings/Earnings"));
 const Notifications = lazy(() => import("../Pages/Notifications/Notifications"));
 const UserSettings = lazy(() => import("../Pages/Settings/UserSettings"));
+const AdminLayout = lazy(() => import("../Components/AdminLayout/AdminLayout"));
+const NonActiveUsers = lazy(() => import("../Pages/Admin/Users/NonActiveUsers"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -229,6 +231,7 @@ const router = createBrowserRouter([
       // --- ADMIN ROUTES ---
       {
         path: "admin",
+        element: <Lazy><AdminLayout /></Lazy>,
         children: [
           {
             index: true,
@@ -257,6 +260,10 @@ const router = createBrowserRouter([
           {
             path: "users",
             element: <AdminChecker><Lazy><Users /></Lazy></AdminChecker>,
+          },
+          {
+            path: "non-active-users",
+            element: <AdminChecker><Lazy><NonActiveUsers /></Lazy></AdminChecker>,
           },
           {
             path: "user/:id",

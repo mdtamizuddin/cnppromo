@@ -16,9 +16,24 @@ import ErrorBoundary from "./Components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
+import { useLocation } from "react-router-dom";
+
 // Internal Layout wrapper to connect with Redux user state
 const MainLayout = () => {
   const { user } = useSelector((state) => state.user);
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  if (isAdminRoute) {
+    return (
+      <>
+        <ScrollRestoration />
+        <DefaultFetch />
+        <Toaster />
+        <Outlet />
+      </>
+    );
+  }
 
   return (
     <>
@@ -26,7 +41,7 @@ const MainLayout = () => {
       <DefaultFetch />
       <Toaster />
       <Topbar />
-      <div className={user ? "lg:pl-72 pb-20 lg:pb-6 transition-all min-h-screen" : "min-h-screen"}>
+      <div className={user ? "w-full lg:pl-72 pb-20 lg:pb-6 transition-all min-h-screen" : "w-full min-h-screen"}>
         <Outlet />
       </div>
       <Footer />

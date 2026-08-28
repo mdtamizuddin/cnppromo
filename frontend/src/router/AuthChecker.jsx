@@ -1,4 +1,5 @@
 import React, { lazy, Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Cookie from 'js-cookie';
 import Loader from '../Components/Loader';
@@ -29,7 +30,16 @@ const AuthChecker = ({ children, requireActive = false }) => {
         return <RequierActive />;
     }
 
-    // 4. Authenticated & Authorized user
+    const location = useLocation();
+
+    // 4. Redirect admins away from the main user dashboards
+    if ((user.role === "admin" || user.role === "moderator") && 
+        (location.pathname === "/user/home" || location.pathname === "/user/welcome")) {
+        window.location.href = "/admin";
+        return null;
+    }
+
+    // 5. Authenticated & Authorized user
     return children;
 };
 

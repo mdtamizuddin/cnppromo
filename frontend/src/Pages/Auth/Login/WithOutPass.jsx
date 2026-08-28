@@ -1,5 +1,6 @@
 import { Card } from "@material-tailwind/react";
-import React from "react";
+import React, { useEffect } from "react";
+import { useSelector } from "react-redux";
 import InputFeild from "../InputFeild";
 import "react-phone-number-input/style.css";
 import { Button } from "@material-tailwind/react";
@@ -14,6 +15,18 @@ const LoginWithoutPass = () => {
     email: "",
     password: "",
   });
+
+  const { user } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'admin' || user.role === 'moderator') {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/user/home";
+      }
+    }
+  }, [user]);
   const updateState = (e, e2) => {
     if (!e2) {
       setData({ ...data, [e.target.name]: e.target.value });

@@ -33,6 +33,9 @@ const AdminChecker = ({ children }) => {
             return window.location.href = "/"
         }
     }
+    else if (data?.role === "user") {
+        return window.location.href = "/user/home"
+    }
 };
 
 export default AdminChecker;

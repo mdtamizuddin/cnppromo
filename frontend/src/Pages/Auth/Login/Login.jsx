@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { Card } from '@material-tailwind/react';
 import { api } from '../../../util/axios';
 import Cookie from 'js-cookie';
@@ -69,6 +70,18 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    const { user } = useSelector((state) => state.user);
+
+    useEffect(() => {
+        if (user) {
+            if (user.role === 'admin' || user.role === 'moderator') {
+                window.location.href = "/admin";
+            } else {
+                window.location.href = "/user/home";
+            }
+        }
+    }, [user]);
 
     // Fetch dynamic statistics
     const { data: statsData } = useQuery({

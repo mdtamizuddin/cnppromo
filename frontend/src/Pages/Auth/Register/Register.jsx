@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { Card } from '@material-tailwind/react';
 import { api } from '../../../util/axios';
 import Cookie from 'js-cookie';
@@ -149,6 +150,18 @@ const Register = () => {
     const randomText = generateRandomText(10);
     const [searchParams] = useSearchParams();
     const queryParamValue = searchParams.get('ref');
+
+    const { user } = useSelector((state) => state.user);
+
+    useEffect(() => {
+        if (user) {
+            if (user.role === 'admin' || user.role === 'moderator') {
+                window.location.href = "/admin";
+            } else {
+                window.location.href = "/user/home";
+            }
+        }
+    }, [user]);
 
     const [data, setData] = useState({
         username: "",
