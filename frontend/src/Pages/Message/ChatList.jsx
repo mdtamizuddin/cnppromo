@@ -120,28 +120,40 @@ ChatRow.displayName = "ChatRow";
 
 /* ── Panel ────────────────────────────────────────────────────────────── */
 
-const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => {
+const ChatList = ({ users, counts, refetch, loading, fetchNextPage, hasNextPage, isFetchingNextPage, activeId, onOpen, onOpenMenu }) => {
   const { user } = useSelector((state) => state.user);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
-  const [date, setDate] = useState("");
-  const [page, setPage] = useState(1);
+  const searchparams = new URLSearchParams(location.search);
+  const sortby = searchparams.get("sortby") || "All";
+  const nameParam = searchparams.get("search") || "";
+  const dateParam = searchparams.get("date") || "";
+
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [directorySearch, setDirectorySearch] = useState("");
   const [directoryQuery, setDirectoryQuery] = useState("");
 
-  const searchparams = new URLSearchParams(location.search);
-  const sortby = searchparams.get("sortby") || "All";
-
   const setSortby = (value) => {
     const next = new URLSearchParams(location.search);
     next.set("sortby", value);
     navigate(`${location.pathname}?${next.toString()}`);
-    setName("");
+  };
+
+  const setNameParam = (value) => {
+    const next = new URLSearchParams(location.search);
+    if (value) next.set("search", value);
+    else next.delete("search");
+    navigate(`${location.pathname}?${next.toString()}`);
+  };
+
+  const setDateParam = (value) => {
+    const next = new URLSearchParams(location.search);
+    if (value) next.set("date", value);
+    else next.delete("date");
+    navigate(`${location.pathname}?${next.toString()}`);
   };
 
   const directoryParams = useMemo(() => {
@@ -172,8 +184,9 @@ const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => 
     }
   };
 
+
   const filtered = useMemo(() => {
-    const q = name.trim().toLowerCase();
+    const q = nameParam.trim().toLowerCase();
     return (users || [])
       .filter((c) => {
         if (sortby === "Unread") return c?.unseen > 0;
@@ -181,9 +194,9 @@ const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => 
         return true;
       })
       .filter((c) => {
-        if (!date) return true;
+        if (!dateParam) return true;
         const d = c?.message?.createdAt ? moment(c.message.createdAt).format("YYYY-MM-DD") : "";
-        return d === date;
+        return d === dateParam;
       })
       .filter((c) => {
         if (!q) return true;
@@ -191,21 +204,9 @@ const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => 
           c?.user?.name?.toLowerCase()?.includes(q) ||
           c?.user?.username?.toLowerCase()?.includes(q)
         );
-      })
-      .sort((a, b) => new Date(b?.updatedAt || 0) - new Date(a?.updatedAt || 0));
-  }, [users, sortby, date, name]);
+      });
+  }, [users, sortby, dateParam, nameParam]);
 
-  const counts = useMemo(
-    () => ({
-      Unread: (users || []).filter((c) => c?.unseen > 0).length,
-      Favourite: (users || []).filter((c) => c?.marked).length,
-    }),
-    [users]
-  );
-
-  useEffect(() => setPage(1), [sortby, name, date]);
-
-  const visible = filtered.slice(0, page * PAGE);
   const tabs = ["All", "Unread", "Favourite"];
 
   return (
@@ -276,7 +277,7 @@ const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => 
                     <DatePicker
                       className="w-full"
                       allowClear
-                      onChange={(d) => setDate(d ? moment(d.$d).format("YYYY-MM-DD") : "")}
+                      onChange={(d) => setDateParam(d ? moment(d.$d).format("YYYY-MM-DD") : "")}
                     />
                   </div>
                   <button
@@ -295,7 +296,7 @@ const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => 
                 <IconButton
                   icon={AdjustmentsHorizontalIcon}
                   label="Filters"
-                  active={!!date || filterOpen}
+                  active={!!dateParam || filterOpen}
                 />
               </span>
             </Popover>
@@ -307,8 +308,8 @@ const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => 
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <input
             type="search"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={nameParam}
+            onChange={(e) => setNameParam(e.target.value)}
             placeholder="Search conversations"
             aria-label="Search conversations"
             className="w-full h-10 pl-9 pr-3 text-sm text-gray-800 bg-gray-100 rounded-xl outline-none placeholder:text-gray-400 focus:bg-gray-50 focus:ring-2 focus:ring-brand/30 transition-colors"
@@ -318,7 +319,7 @@ const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => 
         <div className="flex items-center gap-1.5 mt-3">
           {tabs.map((tab) => {
             const on = sortby === tab;
-            const count = counts[tab];
+            const count = counts?.[tab];
             return (
               <button
                 key={tab}
@@ -328,7 +329,7 @@ const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => 
                 }`}
               >
                 {tab}
-                {!!count && (
+                {count !== undefined && count > 0 && (
                   <span
                     className={`px-1.5 rounded-full text-[10px] font-bold tabular-nums ${
                       on ? "bg-white/25 text-white" : "bg-white text-gray-500"
@@ -351,15 +352,17 @@ const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => 
               <ChatRowSkeleton key={i} />
             ))}
           </div>
-        ) : visible.length ? (
+        ) : filtered?.length ? (
           <Virtuoso
-            data={visible}
+            style={{ height: "100%" }}
+            data={filtered}
             overscan={400}
             endReached={() => {
-              if (visible.length < filtered.length) setPage((p) => p + 1);
+              if (hasNextPage && !isFetchingNextPage) fetchNextPage();
             }}
             itemContent={(_, chat) => (
               <ChatRow
+                key={chat?._id}
                 chat={chat}
                 currentUserId={user?._id}
                 activeId={activeId}
@@ -371,9 +374,9 @@ const ChatList = ({ users, refetch, loading, activeId, onOpen, onOpenMenu }) => 
         ) : (
           <EmptyState
             icon={ChatBubbleLeftRightIcon}
-            title={name || date ? "Nothing matches" : "No conversations yet"}
+            title={nameParam || dateParam ? "Nothing matches" : "No conversations yet"}
             hint={
-              name || date
+              nameParam || dateParam
                 ? "Try a different name, or clear the day filter."
                 : "Start a conversation and it will show up here."
             }

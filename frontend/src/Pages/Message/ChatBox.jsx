@@ -148,13 +148,16 @@ const ChatBox = ({ chatId, onBack }) => {
     <section className="flex flex-col h-full min-h-0 bg-canvas">
       {user?.role === "admin" && (
         <Modal
-          title="User profile"
+          title={null}
+          closable={false}
           open={showProfile}
           footer={null}
           onCancel={() => setShowProfile(false)}
           destroyOnClose
+          centered
+          width={540}
         >
-          <UserProfile uid={chatUserId} />
+          <UserProfile uid={chatUserId} onClose={() => setShowProfile(false)} />
         </Modal>
       )}
 
@@ -181,7 +184,7 @@ const ChatBox = ({ chatId, onBack }) => {
             </span>
             <span
               className={`flex items-center gap-1.5 text-xs ${
-                typing ? "text-brand font-semibold" : chatUser?.active ? "text-emerald-600" : "text-gray-400"
+                typing ? "text-brand font-semibold" : chatUser?.active ? "text-green-600 font-medium" : "text-gray-400"
               }`}
             >
               {status === "typing" ? (

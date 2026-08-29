@@ -26,7 +26,7 @@ export const PresenceAvatar = ({ name, active, size = 44, showPresence = true })
       {showPresence && (
         <span
           className={`absolute bottom-0 right-0 rounded-full border-2 border-white ${
-            active ? "bg-emerald-500" : "bg-gray-300"
+            active ? "bg-green-500" : "bg-gray-300"
           }`}
           style={{ width: dot, height: dot }}
         />

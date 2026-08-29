@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useQuery } from "react-query";
+import { useInfiniteQuery, useQueryClient } from "react-query";
 import { useSelector } from "react-redux";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { ClockIcon } from "@heroicons/react/24/outline";
@@ -27,57 +27,116 @@ const Message = () => {
   const outlet = useOutletContext();
   const onOpenMenu = outlet?.toggleSidebar;
 
+  const queryClient = useQueryClient();
+
   const params = new URLSearchParams(location.search);
   const chatId = params.get("chat");
+  const sortby = params.get("sortby") || "All";
+  const search = params.get("search") || "";
+  const date = params.get("date") || "";
 
-  const [chats, setChats] = useState([]);
-
-  const { refetch, isLoading } = useQuery({
-    queryKey: ["chat-list", user?._id],
-    queryFn: async () => {
-      const res = await api.get(`/message/user/${user?._id}`);
-      return res.data || [];
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+    isFetchingNextPage
+  } = useInfiniteQuery({
+    queryKey: ["chat-list", user?._id, sortby],
+    queryFn: async ({ pageParam = null }) => {
+      const res = await api.get(`/message/user/${user?._id}`, {
+        params: { cursor: pageParam, sortby, limit: 40 },
+      });
+      return res.data;
     },
+    getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
     enabled: !!user?._id,
-    onSuccess: setChats,
   });
+
+  const chats = data?.pages?.flatMap(page => page?.chats || []) || [];
+  const counts = {
+    All: data?.pages?.[0]?.totalAll || 0,
+    Favourite: data?.pages?.[0]?.totalFavourite || 0,
+    Unread: data?.pages?.[0]?.totalUnread || 0,
+  };
 
   // Move the conversation a new message belongs to to the top of the list and
   // refresh its preview, without refetching the whole list.
   useEffect(() => {
     if (!message) return;
-    setChats((prev) => {
-      const i = prev.findIndex(
-        (c) =>
-          String(c._id) === String(message.chat) ||
-          (String(c?.user?._id) === String(message.sender) &&
-            String(c?.owner?._id || c?.owner) === String(message.receiver))
-      );
-      if (i === -1) return prev;
+    queryClient.setQueryData(["chat-list", user?._id, sortby], (oldData) => {
+      if (!oldData) return oldData;
+      
+      let foundChat = null;
+      let chatPageIdx = -1;
+      let chatItemIdx = -1;
+      
+      for (let i = 0; i < oldData.pages.length; i++) {
+        const page = oldData.pages[i];
+        const idx = page.chats.findIndex(
+          (c) =>
+            String(c._id) === String(message.chat) ||
+            (String(c?.user?._id) === String(message.sender) &&
+              String(c?.owner?._id || c?.owner) === String(message.receiver))
+        );
+        if (idx !== -1) {
+          foundChat = page.chats[idx];
+          chatPageIdx = i;
+          chatItemIdx = idx;
+          break;
+        }
+      }
+      
+      if (!foundChat) {
+         // Chat not found in current loaded pages, could refetch here if needed
+         return oldData;
+      }
 
-      const incoming = String(message.sender) === String(prev[i]?.user?._id);
-      const isOpen = String(prev[i]._id) === String(chatId);
-      const updated = {
-        ...prev[i],
+      const incoming = String(message.sender) === String(foundChat?.user?._id);
+      const isOpen = String(foundChat._id) === String(chatId);
+      const updatedChat = {
+        ...foundChat,
         message,
         updatedAt: new Date().toISOString(),
-        unseen: incoming && !isOpen ? (prev[i].unseen || 0) + 1 : prev[i].unseen,
+        unseen: incoming && !isOpen ? (foundChat.unseen || 0) + 1 : foundChat.unseen,
       };
-      return [updated, ...prev.slice(0, i), ...prev.slice(i + 1)];
+      
+      const newPages = oldData.pages.map((page, i) => {
+         if (i === chatPageIdx) {
+            return {
+               ...page,
+               chats: page.chats.filter((_, idx) => idx !== chatItemIdx)
+            }
+         }
+         return page;
+      });
+      
+      newPages[0].chats = [updatedChat, ...newPages[0].chats];
+      
+      return { ...oldData, pages: newPages };
     });
-  }, [message, chatId]);
+  }, [message, chatId, user?._id, sortby, queryClient]);
 
   const openChat = useCallback(
     (id) => {
       const next = new URLSearchParams(location.search);
       next.set("chat", id);
       navigate(`${location.pathname}?${next.toString()}`);
+      
       // Clearing the badge locally keeps the list honest until the next refetch.
-      setChats((prev) =>
-        prev.map((c) => (String(c._id) === String(id) ? { ...c, unseen: 0 } : c))
-      );
+      queryClient.setQueryData(["chat-list", user?._id, sortby], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+           ...oldData,
+           pages: oldData.pages.map(page => ({
+              ...page,
+              chats: page.chats.map(c => String(c._id) === String(id) ? { ...c, unseen: 0 } : c)
+           }))
+        }
+      });
     },
-    [location.pathname, location.search, navigate]
+    [location.pathname, location.search, navigate, user?._id, sortby, queryClient]
   );
 
   const closeChat = useCallback(() => {
@@ -117,8 +176,12 @@ const Message = () => {
           <div className={`min-h-0 h-full ${chatId ? "hidden lg:block" : "block"}`}>
             <ChatList
               users={chats}
+              counts={counts}
               loading={isLoading}
               refetch={refetch}
+              fetchNextPage={fetchNextPage}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
               activeId={chatId}
               onOpen={openChat}
               onOpenMenu={onOpenMenu}

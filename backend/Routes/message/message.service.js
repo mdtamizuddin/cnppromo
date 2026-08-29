@@ -1,5 +1,6 @@
 const Chat = require("./chat.model")
 const Message = require("./message.model")
+const mongoose = require('mongoose')
 const fs = require('fs')
 const createMessage = async (data) => {
     try {
@@ -141,51 +142,94 @@ const getChats = async (filter = {}) => {
 //     }
 // };
 
-const chatByUser = async (id) => {
+const chatByUser = async (id, query = {}) => {
     try {
-        // Fetch chats with population
-        const chats = await Chat.find({ owner: id })
+        const { cursor, sortby, limit = 40 } = query;
+        const parsedLimit = parseInt(limit) || 40;
+
+        const filter = { owner: id };
+
+        if (sortby === "Favourite") {
+            filter.marked = true;
+        }
+
+        if (cursor) {
+            const [cursorUpdatedAt, cursorId] = cursor.split('_');
+            if (cursorUpdatedAt && cursorId) {
+                filter.$or = [
+                    { updatedAt: { $lt: new Date(cursorUpdatedAt) } },
+                    {
+                        updatedAt: new Date(cursorUpdatedAt),
+                        _id: { $lt: cursorId }
+                    }
+                ];
+            }
+        }
+
+        // Fetch limited chats using the compound index { owner: 1, updatedAt: -1, _id: -1 }
+        const chats = await Chat.find(filter)
             .populate('user', 'name username active lastActive')
             .populate('message')
-            .sort({ updatedAt: -1 });
+            .sort({ updatedAt: -1, _id: -1 })
+            .limit(parsedLimit + 1);
 
-        // Filter out any chats where owner or user is missing
-        const validChats = chats.filter(chat => chat.owner && chat.user);
+        const hasNextPage = chats.length > parsedLimit;
+        const pagedChats = hasNextPage ? chats.slice(0, parsedLimit) : chats;
 
-        // Extract user IDs for unseen message counting
+        let nextCursor = null;
+        if (hasNextPage && pagedChats.length > 0) {
+            const lastChat = pagedChats[pagedChats.length - 1];
+            nextCursor = `${lastChat.updatedAt.toISOString()}_${lastChat._id}`;
+        }
+
+        const validChats = pagedChats.filter(chat => chat.owner && chat.user);
         const userIds = validChats.map(chat => chat.user._id);
-        const ownerId = validChats.map(chat => chat.owner._id);
 
-        // Count unseen messages in a single query
-        const unseenCounts = await Message.aggregate([
-            {
-                $match: {
-                    receiver: { $in: ownerId },
-                    seen: { $in: [false, null] }
+        // Fetch global counts & unseen counts in parallel
+        const [totalAll, totalFavourite, unseenSenders, unseenCounts] = await Promise.all([
+            Chat.countDocuments({ owner: id }),
+            Chat.countDocuments({ owner: id, marked: true }),
+            Message.aggregate([
+                { $match: { receiver: new mongoose.Types.ObjectId(id), seen: { $in: [false, null] } } },
+                { $group: { _id: "$sender" } }
+            ]),
+            userIds.length > 0 ? Message.aggregate([
+                {
+                    $match: {
+                        receiver: new mongoose.Types.ObjectId(id),
+                        sender: { $in: userIds },
+                        seen: { $in: [false, null] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$sender",
+                        count: { $sum: 1 }
+                    }
                 }
-            },
-            {
-                $group: {
-                    _id: { receiver: "$receiver", sender: "$sender" },
-                    count: { $sum: 1 }
-                }
-            }
+            ]) : []
         ]);
-        // Create a map for quick lookup of unseen message counts
+
         const unseenMap = unseenCounts.reduce((acc, { _id, count }) => {
-            acc[`${_id.receiver}-${_id.sender}`] = count;
+            acc[_id.toString()] = count;
             return acc;
         }, {});
 
-        // Map unseen counts back to chats
         const unseenMessages = validChats.map(chat => {
-            const key = `${chat.owner._id}-${chat.user._id}`;
+            const doc = chat.toObject ? chat.toObject() : chat;
             return {
-                ...chat._doc,
-                unseen: unseenMap[key] || 0
+                ...doc,
+                unseen: unseenMap[chat.user._id.toString()] || 0
             };
         });
-        return unseenMessages;
+
+        return {
+            chats: unseenMessages,
+            nextCursor,
+            totalAll,
+            totalFavourite,
+            totalUnread: unseenSenders.length
+        };
     } catch (error) {
         throw new Error(error.message || 'Error fetching chats');
     }

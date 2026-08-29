@@ -77,7 +77,7 @@ const chatByUser = async (req, res) => {
     try {
         // A regular user may only list their own conversations, whatever id they ask for.
         const targetId = isPrivileged(req) ? req.params.id : req.user._id.toString();
-        const result = await messageService.chatByUser(targetId);
+        const result = await messageService.chatByUser(targetId, req.query);
         res.send(result);
     } catch (error) {
         res.status(500).send({
