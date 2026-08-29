@@ -1,43 +1,59 @@
-import { LoginOutlined, MessageOutlined } from '@ant-design/icons';
-import { Button, Avatar } from 'antd';
-import React from 'react';
-import toast from 'react-hot-toast';
-import { useSelector } from 'react-redux';
-import { api } from '../../util/axios';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
+import { api } from "../../util/axios";
+import { PresenceAvatar } from "./components/Primitives";
 
 const UserCard = ({ user, setOpen }) => {
-    const { user: currentUser } = useSelector(state => state.user)
-    const navigate = useNavigate();
-    const searchparams = new URLSearchParams(window.location.search);
-    const chatHandler = async () => {
-        try {
-            const newChat = { owner: currentUser?._id, user: user?._id }
-            const res = await api.post('/message/chat', newChat)
-            searchparams.set('chat', res.data._id)
-            navigate(`/message?${searchparams.toString()}`)
-            setOpen(false)
-        } catch (error) {
-            toast.error(error?.response?.data?.message || 'Something went wrong')
-        }
+  const { user: currentUser } = useSelector((state) => state.user);
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+
+  const startChat = async () => {
+    if (busy) return;
+    try {
+      setBusy(true);
+      const res = await api.post("/message/chat", { owner: currentUser?._id, user: user?._id });
+      const params = new URLSearchParams(window.location.search);
+      params.set("chat", res.data._id);
+      navigate(`${window.location.pathname}?${params.toString()}`);
+      setOpen(false);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Could not open that conversation");
+    } finally {
+      setBusy(false);
     }
-    return (
-        <div className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 hover:bg-gray-100 focus:outline-none gap-x-4">
-            <Avatar size={50} style={{ minWidth: "50px", minHeight: "50px" }} className='w-10 h-10 rounded-full border-primary'>
-                {user?.name?.slice(0, 1)}
-            </Avatar>
-            <div className="w-full pb-2">
-                <div className="flex justify-between">
-                    <span className="block ml-2 font-semibold text-gray-600">{user?.name}</span>
-                    <span className="block ml-2 text-xs text-gray-600">{user?.username}</span>
-                </div>
-                <span className="block ml-2 text-sm text-gray-600">{user?.phone}</span>
-            </div>
-            <Button type='primary' onClick={chatHandler}>
-                <MessageOutlined />
-            </Button>
-        </div>
-    );
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={startChat}
+      disabled={busy}
+      className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-left
+        hover:bg-gray-50 disabled:opacity-60 transition-colors
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+    >
+      <PresenceAvatar name={user?.name} active={user?.active} size={44} />
+      <span className="flex-1 min-w-0">
+        <span className="flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold text-gray-800 truncate">{user?.name}</span>
+          <span className="text-[10px] text-gray-400 shrink-0">{user?.username}</span>
+        </span>
+        <span className="block text-xs text-gray-500 truncate mt-0.5">
+          {user?.phone || user?.email || " "}
+        </span>
+      </span>
+      <span
+        className="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-100 text-gray-500 shrink-0
+          group-hover:bg-brand-soft group-hover:text-brand transition-colors"
+      >
+        <ChatBubbleLeftRightIcon className="w-[18px] h-[18px]" />
+      </span>
+    </button>
+  );
 };
 
 export default UserCard;

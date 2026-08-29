@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useRef } from "react";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
@@ -16,7 +16,17 @@ export const SocketProvider = ({ children }) => {
   const [message, setMessage] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  const sound = new Audio("/norification.wav");
+  // Held in a ref: building an Audio element in the render body allocated a fresh
+  // decoder on every render of a provider that wraps the whole app.
+  const soundRef = useRef(null);
+  const playChime = () => {
+    if (!soundRef.current) soundRef.current = new Audio("/norification.wav");
+    soundRef.current.currentTime = 0;
+    soundRef.current.play().catch(() => {
+      // Browsers reject playback until the user has interacted with the page.
+    });
+  };
+
   useEffect(() => {
     const token = Cookie.get("token-you");
     if (user?._id && token) {
@@ -48,7 +58,7 @@ export const SocketProvider = ({ children }) => {
       const handleMessage = (data) => {
         setMessage(data);
         if (data?.receiver === user?._id) {
-          sound.play();
+          playChime();
           addNotification({
             title: "You have a new message",
             message: data.message || "...",

@@ -113,14 +113,56 @@ background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
 }
 
 .message {
-  background: rgb(2, 0, 36);
-  background: linear-gradient(
-    90deg,
-    rgba(2, 0, 36, 1) 0%,
-    rgba(9, 9, 121, 1) 45%,
-    rgb(5, 113, 135) 100%
-  );
+  /* The messaging surface sits on the same ground as the rest of the app. The old
+     navy-to-teal gradient predated that system and fought both the list rail and
+     the conversation header. */
+  background: #f8faff;
   font-weight: 400;
+}
+
+/* Typing indicator. Each dot is offset by its own animation-delay. */
+@keyframes chat-typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+.chat-typing-dot {
+  animation: chat-typing-bounce 1.1s ease-in-out infinite;
+}
+
+/* Rows inside the bubble action menu. */
+.chat-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 8px;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+.chat-menu-item:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+/* Keeps the day marker legible while it floats over the messages behind it. */
+.chat-date-pill {
+  backdrop-filter: blur(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-typing-dot {
+    animation: none;
+    opacity: 0.7;
+  }
 }
 
 

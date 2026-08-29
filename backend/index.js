@@ -236,12 +236,12 @@ app.get("/files/:filename", (req, res) => {
 });
 
 // Socket.IO Connection and Chat Handling
-const connectedSockets = new Map();
-const sendToSpecificUser = (socketId, data, funname) => {
-  if (connectedSockets.has(socketId)) {
-    const socket2 = connectedSockets.get(socketId);
-    socket2.emit(funname, data);
-  }
+// Every socket joins a room named after its user id. A Map holding one socket per
+// user meant a second tab silently evicted the first, which then stopped receiving
+// anything; a room fans out to every live connection that user has.
+const sendToSpecificUser = (userId, data, funname) => {
+  if (!userId) return;
+  io.to(String(userId)).emit(funname, data);
 };
 
 // Socket handshakes must carry the same bearer token the REST API uses.
@@ -293,7 +293,7 @@ const statusUpdater = async (socketId, status) => {
 
 io.on("connection", (socket) => {
   const userId = socket.userId;
-  connectedSockets.set(userId, socket);
+  socket.join(userId);
   statusUpdater(userId, true);
 
   socket.on("message", async (data) => {
@@ -353,11 +353,38 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("disconnect", () => {
-    // A second tab may already have replaced this entry; only tear down our own.
-    if (connectedSockets.get(userId) !== socket) return;
-    connectedSockets.delete(userId);
-    statusUpdater(userId, false);
+  socket.on("typing", async (data) => {
+    try {
+      if (!data?.chat) return;
+      const chat = await Chat.findById(data.chat);
+      if (!chat) return;
+      if (chat.owner?.toString() !== userId && chat.user?.toString() !== userId) return;
+
+      // Each participant owns their own Chat document, so the typist's chat id is
+      // meaningless on the other side. Relay the typist's *user* id, which is what
+      // the receiver already identifies the conversation by.
+      const other =
+        chat.owner?.toString() === userId
+          ? chat.user?.toString()
+          : chat.owner?.toString();
+
+      sendToSpecificUser(other, { from: userId, stop: !!data.stop }, "typing");
+    } catch (error) {
+      console.error("socket typing handler error:", error.message);
+    }
+  });
+
+  socket.on("disconnect", async () => {
+    try {
+      // Only go offline once the user's last connection is gone — closing one of
+      // several open tabs must not mark a still-connected user away.
+      const remaining = await io.in(userId).fetchSockets();
+      if (remaining.length === 0) {
+        statusUpdater(userId, false);
+      }
+    } catch (error) {
+      console.error("socket disconnect handler error:", error.message);
+    }
   });
 });
 

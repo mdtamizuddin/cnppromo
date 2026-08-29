@@ -2,7 +2,7 @@ import React from "react";
 import { useSocketContext } from "../../Components/SocketContext";
 import { useQuery } from "react-query";
 import { api } from "../../util/axios";
-import { LinkifyText } from "./ChatBox";
+import { LinkifyText } from "./components/MessageBubble";
 import { Image } from "antd";
 import {
   ArrowRightOutlined,

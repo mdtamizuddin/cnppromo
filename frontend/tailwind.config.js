@@ -12,7 +12,12 @@ export default withMT({
       colors: {
         'primary': '#050C9C',
         "secondary": "#3ABEF9",
-        "T2": "#E52548"
+        "T2": "#E52548",
+        // Messaging surface tokens. `brand` is the interactive accent the
+        // newest screens already use; `canvas` is the app-wide page ground.
+        "brand": "#5a32fa",
+        "brand-soft": "#efeaff",
+        "canvas": "#f8faff"
       }
     },
   },

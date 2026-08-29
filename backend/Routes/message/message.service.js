@@ -190,18 +190,30 @@ const chatByUser = async (id) => {
         throw new Error(error.message || 'Error fetching chats');
     }
 };
+// Anything the user types is matched literally. Passing raw input to $regex lets a
+// stray `(` throw, and a crafted pattern like `(a+)+$` pin the event loop.
+const escapeRegex = (text) => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const SEARCH_LIMIT = 50;
+
 const searchMessages = async (query) => {
     try {
         const { user, text } = query;
+
+        if (!text || !String(text).trim()) {
+            return { total: 0, messages: [] };
+        }
 
         const result = await Message.find({
             $or: [
                 { sender: user },
                 { receiver: user }
             ],
-            message: { $regex: text, $options: 'i' }
+            message: { $regex: escapeRegex(text.trim()), $options: 'i' }
         }).populate('sender', 'name username active lastActive')
             .populate('receiver', 'name username active lastActive')
+            .sort({ _id: -1 })
+            .limit(SEARCH_LIMIT)
 
         return {
             total: result.length,

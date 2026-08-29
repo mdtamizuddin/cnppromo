@@ -29,6 +29,11 @@ const ChatSchema = new Schema(
   }
 );
 
+// Chat list pages sort by updatedAt desc; updatedAt is not unique, so _id is the
+// tie-break and both belong in the index that serves the cursor.
+ChatSchema.index({ owner: 1, updatedAt: -1, _id: -1 });
+ChatSchema.index({ owner: 1, marked: 1, updatedAt: -1 });
+
 const Chat = mongoose.model('Chat', ChatSchema);
 
 

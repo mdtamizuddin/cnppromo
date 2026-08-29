@@ -1,271 +1,378 @@
-import {
-  AudioOutlined,
-  CameraFilled,
-  FileImageFilled,
-  VideoCameraFilled,
-} from "@ant-design/icons";
-import React, { useState, useRef, useEffect } from "react";
-import { api } from "../../util/axios";
-import { Spin, Popover, Input } from "antd";
-import { useSocketContext } from "../../Components/SocketContext";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Popover } from "antd";
 import toast from "react-hot-toast";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import {
+  PaperClipIcon,
+  CameraIcon,
+  PhotoIcon,
+  VideoCameraIcon,
+  MicrophoneIcon,
+  PaperAirplaneIcon,
+  XMarkIcon,
+  StopIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
+import { api } from "../../util/axios";
+import { useSocketContext } from "../../Components/SocketContext";
 
-const WriteChat = ({ socket, chat, reply, setReply }) => {
-  const [loading, setLoading] = useState(false);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
+const MAX_ROWS_PX = 132; // roughly six lines before the field starts scrolling
+
+const Composer = ({ socket, chat, reply, setReply }) => {
   const { connected } = useSocketContext();
+  const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(null); // 'image' | 'video' | null
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
-  const [message, setMessage] = useState("");
-  const [recordLength, setRecordLength] = useState(1);
+  const [recordLength, setRecordLength] = useState(0);
+  const [attachOpen, setAttachOpen] = useState(false);
+
+  const textareaRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const videoInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
-
   const typingTimerRef = useRef(null);
 
+  const hasText = message.trim().length > 0;
+
+  /* ── Auto-grow ──────────────────────────────────────────────────────── */
   useEffect(() => {
-    if (message && chat && connected) {
-      socket.emit("typing", { chat: chat?._id, sender: chat?.owner?._id, receiver: chat?.user?._id });
-      clearTimeout(typingTimerRef.current);
-      typingTimerRef.current = setTimeout(() => {
-        socket.emit("typing", { chat: chat?._id, sender: chat?.owner?._id, receiver: chat?.user?._id, stop: true });
-      }, 2000);
-    }
-    return () => clearTimeout(typingTimerRef.current);
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, MAX_ROWS_PX)}px`;
   }, [message]);
 
+  /* ── Typing signal ──────────────────────────────────────────────────── */
+  useEffect(() => {
+    if (!message || !chat || !connected || !socket) return;
+    // Sender and recipient are both derived server-side from the chat document.
+    socket.emit("typing", { chat: chat?._id });
+    clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(() => {
+      socket.emit("typing", { chat: chat?._id, stop: true });
+    }, 2000);
+    return () => clearTimeout(typingTimerRef.current);
+  }, [message, chat, connected, socket]);
+
+  /* ── Recording timer ────────────────────────────────────────────────── */
   useEffect(() => {
     if (isRecording) {
-      intervalRef.current = setInterval(() => {
-        setRecordLength((prev) => prev + 1);
-      }, 1000);
+      intervalRef.current = setInterval(() => setRecordLength((p) => p + 1), 1000);
     }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
+    return () => clearInterval(intervalRef.current);
   }, [isRecording]);
 
+  // Releasing the mic on unmount matters: leaving the track live keeps the
+  // browser's recording indicator on after the user has navigated away.
+  useEffect(
+    () => () => {
+      streamRef.current?.getTracks?.().forEach((t) => t.stop());
+      clearInterval(intervalRef.current);
+      clearTimeout(typingTimerRef.current);
+    },
+    []
+  );
+
+  const emit = (payload) => {
+    socket.emit("message", {
+      receiver: chat?.user?._id,
+      chat: chat?._id,
+      reply: reply?._id || null,
+      ...payload,
+    });
+    setReply(null);
+  };
+
+  /* ── Send text ──────────────────────────────────────────────────────── */
+  const sendText = (e) => {
+    e?.preventDefault();
+    if (!connected) return toast.error("Still reconnecting — hold on a moment");
+    const text = message.trim();
+    if (!text) return;
+    emit({ message: text });
+    setMessage("");
+    socket.emit("typing", { chat: chat?._id, stop: true });
+  };
+
+  // Enter sends, Shift+Enter breaks the line. The old single-line input made a
+  // newline impossible to type at all.
+  const onKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendText();
+    }
+  };
+
+  /* ── Attachments ────────────────────────────────────────────────────── */
+  const uploadImage = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // let the same file be picked twice in a row
+    if (!file || !connected) return;
+    try {
+      setUploading("image");
+      const form = new FormData();
+      form.append("image", file);
+      const res = await api.post("/upload", form);
+      emit({ image: res.data.url });
+    } catch {
+      toast.error("Could not send the photo");
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const uploadVideo = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.includes("video")) {
+      return toast.error("Pick a video file (MP4, WebM or Ogg)");
+    }
+    try {
+      setUploading("video");
+      const form = new FormData();
+      form.append("video", file);
+      const res = await api.post("/upload/video", form);
+      emit({ video: res.data.url });
+    } catch {
+      toast.error("Could not send the video");
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  /* ── Voice ──────────────────────────────────────────────────────────── */
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.ondataavailable = (event) => setAudioBlob(event.data);
-      mediaRecorder.start();
-      setRecordLength(1);
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      recorder.ondataavailable = (ev) => setAudioBlob(ev.data);
+      recorder.start();
+      setRecordLength(0);
       setIsRecording(true);
-    } catch (error) {
-      console.error("Error accessing microphone:", error);
+    } catch {
+      toast.error("Microphone access was blocked");
     }
   };
 
   const stopRecording = () => {
     mediaRecorderRef.current?.stop();
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
+    streamRef.current?.getTracks?.().forEach((t) => t.stop());
+    streamRef.current = null;
     setIsRecording(false);
   };
 
-  const uploadAudio = async () => {
+  const discardRecording = () => {
+    if (isRecording) stopRecording();
+    setAudioBlob(null);
+    setRecordLength(0);
+  };
+
+  const sendVoice = async () => {
     if (!audioBlob) return;
-    const formData = new FormData();
-    formData.append("audio", audioBlob, "recording.wav");
     try {
-      const response = await api.post("/upload/file", formData, {
+      setUploading("audio");
+      const form = new FormData();
+      form.append("audio", audioBlob, "recording.wav");
+      const res = await api.post("/upload/file", form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      const newMessage = {
-        receiver: chat?.user?._id,
-        sender: chat?.owner?._id,
-        chat: chat?._id,
-        audio: response.data.url,
-        reply: reply?._id || null,
-      };
-      socket.emit("message", newMessage);
+      emit({ audio: res.data.url });
       setAudioBlob(null);
-      setReply(null);
-    } catch (error) {
-      console.error("Error uploading audio:", error);
+      setRecordLength(0);
+    } catch {
+      toast.error("Could not send the voice message");
+    } finally {
+      setUploading(null);
     }
   };
 
-  const uploadIMage = async (e) => {
-    try {
-      if (!connected) return;
-      const file = e.target.files[0];
-      if (!file) return;
-      setLoading(true);
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await api.post("/upload", formData);
-      socket.emit("message", {
-        receiver: chat?.user?._id,
-        sender: chat?.owner?._id,
-        chat: chat?._id,
-        image: res.data.url,
-      });
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-      setLoading(false);
-    }
-  };
+  const mmss = `${Math.floor(recordLength / 60)}:${String(recordLength % 60).padStart(2, "0")}`;
 
-  const sendMessage = (e) => {
-    e.preventDefault();
-    if (!connected) return toast.error("Wait");
-    const msgText = e.target.message.value;
-    socket.emit("message", {
-      message: msgText,
-      receiver: chat?.user?._id,
-      sender: chat?.owner?._id,
-      chat: chat?._id,
-      reply: reply?._id || null,
-    });
-    setMessage("");
-    setReply(null);
-  };
+  // Created once per blob and revoked when it goes away; building the URL in the
+  // render body leaked one object URL per render for the whole review session.
+  const audioPreview = useMemo(
+    () => (audioBlob ? URL.createObjectURL(audioBlob) : null),
+    [audioBlob]
+  );
+  useEffect(() => {
+    if (!audioPreview) return;
+    return () => URL.revokeObjectURL(audioPreview);
+  }, [audioPreview]);
 
-  const uploadVideo = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (!file.type.includes("video")) {
-      return toast.error("Please select a valid video file (MP4, WebM, Ogg, etc).");
-    }
-    const formData = new FormData();
-    formData.append("video", file);
-    try {
-      setUploadingVideo(true);
-      const res = await api.post("/upload/video", formData);
-      socket.emit("message", {
-        receiver: chat?.user?._id,
-        sender: chat?.owner?._id,
-        chat: chat?._id,
-        video: res.data.url,
-        reply: reply?._id || null,
-      });
-      setUploadingVideo(false);
-      setReply(null);
-    } catch (error) {
-      console.error(error);
-      setUploadingVideo(false);
-    }
-  };
+  /* ── Recording / review bar replaces the composer while active ──────── */
+  if (isRecording || audioBlob) {
+    return (
+      <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-2.5">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={discardRecording}
+            aria-label="Discard recording"
+            className="flex items-center justify-center w-9 h-9 rounded-full text-gray-400
+              hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0"
+          >
+            <TrashIcon className="w-[18px] h-[18px]" />
+          </button>
 
-  const openCamera = () => {
-    document.getElementById("file")?.setAttribute("capture", "environment");
-    document.getElementById("file")?.click();
-  };
+          {isRecording ? (
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
+              <span className="text-sm font-semibold text-gray-700 tabular-nums">{mmss}</span>
+              <span className="text-xs text-gray-400 truncate">Recording…</span>
+            </div>
+          ) : (
+            <audio controls src={audioPreview} className="flex-1 min-w-0 h-9" />
+          )}
 
-  const openGallery = () => {
-    document.getElementById("file")?.removeAttribute("capture");
-    document.getElementById("file")?.click();
-  };
-
-  if (!connected) {
-    return <div className="p-3 text-center text-white text-sm">Reconnecting...</div>;
+          <button
+            type="button"
+            onClick={isRecording ? stopRecording : sendVoice}
+            disabled={uploading === "audio"}
+            aria-label={isRecording ? "Stop recording" : "Send voice message"}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-brand text-white
+              shadow-sm hover:bg-brand/90 disabled:opacity-50 transition-colors shrink-0
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+          >
+            {uploading === "audio" ? (
+              <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+            ) : isRecording ? (
+              <StopIcon className="w-[18px] h-[18px]" />
+            ) : (
+              <PaperAirplaneIcon className="w-[18px] h-[18px] -rotate-45 -ml-0.5" />
+            )}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <form onSubmit={sendMessage} className="relative shrink-0">
+    <div className="shrink-0 border-t border-gray-100 bg-white">
+      {!connected && (
+        <div className="px-4 py-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50 border-b border-amber-100">
+          Reconnecting… your message will send once you're back online.
+        </div>
+      )}
+
       {reply && (
-        <div className="flex items-center justify-between px-3 py-1.5 bg-gray-100 border-t border-gray-200 text-xs text-gray-600">
-          <div className="truncate min-w-0">
-            <span className="font-medium">Reply to: </span>
-            <span>
-              {reply.message
-                ? reply.message.slice(0, 50)
-                : reply.audio ? "Voice Message" : reply.video ? "A Video" : "Image"}
-            </span>
+        <div className="flex items-center gap-2 px-3 py-2 bg-brand-soft/50 border-b border-gray-100">
+          <span className="w-0.5 self-stretch rounded-full bg-brand shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-brand">Replying to</p>
+            <p className="text-xs text-gray-600 truncate">
+              {reply.message ||
+                (reply.audio ? "Voice message" : reply.video ? "Video" : "Photo")}
+            </p>
           </div>
-          <button type="button" onClick={() => setReply(null)} className="shrink-0 ml-2 text-gray-400 hover:text-gray-600">
-            <FontAwesomeIcon icon={faXmark} />
+          <button
+            type="button"
+            onClick={() => setReply(null)}
+            aria-label="Cancel reply"
+            className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-white shrink-0"
+          >
+            <XMarkIcon className="w-4 h-4" />
           </button>
         </div>
       )}
-      <div className="flex items-end gap-2 p-2 bg-white border-t border-gray-200">
-        <div className="flex items-center gap-1 shrink-0">
-          <input onChange={uploadIMage} accept="image/*" type="file" id="file" className="hidden" />
-          <Popover
-            trigger={"click"}
-            content={
-              <div className="flex items-center gap-x-3 text-lg text-red-400">
-                <CameraFilled onClick={openCamera} />
-                <FileImageFilled onClick={openGallery} />
-              </div>
-            }
+
+      <form onSubmit={sendText} className="flex items-end gap-2 p-2.5">
+        <input ref={imageInputRef} onChange={uploadImage} accept="image/*" type="file" className="hidden" />
+        <input ref={videoInputRef} onChange={uploadVideo} accept="video/*" type="file" className="hidden" />
+
+        <Popover
+          trigger="click"
+          placement="topLeft"
+          open={attachOpen}
+          onOpenChange={setAttachOpen}
+          content={
+            <div className="flex flex-col min-w-[168px] text-sm text-gray-700">
+              <button
+                className="chat-menu-item"
+                onClick={() => {
+                  setAttachOpen(false);
+                  imageInputRef.current?.removeAttribute("capture");
+                  imageInputRef.current?.click();
+                }}
+              >
+                <PhotoIcon className="w-4 h-4 text-brand" /> Photo
+              </button>
+              <button
+                className="chat-menu-item"
+                onClick={() => {
+                  setAttachOpen(false);
+                  imageInputRef.current?.setAttribute("capture", "environment");
+                  imageInputRef.current?.click();
+                }}
+              >
+                <CameraIcon className="w-4 h-4 text-brand" /> Camera
+              </button>
+              <button
+                className="chat-menu-item"
+                onClick={() => {
+                  setAttachOpen(false);
+                  videoInputRef.current?.click();
+                }}
+              >
+                <VideoCameraIcon className="w-4 h-4 text-brand" /> Video
+              </button>
+            </div>
+          }
+        >
+          <button
+            type="button"
+            aria-label="Add an attachment"
+            className="flex items-center justify-center w-10 h-10 rounded-full text-gray-500 shrink-0
+              hover:text-brand hover:bg-brand-soft transition-colors
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
           >
-            <button className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-base cursor-pointer" type="button">
-              {loading ? <Spin /> : <CameraFilled />}
-            </button>
-          </Popover>
-          <label className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-base cursor-pointer">
-            {uploadingVideo ? <Spin /> : <VideoCameraFilled />}
-            <input onChange={uploadVideo} accept="video/*" type="file" id="video" className="hidden" />
-          </label>
-          <Popover
-            trigger={"click"}
-            content={
-              <div className="min-w-[250px] min-h-[150px] flex flex-col justify-center items-center">
-                <div onClick={isRecording ? stopRecording : startRecording}>
-                  {isRecording ? (
-                    <div className="waveform">
-                      <div className="wave"></div>
-                      <div className="wave"></div>
-                      <div className="wave"></div>
-                      <div className="wave"></div>
-                      <div className="wave"></div>
-                      {recordLength}s
-                    </div>
-                  ) : audioBlob ? null : (
-                    "Start Recording"
-                  )}
-                </div>
-                {audioBlob && (
-                  <div>
-                    <audio controls src={URL.createObjectURL(audioBlob)}></audio>
-                    <div onClick={() => setAudioBlob(null)} className="text-red-500 text-sm mt-2 cursor-pointer">Cancel</div>
-                    <div onClick={uploadAudio} className="text-green-600 text-base flex items-center gap-x-2 mt-2 cursor-pointer">
-                      Send Voice
-                      <svg className="w-3 h-3 origin-center transform rotate-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                      </svg>
-                    </div>
-                  </div>
-                )}
-              </div>
-            }
-          >
-            <button type="button" className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-base">
-              <AudioOutlined />
-            </button>
-          </Popover>
-        </div>
-        <div className="flex-1 relative">
-          <Input
-            onChange={(e) => setMessage(e.target.value)}
+            {uploading && uploading !== "audio" ? (
+              <span className="w-4 h-4 rounded-full border-2 border-gray-200 border-t-brand animate-spin" />
+            ) : (
+              <PaperClipIcon className="w-5 h-5" />
+            )}
+          </button>
+        </Popover>
+
+        <div className="flex-1 min-w-0 bg-gray-100 rounded-2xl px-3.5 py-2 focus-within:bg-gray-50 transition-colors">
+          <textarea
+            ref={textareaRef}
+            rows={1}
             value={message}
-            type="text"
-            placeholder="Type a message..."
-            className="!border-0 !shadow-none !rounded-2xl bg-gray-100 px-4 py-2.5 text-sm focus:bg-gray-50 !outline-none"
-            name="message"
-            required
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Write a message…"
+            aria-label="Message"
+            className="w-full bg-transparent text-[13.5px] leading-relaxed text-gray-800 placeholder:text-gray-400
+              resize-none outline-none max-h-[132px]"
           />
         </div>
-        <button type="submit" className="flex items-center justify-center w-9 h-9 rounded-full bg-[#180d60] hover:bg-[#2a1a8a] text-white shrink-0">
-          <svg className="w-4 h-4 origin-center transform rotate-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-          </svg>
+
+        {/* One trailing control that morphs: mic when empty, send once there's text. */}
+        <button
+          type={hasText ? "submit" : "button"}
+          onClick={hasText ? undefined : startRecording}
+          aria-label={hasText ? "Send message" : "Record a voice message"}
+          className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 transition-all duration-200
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 ${
+              hasText
+                ? "bg-brand text-white shadow-sm hover:bg-brand/90 scale-100"
+                : "bg-gray-100 text-gray-500 hover:text-brand hover:bg-brand-soft"
+            }`}
+        >
+          {hasText ? (
+            <PaperAirplaneIcon className="w-[18px] h-[18px] -rotate-45 -ml-0.5" />
+          ) : (
+            <MicrophoneIcon className="w-5 h-5" />
+          )}
         </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 };
 
-export default WriteChat;
+export default Composer;

@@ -1,288 +1,370 @@
-import {
-  FilterOutlined,
-  PlusOutlined,
-  SearchOutlined,
-  StarFilled,
-} from "@ant-design/icons";
-import { Button, Input } from "antd";
-import { Modal } from "antd";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "react-query";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { Modal, Input, DatePicker, Popover } from "antd";
+import { Virtuoso } from "react-virtuoso";
+import moment from "moment";
+import toast from "react-hot-toast";
+import {
+  MagnifyingGlassIcon,
+  PencilSquareIcon,
+  AdjustmentsHorizontalIcon,
+  StarIcon,
+  ChatBubbleLeftRightIcon,
+  PhotoIcon,
+  VideoCameraIcon,
+  MicrophoneIcon,
+} from "@heroicons/react/24/outline";
+import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import { api } from "../../util/axios";
 import UserCard from "./UserCard";
-import { Avatar } from "antd";
-import { useSelector } from "react-redux";
-import { useEffect } from "react";
-import moment from "moment/moment";
-import { useLocation } from "react-router-dom";
-import { Popover } from "antd";
-import { useState } from "react";
-import { DatePicker } from "antd";
-import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
-import { useSocketContext } from "../../Components/SocketContext";
 import SearchMessage from "./SearchMessage";
-import { Virtuoso } from "react-virtuoso";
+import { PresenceAvatar, ChatRowSkeleton, EmptyState, IconButton } from "./components/Primitives";
 
-const ChatList = ({ socket, users, open, setOpen, refetch }) => {
-  const [visible, setVisible] = React.useState(false);
-  const [search, setSearch] = React.useState("");
-  const [query, setQuery] = React.useState("");
-  const [name, setName] = React.useState("");
-  const { message } = useSocketContext();
-  const { user } = useSelector((state) => state.user);
-  const [params, setParams] = React.useState({});
-  const { data, isLoading } = useQuery({
-    queryKey: ["users-chat-list", params, message],
-    queryFn: async () => {
-      const res = await api.get(`/user`, { params });
-      return res.data || [];
-    },
-    enabled: visible && !!user,
-    refetchOnWindowFocus: false,
-  });
-  useEffect(() => {
-    if (query) {
-      setParams({ search: query, limit: 100 });
-    } else if (user?.role !== "admin") {
-      setParams({ admin: true, limit: 100 });
-    } else {
-      setParams({ limit: 100 });
-    }
-  }, [query]);
-  const [contacts, setContacts] = useState([]);
-  const location = useLocation();
-  const lo = location?.search;
-  const [date, setDate] = useState("");
-  const searchparams = new URLSearchParams(window.location.search);
-  const sortby = searchparams.get("sortby") || "All";
-  const navigate = useNavigate();
-  const setSortby = (value) => {
-    searchparams.set("sortby", value);
-    navigate(`?${searchparams.toString()}`);
-  };
-  useEffect(() => {
-    if (date) {
-      const contactsNew = users.filter((item) => {
-        const date2 = item?.message?.createdAt
-          ? moment(item?.message?.createdAt).format("YYYY-MM-DD")
-          : "";
-        return date2 === date;
-      });
-      setContacts(contactsNew);
-    }
-  }, [date]);
-  useEffect(() => {
-    setContacts(users);
-  }, [users]);
-  const [unread, setUnread] = useState(0);
-  const [favourite, setFavourite] = useState(0);
-  useEffect(() => {
-    if (contacts) {
-      setUnread(contacts.filter((item) => item?.unseen > 0).length);
-      setFavourite(contacts.filter((item) => item?.marked).length);
-    }
-  }, [contacts]);
-  const sortedContacts = contacts
-    ?.filter((item) => {
-      if (sortby === "Ununswered") return item?.message?.sender === item?.user?._id;
-      if (sortby === "Unread") return item?.unseen > 0;
-      return item;
-    })
-    .filter(
-      (u) =>
-        u?.user?.name?.toLowerCase()?.includes(name.toLowerCase()) ||
-        u?.user?.username?.toLowerCase()?.includes(name.toLowerCase())
-    )
-    .filter((u) => {
-      if (sortby === "Favourite") return u?.marked;
-      return u;
-    })
-    .sort((a, b) => (a?.updatedAt > b?.updatedAt ? -1 : 1));
-  const steps = [
-    { label: "All", key: "All" },
-    { label: "Unread", key: "Unread", count: unread },
-    { label: "Favourite", key: "Favourite", count: favourite },
-  ];
-  const [page, setPage] = useState(1);
-  const [limit] = useState(50);
-  useEffect(() => {
-    const p = searchparams.get("page") || 1;
-    if (p) setPage(p);
-  }, [lo]);
-  const [openSearch, setOpenSearch] = useState(false);
+const PAGE = 40;
 
-  const itemsPerPage = 50;
-  const pageData = sortedContacts?.slice(0, page * itemsPerPage) || [];
+/* ── Last-message preview ─────────────────────────────────────────────── */
+
+const Preview = ({ chat, currentUserId }) => {
+  const m = chat?.message;
+  if (!m) return <span className="text-xs text-gray-400 italic">No messages yet</span>;
+
+  const outgoing = String(m.sender?._id || m.sender) === String(currentUserId);
+  const icon = m.image ? PhotoIcon : m.video ? VideoCameraIcon : m.audio ? MicrophoneIcon : null;
+  const label = m.message || (m.image ? "Photo" : m.video ? "Video" : m.audio ? "Voice message" : "");
 
   return (
-    <div className="border-r h-auto border-gray-300 lg:col-span-1 lg:block bg-black">
-      <SearchMessage open={openSearch} setOpen={setOpenSearch} />
-      {visible && (
-        <Modal
-          open={visible}
-          onOk={() => setVisible(false)}
-          onCancel={() => setVisible(false)}
-          title={user?.role === "admin" ? "Start New Chat" : "Chat With Admin"}
-          loading={isLoading}
-          footer={null}
-        >
-          {user?.role === "admin" && (
-            <Input
-              placeholder="Search User"
-              suffix={<SearchOutlined onClick={() => setQuery(search)} />}
-              className="mt-3"
-              onKeyDown={(e) => { if (e.key === "Enter") setQuery(search); }}
-              onChange={(e) => setSearch(e.target.value)}
-              value={search}
-            />
-          )}
-          <div className="max-h-[75vh] overflow-y-auto mt-5">
-            {data?.users?.map((userItem, index) => (
-              <UserCard setOpen={setVisible} key={userItem?._id || index} user={userItem} />
-            ))}
-          </div>
-        </Modal>
-      )}
-      <div className="flex py-3 justify-between items-center px-3">
-        <Input
-          suffix={
-            <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} viewBox="0 0 24 24" className="w-5 h-5 text-gray-300">
-              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          }
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          type="search"
-          className="w-full lg:min-w-[250px] lg:max-w-[300px]"
-          name="search"
-          placeholder="Search User"
-          required
-        />
-        <div className="flex gap-x-3 text-white">
-          <button className="p-2 text-lg" onClick={() => setVisible(true)}>
-            <PlusOutlined />
-          </button>
-          <Popover
-            trigger={"click"}
-            content={
-              <div className="flex flex-col space-y-2">
-                <Button type="primary" size="small" onClick={() => setOpenSearch(true)}>
-                  Search Message
-                </Button>
-                <DatePicker
-                  onChange={(e) => {
-                    if (e) setDate(moment(e.$d).format("YYYY-MM-DD"));
-                    else { setDate(""); setContacts(users); }
-                  }}
-                  className="w-[200px]"
-                />
-              </div>
-            }
-            placement="bottom"
-          >
-            <button className="p-2 text-lg"><FilterOutlined /></button>
-          </Popover>
-        </div>
-      </div>
-      <div className="flex justify-around overflow-x-auto">
-        {steps?.map((item, index) => (
-          <div
-            onClick={() => { setSortby(item?.key); setName(""); }}
-            key={index}
-            className={`flex items-center justify-center px-3 py-2 lg:text-sm text-xs transition duration-150 ease-in-out border-b border-gray-300 hover:bg-gray-600 focus:outline-none gap-x-4 cursor-pointer ${
-              sortby === item?.key ? "bg-gray-100 text-red-600" : "text-gray-200"
-            }`}
-          >
-            <span>{item?.label}</span>
-            {!!item?.count && (
-              <span className="bg-red-600 text-xs text-white px-2 py-1 rounded-full">{item?.count}</span>
-            )}
-          </div>
-        ))}
-      </div>
-      <div style={{ height: "calc(100dvh - 200px)" }}>
-        <Virtuoso
-          data={pageData}
-          itemContent={(index, record) => (
-            <Person refetch={refetch} onClick={() => setOpen(false)} socket={socket} user={record} />
-          )}
-          endReached={() => {
-            if (page * itemsPerPage < (sortedContacts?.length || 0)) {
-              setPage((p) => p + 1);
-            }
-          }}
-          overscan={200}
-        />
-      </div>
-    </div>
+    <span className="flex items-center gap-1 min-w-0 text-xs text-gray-500">
+      {outgoing && <span className="text-gray-400 shrink-0">You:</span>}
+      {icon && React.createElement(icon, { className: "w-3.5 h-3.5 shrink-0 text-gray-400" })}
+      <span className="truncate">{label}</span>
+    </span>
   );
 };
 
-export default ChatList;
+/* ── One conversation ─────────────────────────────────────────────────── */
 
-const Person = React.memo(({ socket, user: chatUser, refetch, onClick }) => {
-  const addfavourite = async (e) => {
-    e.stopPropagation();
-    try {
-      const res = await api.put(`/message/chat/${chatUser._id}`);
-      refetch();
-      toast.success(!chatUser?.marked ? "Marked as favourite" : "Removed from favourite");
-    } catch (error) {
-      toast.error(error?.response?.data?.message || "Something went wrong");
-    }
-  };
-  const navigate = useNavigate();
-  const searchparams = new URLSearchParams(window.location.search);
-  const sortby = searchparams.get("sortby") || "All";
-  const handleClick = () => {
-    searchparams.set("sortby", sortby);
-    searchparams.set("chat", chatUser?._id);
-    navigate(`/message?${searchparams.toString()}`);
-    onClick();
-  };
-  const lastMsg = chatUser?.message?.message
-    ? chatUser?.message?.message?.slice(0, 50)
-    : chatUser?.message?.audio
-    ? "Voice Message"
-    : chatUser?.message?.video
-    ? "Video Message"
-    : "No message";
+const ChatRow = React.memo(({ chat, currentUserId, activeId, onOpen, onToggleStar }) => {
+  const active = String(chat?._id) === String(activeId);
+  const unread = chat?.unseen || 0;
+
   return (
     <div
-      onClick={handleClick}
-      className="flex items-center px-3 py-3 text-sm transition duration-150 ease-in-out cursor-pointer bg-white hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100 gap-x-3"
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(chat?._id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen(chat?._id);
+        }
+      }}
+      className={`group relative flex items-center gap-3 px-3 py-2.5 mx-2 my-0.5 rounded-2xl cursor-pointer
+        transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+          active ? "bg-brand-soft" : "hover:bg-gray-50"
+        }`}
     >
-      <div className="relative shrink-0">
-        <Avatar size={48} className="rounded-full">
-          {chatUser?.user?.name?.slice(0, 1)}
-        </Avatar>
-        {chatUser?.user?.active && (
-          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
-        )}
-      </div>
+      {/* The active conversation gets a rail, not just a fill change, so it stays
+          distinguishable from an unread row. */}
+      {active && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 rounded-full bg-brand" />
+      )}
+
+      <PresenceAvatar name={chat?.user?.name} active={chat?.user?.active} size={44} />
+
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-gray-800 truncate">{chatUser?.user?.name}</span>
-          <div className="flex items-center gap-2 shrink-0 ml-2">
-            <StarFilled
-              onClick={addfavourite}
-              className={`text-base ${chatUser?.marked ? "text-yellow-500" : "text-gray-300"}`}
-            />
-            <span className="text-[10px] text-gray-400 whitespace-nowrap">
-              {chatUser?.message?.createdAt ? moment(chatUser?.message?.createdAt).fromNow() : ""}
-            </span>
-          </div>
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={`truncate text-sm ${
+              unread ? "font-bold text-gray-900" : "font-semibold text-gray-700"
+            }`}
+          >
+            {chat?.user?.name || "Unknown"}
+          </span>
+          <span className="shrink-0 text-[10px] text-gray-400 tabular-nums">
+            {chat?.message?.createdAt ? moment(chat.message.createdAt).fromNow(true) : ""}
+          </span>
         </div>
-        <div className="flex items-center justify-between mt-0.5">
-          <span className="text-xs text-gray-500 truncate">{lastMsg}</span>
-          {!!chatUser?.unseen && (
-            <span className="shrink-0 ml-2 min-w-[20px] h-5 bg-red-500 text-white text-[10px] font-semibold rounded-full flex items-center justify-center px-1.5">
-              {chatUser?.unseen}
-            </span>
-          )}
+        <div className="flex items-center justify-between gap-2 mt-0.5">
+          <Preview chat={chat} currentUserId={currentUserId} />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleStar(chat);
+              }}
+              aria-label={chat?.marked ? "Remove from favourites" : "Add to favourites"}
+              className={`p-0.5 rounded transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                chat?.marked
+                  ? "opacity-100 text-amber-400"
+                  : "opacity-0 group-hover:opacity-100 focus:opacity-100 text-gray-300 hover:text-amber-400"
+              }`}
+            >
+              {chat?.marked ? <StarSolid className="w-4 h-4" /> : <StarIcon className="w-4 h-4" />}
+            </button>
+            {!!unread && (
+              <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-brand text-white text-[10px] font-bold tabular-nums">
+                {unread > 99 ? "99+" : unread}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 });
+ChatRow.displayName = "ChatRow";
+
+/* ── Panel ────────────────────────────────────────────────────────────── */
+
+const ChatList = ({ users, refetch, loading, activeId, onOpen }) => {
+  const { user } = useSelector((state) => state.user);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [name, setName] = useState("");
+  const [date, setDate] = useState("");
+  const [page, setPage] = useState(1);
+  const [newChatOpen, setNewChatOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [directorySearch, setDirectorySearch] = useState("");
+  const [directoryQuery, setDirectoryQuery] = useState("");
+
+  const searchparams = new URLSearchParams(location.search);
+  const sortby = searchparams.get("sortby") || "All";
+
+  const setSortby = (value) => {
+    const next = new URLSearchParams(location.search);
+    next.set("sortby", value);
+    navigate(`${location.pathname}?${next.toString()}`);
+    setName("");
+  };
+
+  const directoryParams = useMemo(() => {
+    if (directoryQuery) return { search: directoryQuery, limit: 100 };
+    if (user?.role !== "admin") return { admin: true, limit: 100 };
+    return { limit: 100 };
+  }, [directoryQuery, user?.role]);
+
+  const { data: directory, isLoading: directoryLoading } = useQuery({
+    // Keyed on the search params only. Keying on the live socket message refetched
+    // the whole user directory every time any chat message arrived.
+    queryKey: ["users-chat-list", directoryParams],
+    queryFn: async () => {
+      const res = await api.get(`/user`, { params: directoryParams });
+      return res.data || [];
+    },
+    enabled: newChatOpen && !!user,
+    refetchOnWindowFocus: false,
+  });
+
+  const toggleStar = async (chat) => {
+    try {
+      await api.put(`/message/chat/${chat._id}`);
+      refetch?.();
+      toast.success(chat?.marked ? "Removed from favourites" : "Added to favourites");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Something went wrong");
+    }
+  };
+
+  const filtered = useMemo(() => {
+    const q = name.trim().toLowerCase();
+    return (users || [])
+      .filter((c) => {
+        if (sortby === "Unread") return c?.unseen > 0;
+        if (sortby === "Favourite") return c?.marked;
+        return true;
+      })
+      .filter((c) => {
+        if (!date) return true;
+        const d = c?.message?.createdAt ? moment(c.message.createdAt).format("YYYY-MM-DD") : "";
+        return d === date;
+      })
+      .filter((c) => {
+        if (!q) return true;
+        return (
+          c?.user?.name?.toLowerCase()?.includes(q) ||
+          c?.user?.username?.toLowerCase()?.includes(q)
+        );
+      })
+      .sort((a, b) => new Date(b?.updatedAt || 0) - new Date(a?.updatedAt || 0));
+  }, [users, sortby, date, name]);
+
+  const counts = useMemo(
+    () => ({
+      Unread: (users || []).filter((c) => c?.unseen > 0).length,
+      Favourite: (users || []).filter((c) => c?.marked).length,
+    }),
+    [users]
+  );
+
+  useEffect(() => setPage(1), [sortby, name, date]);
+
+  const visible = filtered.slice(0, page * PAGE);
+  const tabs = ["All", "Unread", "Favourite"];
+
+  return (
+    <aside className="flex flex-col h-full min-h-0 bg-white lg:border-r border-gray-100">
+      <SearchMessage open={searchOpen} setOpen={setSearchOpen} />
+
+      <Modal
+        open={newChatOpen}
+        onCancel={() => setNewChatOpen(false)}
+        title={user?.role === "admin" ? "Start a new chat" : "Message an admin"}
+        footer={null}
+        destroyOnClose
+      >
+        {user?.role === "admin" && (
+          <Input
+            placeholder="Search people"
+            allowClear
+            prefix={<MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />}
+            className="mt-2"
+            value={directorySearch}
+            onChange={(e) => setDirectorySearch(e.target.value)}
+            onPressEnter={() => setDirectoryQuery(directorySearch)}
+          />
+        )}
+        <div className="max-h-[65vh] overflow-y-auto mt-4 -mx-2 px-2">
+          {directoryLoading ? (
+            Array.from({ length: 5 }).map((_, i) => <ChatRowSkeleton key={i} />)
+          ) : directory?.users?.length ? (
+            directory.users.map((u) => <UserCard key={u?._id} user={u} setOpen={setNewChatOpen} />)
+          ) : (
+            <p className="py-8 text-sm text-center text-gray-400">Nobody found</p>
+          )}
+        </div>
+      </Modal>
+
+      {/* Header */}
+      <div className="shrink-0 px-4 pt-4 pb-3 border-b border-gray-100">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-lg font-black tracking-tight text-gray-900">Messages</h1>
+          <div className="flex items-center gap-2">
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              open={filterOpen}
+              onOpenChange={setFilterOpen}
+              content={
+                <div className="flex flex-col gap-3 w-[220px]">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">
+                      Filter by day
+                    </p>
+                    <DatePicker
+                      className="w-full"
+                      allowClear
+                      onChange={(d) => setDate(d ? moment(d.$d).format("YYYY-MM-DD") : "")}
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      setFilterOpen(false);
+                      setSearchOpen(true);
+                    }}
+                    className="chat-menu-item text-sm text-gray-700"
+                  >
+                    <MagnifyingGlassIcon className="w-4 h-4 text-brand" /> Search all messages
+                  </button>
+                </div>
+              }
+            >
+              <span>
+                <IconButton
+                  icon={AdjustmentsHorizontalIcon}
+                  label="Filters"
+                  active={!!date || filterOpen}
+                />
+              </span>
+            </Popover>
+            <IconButton icon={PencilSquareIcon} label="New chat" onClick={() => setNewChatOpen(true)} />
+          </div>
+        </div>
+
+        <div className="relative">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <input
+            type="search"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Search conversations"
+            aria-label="Search conversations"
+            className="w-full h-10 pl-9 pr-3 text-sm text-gray-800 bg-gray-100 rounded-xl outline-none placeholder:text-gray-400 focus:bg-gray-50 focus:ring-2 focus:ring-brand/30 transition-colors"
+          />
+        </div>
+
+        <div className="flex items-center gap-1.5 mt-3">
+          {tabs.map((tab) => {
+            const on = sortby === tab;
+            const count = counts[tab];
+            return (
+              <button
+                key={tab}
+                onClick={() => setSortby(tab)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                  on ? "bg-brand text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                {tab}
+                {!!count && (
+                  <span
+                    className={`px-1.5 rounded-full text-[10px] font-bold tabular-nums ${
+                      on ? "bg-white/25 text-white" : "bg-white text-gray-500"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Rows */}
+      <div className="flex-1 min-h-0">
+        {loading ? (
+          <div className="pt-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ChatRowSkeleton key={i} />
+            ))}
+          </div>
+        ) : visible.length ? (
+          <Virtuoso
+            data={visible}
+            overscan={400}
+            endReached={() => {
+              if (visible.length < filtered.length) setPage((p) => p + 1);
+            }}
+            itemContent={(_, chat) => (
+              <ChatRow
+                chat={chat}
+                currentUserId={user?._id}
+                activeId={activeId}
+                onOpen={onOpen}
+                onToggleStar={toggleStar}
+              />
+            )}
+          />
+        ) : (
+          <EmptyState
+            icon={ChatBubbleLeftRightIcon}
+            title={name || date ? "Nothing matches" : "No conversations yet"}
+            hint={
+              name || date
+                ? "Try a different name, or clear the day filter."
+                : "Start a conversation and it will show up here."
+            }
+          />
+        )}
+      </div>
+    </aside>
+  );
+};
+
+export default ChatList;
