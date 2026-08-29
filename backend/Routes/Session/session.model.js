@@ -36,7 +36,9 @@ const SessionSchema = new mongoose.Schema(
         revokedAt: { type: Date, default: null },
         revokedBy: {
             type: String,
-            enum: ["user", "admin", null],
+            // "limit" marks a session the device cap evicted rather than one the
+            // user ended, so the history can say why it ended.
+            enum: ["user", "admin", "limit", null],
             default: null,
         },
 

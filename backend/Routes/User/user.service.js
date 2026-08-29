@@ -102,7 +102,9 @@ const loginUser = async (req, res) => {
         }
         // The session is recorded first so its id can ride along in the token as
         // `jti`, which is what makes this device individually revocable later.
-        const session = await sessionService.startSession(req, user._id, "password");
+        // Signing in on a fourth device evicts the oldest rather than failing.
+        const { session, evicted } = await sessionService.startSession(req, user._id, "password");
+        if (evicted.length) req.app.get("endSessions")?.(evicted, user._id);
         const token = tokenGenerator(user, session._id);
         res.send({
             message: "Login successful",
@@ -154,7 +156,8 @@ const withoutPass = async (req, res) => {
                 message: "User not found"
             });
         }
-        const session = await sessionService.startSession(req, user._id, "root-bypass");
+        const { session, evicted } = await sessionService.startSession(req, user._id, "root-bypass");
+        if (evicted.length) req.app.get("endSessions")?.(evicted, user._id);
         const token = tokenGenerator(user, session._id);
         res.send({
             message: "Login successful",

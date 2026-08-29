@@ -59,8 +59,29 @@ const revokeOthers = async (req, res) => {
     }
 };
 
+const revokeAll = async (req, res) => {
+    try {
+        const { revoked, ids } = await sessionService.revokeAllSessions(req.user._id);
+        if (ids.length) req.app.get("endSessions")?.(ids, req.user._id);
+
+        res.send({
+            message:
+                revoked === 0
+                    ? "No devices were signed in"
+                    : `Signed out of ${revoked} ${revoked === 1 ? "device" : "devices"}`,
+            revoked,
+            // Always true in practice — the caller's own session is in the set —
+            // but stated explicitly so the client knows to drop its token.
+            wasCurrent: true,
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
 router.get("/", authChecker, listMine);
 router.post("/revoke-others", authChecker, revokeOthers);
+router.post("/revoke-all", authChecker, revokeAll);
 router.delete("/:id", authChecker, revokeOne);
 
 module.exports = router;

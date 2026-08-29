@@ -85,9 +85,18 @@ const SessionRow = ({ session, onLogout, busy, showAction }) => (
     </div>
 
     <div className="text-xs text-gray-500">
-      {session.status === "active"
-        ? moment(session.lastActiveAt).fromNow()
-        : `Ended ${moment(session.revokedAt || session.lastActiveAt).fromNow()}`}
+      {session.status === "active" ? (
+        moment(session.lastActiveAt).fromNow()
+      ) : (
+        <>
+          {`Ended ${moment(session.revokedAt || session.lastActiveAt).fromNow()}`}
+          {session.revokedBy === "limit" && (
+            <span className="block text-[10px] text-gray-400">
+              Device limit reached
+            </span>
+          )}
+        </>
+      )}
     </div>
 
     <div className="flex items-center justify-between sm:justify-end gap-3">
@@ -182,6 +191,20 @@ const LoginDevices = () => {
     }
   };
 
+  // Ends this device's session too, so it always finishes at the login screen.
+  const logoutEverywhere = async () => {
+    setPending("all");
+    try {
+      await api.post("/session/revoke-all");
+      Cookie.remove("token-you");
+      toast.success("Signed out on every device");
+      window.location.href = "/login";
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Something went wrong");
+      setPending(null);
+    }
+  };
+
   const active = data?.active || [];
   const ended = data?.ended || [];
   const summary = data?.summary;
@@ -192,14 +215,18 @@ const LoginDevices = () => {
       <Modal
         open={!!confirm}
         onCancel={() => setConfirm(null)}
-        onOk={() => confirm && doLogout(confirm)}
+        onOk={() => (confirm === "all" ? logoutEverywhere() : doLogout(confirm))}
         okText="Sign out"
-        okButtonProps={{ danger: true, loading: pending === confirm?._id }}
-        title="Sign out of this device?"
+        okButtonProps={{
+          danger: true,
+          loading: pending === "all" || pending === confirm?._id,
+        }}
+        title={confirm === "all" ? "Sign out everywhere?" : "Sign out of this device?"}
       >
         <p className="text-sm text-gray-600">
-          You are using this device right now. Signing out will return you to the login
-          screen.
+          {confirm === "all"
+            ? "Every device, including this one, will be signed out. You will need to log in again."
+            : "You are using this device right now. Signing out will return you to the login screen."}
         </p>
       </Modal>
 
@@ -228,13 +255,13 @@ const LoginDevices = () => {
                 <Skeleton className="h-8 w-32 my-1" />
               ) : (
                 <p className="text-2xl font-black text-brand">
-                  {summary?.activeCount || 0}{" "}
-                  {summary?.activeCount === 1 ? "device" : "devices"}
+                  {summary?.activeCount || 0} of {summary?.maxDevices ?? 3}{" "}
+                  {summary?.maxDevices === 1 ? "device" : "devices"}
                 </p>
               )}
-              <p className="text-xs text-gray-500 max-w-[42ch]">
-                If you see a device you don't recognise, sign it out and change your
-                password.
+              <p className="text-xs text-gray-500 max-w-[44ch]">
+                You can stay signed in on up to {summary?.maxDevices ?? 3} devices. Logging
+                in on a new one signs out the device you logged into longest ago.
               </p>
             </div>
           </div>
@@ -243,7 +270,11 @@ const LoginDevices = () => {
 
           <dl className="space-y-2.5">
             {[
-              { k: "Active devices", v: summary?.activeCount ?? 0, dot: "bg-emerald-500" },
+              {
+                k: "Active devices",
+                v: `${summary?.activeCount ?? 0} / ${summary?.maxDevices ?? 3}`,
+                dot: "bg-emerald-500",
+              },
               { k: "Signed-out devices", v: summary?.endedCount ?? 0, dot: "bg-gray-300" },
             ].map((row) => (
               <div key={row.k} className="flex items-center justify-between gap-3">
@@ -311,20 +342,34 @@ const LoginDevices = () => {
         </SectionCard>
       )}
 
-      {/* Sign out everywhere else */}
-      {otherActive > 0 && (
-        <button
-          type="button"
-          onClick={logoutOthers}
-          disabled={pending === "others"}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl
-            bg-white border border-rose-200 text-rose-600 text-sm font-bold shadow-sm
-            hover:bg-rose-50 disabled:opacity-50 transition-colors
-            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
-        >
-          <ArrowRightOnRectangleIcon className="w-4 h-4" />
-          Sign out of all other devices ({otherActive})
-        </button>
+      {/* Bulk sign-out */}
+      {!isLoading && active.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={logoutOthers}
+            disabled={otherActive === 0 || !!pending}
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl
+              bg-white border border-gray-200 text-gray-700 text-sm font-bold shadow-sm
+              hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 transition-colors
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+          >
+            <ArrowRightOnRectangleIcon className="w-4 h-4" />
+            Sign out other devices{otherActive > 0 ? ` (${otherActive})` : ""}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirm("all")}
+            disabled={!!pending}
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl
+              bg-white border border-rose-200 text-rose-600 text-sm font-bold shadow-sm
+              hover:bg-rose-50 disabled:opacity-40 transition-colors
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+          >
+            <ArrowRightOnRectangleIcon className="w-4 h-4" />
+            Sign out everywhere
+          </button>
+        </div>
       )}
 
       {/* Security tips */}
