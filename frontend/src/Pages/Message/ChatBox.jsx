@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery, useInfiniteQuery, useQueryClient } from "react-query";
 import { useSelector } from "react-redux";
 import { Modal } from "antd";
 import {
@@ -14,11 +14,15 @@ import UserProfile from "./UserProfile";
 import MessageThread from "./components/MessageThread";
 import { PresenceAvatar, TypingDots, EmptyState } from "./components/Primitives";
 
+const START_INDEX = 10000;
+
 const ChatBox = ({ chatId, onBack }) => {
   const { socket, message } = useSocketContext();
   const { user } = useSelector((state) => state.user);
+  const queryClient = useQueryClient();
 
   const [messages, setMessages] = useState([]);
+  const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX);
   const [reply, setReply] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [typing, setTyping] = useState(false);
@@ -43,20 +47,38 @@ const ChatBox = ({ chatId, onBack }) => {
   const chatUser = chat?.user;
   const chatUserId = chatUser?._id;
 
-  const { refetch, isLoading: msgsLoading } = useQuery({
-    // Keyed on the two ids rather than whole objects, so an unrelated identity
-    // change no longer refetches the entire history.
+  const {
+    data: messagesPages,
+    isLoading: msgsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = useInfiniteQuery({
     queryKey: ["messages", user?._id, chatUserId],
-    queryFn: async () => {
-      const res = await api.get(`/message/msg/all?sender=${user?._id}&receiver=${chatUserId}`);
-      return res.data || [];
+    queryFn: async ({ pageParam = null }) => {
+      const url = pageParam
+        ? `/message/msg/all?sender=${user?._id}&receiver=${chatUserId}&cursor=${encodeURIComponent(pageParam)}&limit=30`
+        : `/message/msg/all?sender=${user?._id}&receiver=${chatUserId}&limit=30`;
+      const res = await api.get(url);
+      return res.data || { messages: [], nextCursor: null, hasNextPage: false };
     },
+    getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
     enabled: !!user?._id && !!chatUserId,
     refetchOnWindowFocus: false,
-    onSuccess: (rows) => {
-      setMessages(rows);
-      if (unreadAnchorRef.current === null) {
-        const first = rows.find(
+    onSuccess: (data) => {
+      // Flatten all pages: pages are in chronological order
+      // Page 0 has the latest messages. Earlier pages have older messages.
+      const flattened = data.pages
+        .slice()
+        .reverse()
+        .flatMap((p) => p.messages || []);
+
+      setMessages(flattened);
+      setFirstItemIndex(START_INDEX - (flattened.length - (data.pages[0]?.messages?.length || 0)));
+
+      if (unreadAnchorRef.current === null && flattened.length > 0) {
+        const first = flattened.find(
           (m) => !m.seen && String(m.sender?._id || m.sender) !== String(user?._id)
         );
         unreadAnchorRef.current = first?._id || undefined;
@@ -67,6 +89,7 @@ const ChatBox = ({ chatId, onBack }) => {
   useEffect(() => {
     unreadAnchorRef.current = null;
     setMessages([]);
+    setFirstItemIndex(START_INDEX);
     setReply(null);
     setTyping(false);
   }, [chatId]);
@@ -231,13 +254,17 @@ const ChatBox = ({ chatId, onBack }) => {
       <div className="flex-1 min-h-0">
         <MessageThread
           messages={messages}
-          loading={chatLoading || msgsLoading}
+          loading={chatLoading || (msgsLoading && !messages.length)}
           currentUser={user}
           chatUser={chatUser}
           firstUnseenId={unreadAnchorRef.current}
           virtuosoRef={virtuosoRef}
           onReply={onReply}
           onChanged={refetch}
+          onLoadOlder={fetchNextPage}
+          hasOlder={hasNextPage}
+          loadingOlder={isFetchingNextPage}
+          firstItemIndex={firstItemIndex}
         />
       </div>
 

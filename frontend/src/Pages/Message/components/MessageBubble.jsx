@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useState } from "react";
-import { Popover, Input, Button } from "antd";
+import { Popover, Modal } from "antd";
 import toast from "react-hot-toast";
 import {
   ArrowUturnLeftIcon,
@@ -11,6 +11,8 @@ import {
   CheckIcon,
   ExclamationCircleIcon,
   ArrowPathIcon,
+  XMarkIcon,
+  ChatBubbleBottomCenterTextIcon
 } from "@heroicons/react/24/outline";
 import { api } from "../../../util/axios";
 import { PresenceAvatar } from "./Primitives";
@@ -74,10 +76,19 @@ export const MessageStatus = ({ status }) => {
   );
 };
 
-const fmtClock = (date) =>
-  date
-    ? new Date(date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
-    : "";
+const fmtDateTime = (date) => {
+  if (!date) return "";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
 /* ── Bubble ───────────────────────────────────────────────────────────── */
 
@@ -102,12 +113,17 @@ const MessageBubble = memo(
     onChanged,
     onRetry,
   }) => {
-    const [editing, setEditing] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editText, setEditText] = useState(msg?.message || "");
+    const [updating, setUpdating] = useState(false);
+    const [popoverOpen, setPopoverOpen] = useState(false);
+
     const status = msg.__status || (msg.seen ? "seen" : "sent");
     const failed = status === "failed";
     const pending = status === "sending";
 
     const remove = useCallback(async () => {
+      setPopoverOpen(false);
       try {
         await api.delete(`/message/${msg?._id}`);
         onChanged?.();
@@ -117,63 +133,85 @@ const MessageBubble = memo(
       }
     }, [msg?._id, onChanged]);
 
-    const saveEdit = useCallback(
-      async (e) => {
-        e.preventDefault();
-        const next = e.target.message.value.trim();
-        if (!next) return;
-        try {
-          await api.put(`/message/update/${msg?._id}`, { message: next });
-          setEditing(false);
-          onChanged?.();
-          toast.success("Message updated");
-        } catch {
-          toast.error("Could not update the message");
-        }
-      },
-      [msg?._id, onChanged]
-    );
+    const handleOpenEdit = () => {
+      setEditText(msg?.message || "");
+      setPopoverOpen(false);
+      setEditModalOpen(true);
+    };
+
+    const handleSaveEdit = useCallback(async () => {
+      const next = editText.trim();
+      if (!next) {
+        toast.error("Message cannot be empty");
+        return;
+      }
+      if (next === msg?.message?.trim()) {
+        setEditModalOpen(false);
+        return;
+      }
+
+      try {
+        setUpdating(true);
+        await api.put(`/message/update/${msg?._id}`, { message: next });
+        setEditModalOpen(false);
+        onChanged?.();
+        toast.success("Message updated successfully!");
+      } catch (err) {
+        toast.error(err?.response?.data?.message || "Could not update the message");
+      } finally {
+        setUpdating(false);
+      }
+    }, [editText, msg?._id, msg?.message, onChanged]);
 
     const copy = useCallback(() => {
+      setPopoverOpen(false);
       if (!msg?.message) return;
       navigator.clipboard.writeText(msg.message);
-      toast.success("Copied");
+      toast.success("Copied to clipboard!");
     }, [msg?.message]);
 
     const hasText = !!msg?.message;
     const mediaOnly = !hasText && (msg?.image || msg?.video || msg?.audio);
 
     const menu = (
-      <div className="flex flex-col min-w-[180px] text-sm text-gray-700">
-        <button onClick={copy} disabled={!hasText} className="chat-menu-item disabled:opacity-40">
-          <ClipboardIcon className="w-4 h-4" /> Copy text
+      <div className="flex flex-col min-w-[190px] py-1 text-xs">
+        <button
+          onClick={() => {
+            setPopoverOpen(false);
+            onReply?.(msg);
+          }}
+          className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#5a32fa] transition-colors rounded-lg font-medium text-left"
+        >
+          <ArrowUturnLeftIcon className="w-4 h-4 text-gray-400" />
+          <span>Reply</span>
         </button>
+
+        <button
+          onClick={copy}
+          disabled={!hasText}
+          className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#5a32fa] transition-colors rounded-lg font-medium text-left disabled:opacity-40 disabled:pointer-events-none"
+        >
+          <ClipboardIcon className="w-4 h-4 text-gray-400" />
+          <span>Copy text</span>
+        </button>
+
         {own && (
           <>
-            <Popover
-              trigger="click"
-              placement="left"
-              open={editing}
-              onOpenChange={setEditing}
-              content={
-                <form onSubmit={saveEdit} className="w-[280px] flex flex-col gap-2">
-                  <Input.TextArea
-                    name="message"
-                    defaultValue={msg?.message}
-                    autoSize={{ minRows: 2, maxRows: 6 }}
-                  />
-                  <Button type="primary" size="small" htmlType="submit" className="self-end">
-                    Save
-                  </Button>
-                </form>
-              }
+            <div className="my-1 border-t border-gray-100" />
+            <button
+              onClick={handleOpenEdit}
+              disabled={!hasText}
+              className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#5a32fa] transition-colors rounded-lg font-medium text-left disabled:opacity-40 disabled:pointer-events-none"
             >
-              <button className="chat-menu-item" disabled={!hasText}>
-                <PencilSquareIcon className="w-4 h-4" /> Edit
-              </button>
-            </Popover>
-            <button onClick={remove} className="chat-menu-item text-rose-600">
-              <TrashIcon className="w-4 h-4" /> Delete
+              <PencilSquareIcon className="w-4 h-4 text-gray-400" />
+              <span>Edit message</span>
+            </button>
+            <button
+              onClick={remove}
+              className="flex items-center gap-2.5 px-3 py-2 text-rose-600 hover:bg-rose-50 transition-colors rounded-lg font-medium text-left"
+            >
+              <TrashIcon className="w-4 h-4 text-rose-500" />
+              <span>Delete message</span>
             </button>
           </>
         )}
@@ -202,32 +240,40 @@ const MessageBubble = memo(
           <div className={`flex items-center gap-1 ${own ? "flex-row-reverse" : ""}`}>
             <div
               id={msg?._id}
-              className={`relative px-3 py-2 shadow-sm transition-opacity ${
-                pending ? "opacity-60" : ""
+              className={`relative px-4 py-2.5 transition-all select-text ${
+                pending ? "opacity-65" : ""
               } ${
                 own
-                  ? `bg-brand text-white ${runEnd ? "rounded-2xl rounded-br-md" : "rounded-2xl"}`
-                  : `bg-white text-gray-800 border border-gray-100 ${
-                      runEnd ? "rounded-2xl rounded-bl-md" : "rounded-2xl"
+                  ? `bg-gradient-to-br from-[#5a32fa] to-[#4722db] text-white shadow-md shadow-indigo-500/15 ${
+                      runEnd ? "rounded-[20px] rounded-br-[4px]" : "rounded-[20px]"
                     }`
-              } ${highlighted ? "ring-2 ring-amber-400" : ""} ${
-                failed ? "ring-1 ring-rose-300" : ""
+                  : `bg-white text-gray-800 border border-gray-150/80 shadow-xs ${
+                      runEnd ? "rounded-[20px] rounded-bl-[4px]" : "rounded-[20px]"
+                    }`
+              } ${highlighted ? "ring-2 ring-amber-400 ring-offset-1" : ""} ${
+                failed ? "ring-2 ring-rose-400" : ""
               } ${mediaOnly ? "p-1.5" : ""}`}
             >
-              {/* The quoted message appears once, inside the bubble. It used to be
-                  rendered twice — as a button above and again in the body. */}
+              {/* Quoted message */}
               {msg?.reply && (
                 <button
                   type="button"
                   onClick={() => onJumpToReply?.(msg.reply._id)}
-                  className={`block w-full text-left mb-1.5 pl-2 pr-1 py-1 rounded-md border-l-2 text-[11px] truncate transition-colors ${
+                  className={`block w-full text-left mb-2 pl-2.5 pr-2 py-1.5 rounded-xl border-l-[3px] text-[11px] truncate transition-all ${
                     own
-                      ? "border-white/50 bg-white/10 text-white/80 hover:bg-white/20"
-                      : "border-brand/40 bg-brand-soft/60 text-gray-600 hover:bg-brand-soft"
+                      ? "border-white/80 bg-black/15 text-white/90 hover:bg-black/25"
+                      : "border-[#5a32fa] bg-indigo-50/70 text-gray-700 hover:bg-indigo-50"
                   }`}
                 >
-                  {msg.reply.message?.slice(0, 70) ||
-                    (msg.reply.audio ? "Voice message" : msg.reply.video ? "Video" : "Photo")}
+                  <span className="block font-bold text-[10px] opacity-75 mb-0.5">
+                    {String(msg.reply.sender?._id || msg.reply.sender) === String(currentUser?._id)
+                      ? "You"
+                      : chatUser?.name || "Member"}
+                  </span>
+                  <span className="truncate block font-medium">
+                    {msg.reply.message?.slice(0, 70) ||
+                      (msg.reply.audio ? "🎤 Voice message" : msg.reply.video ? "📹 Video" : "📷 Photo")}
+                  </span>
                 </button>
               )}
 
@@ -241,8 +287,7 @@ const MessageBubble = memo(
               )}
             </div>
 
-            {/* Actions stay hidden until hover or keyboard focus. A permanently
-                visible pencil beside every bubble was the loudest thing on screen. */}
+            {/* Actions Trigger */}
             <div
               className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100
                 transition-opacity duration-150"
@@ -257,7 +302,14 @@ const MessageBubble = memo(
               >
                 <ArrowUturnLeftIcon className="w-4 h-4" />
               </button>
-              <Popover trigger="click" placement={own ? "left" : "right"} content={menu}>
+              <Popover
+                trigger="click"
+                placement={own ? "left" : "right"}
+                content={menu}
+                open={popoverOpen}
+                onOpenChange={setPopoverOpen}
+                arrow={false}
+              >
                 <button
                   type="button"
                   aria-label="More actions"
@@ -271,13 +323,13 @@ const MessageBubble = memo(
             </div>
           </div>
 
-          {/* One timestamp per run, not one per message. */}
+          {/* Full Timestamp & Status */}
           {(runEnd || failed) && (
             <div
-              className={`flex items-center gap-1 mt-1 px-0.5 ${own ? "flex-row-reverse" : ""}`}
+              className={`flex items-center gap-1.5 mt-1 px-1 ${own ? "flex-row-reverse" : ""}`}
             >
-              <span className="text-[10px] text-gray-400 tabular-nums">
-                {fmtClock(msg?.createdAt)}
+              <span className="text-[10px] text-gray-400 font-medium tabular-nums">
+                {fmtDateTime(msg?.createdAt)}
               </span>
               {own && <MessageStatus status={status} />}
               {failed && (
@@ -292,6 +344,93 @@ const MessageBubble = memo(
             </div>
           )}
         </div>
+
+        {/* ── Modern Message Update Modal ─────────────────────────────────────── */}
+        {own && (
+          <Modal
+            open={editModalOpen}
+            onCancel={() => !updating && setEditModalOpen(false)}
+            footer={null}
+            closable={false}
+            centered
+            width={480}
+            destroyOnClose
+          >
+            <div className="p-5 space-y-4">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-50 text-[#5a32fa] flex items-center justify-center">
+                    <PencilSquareIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900">Edit Message</h3>
+                    <p className="text-[11px] text-gray-400">Make changes to your sent message</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEditModalOpen(false)}
+                  disabled={updating}
+                  className="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Textarea Editor */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-600">Message Content</label>
+                <div className="relative">
+                  <textarea
+                    rows={4}
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    placeholder="Type your message..."
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      }
+                    }}
+                    className="w-full p-3.5 text-xs text-gray-800 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5a32fa]/30 focus:border-[#5a32fa] transition-all resize-none"
+                  />
+                  <div className="flex justify-between items-center px-1 text-[10px] text-gray-400">
+                    <span>Press Enter to save, Shift+Enter for new line</span>
+                    <span>{editText.length} characters</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  disabled={updating}
+                  onClick={() => setEditModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={updating || !editText.trim()}
+                  onClick={handleSaveEdit}
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#5a32fa] hover:bg-[#4923e0] disabled:opacity-50 disabled:pointer-events-none rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center gap-1.5"
+                >
+                  {updating ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
       </div>
     );
   }
