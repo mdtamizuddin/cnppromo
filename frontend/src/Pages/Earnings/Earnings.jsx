@@ -22,6 +22,7 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
   WalletIcon,
+  ArrowsRightLeftIcon
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as CheckCircleSolid } from "@heroicons/react/24/solid";
 import dayjs from "dayjs";
@@ -44,7 +45,7 @@ const Earnings = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [copiedId, setCopiedId] = useState(false);
 
-  // 1. Fetch Withdrawals
+  // 1. Fetch Real Withdrawals API
   const { data: withdrawalsData, isLoading: isWithdrawLoading } = useQuery({
     queryKey: ["user-withdrawals", user?._id],
     queryFn: async () => {
@@ -54,7 +55,17 @@ const Earnings = () => {
     enabled: !!user?._id,
   });
 
-  // 2. Fetch Referral Transactions
+  // 2. Fetch Real External Withdrawals API
+  const { data: extWithdrawalsData } = useQuery({
+    queryKey: ["user-ext-withdrawals", user?._id],
+    queryFn: async () => {
+      const res = await api.get(`/external-withdraw/user/${user?._id}`);
+      return Array.isArray(res.data) ? res.data : res.data?.data || [];
+    },
+    enabled: !!user?._id,
+  });
+
+  // 3. Fetch Real Referral Transactions API
   const { data: referData, isLoading: isReferLoading } = useQuery({
     queryKey: ["earnings-refer-history", user?._id],
     queryFn: async () => {
@@ -64,7 +75,27 @@ const Earnings = () => {
     enabled: !!user?._id,
   });
 
-  // 3. Unify Transactions List
+  // 4. Fetch Real Social Work Submissions API
+  const { data: workSubmitsData } = useQuery({
+    queryKey: ["user-work-submits", user?._id],
+    queryFn: async () => {
+      const res = await api.get(`/social-works/submit/${user?._id}`);
+      return Array.isArray(res.data) ? res.data : res.data?.data || [];
+    },
+    enabled: !!user?._id,
+  });
+
+  // 5. Fetch Real TopUp / Deposit Transactions API
+  const { data: topupData } = useQuery({
+    queryKey: ["user-topup-history", user?._id],
+    queryFn: async () => {
+      const res = await api.get("/topup");
+      return Array.isArray(res.data) ? res.data : res.data?.data || [];
+    },
+    enabled: !!user?._id,
+  });
+
+  // 6. Merge all real API responses into a unified transaction stream
   const allTransactions = useMemo(() => {
     const list = [];
 
@@ -93,12 +124,38 @@ const Earnings = () => {
           method: w.method,
           account: w.account,
           image: w.image,
+          note: w.note,
           user: w.user || user,
-          note: isCompleted
-            ? `Payment has been sent successfully to the user ${w.method || "wallet"} number. Please check and confirm.`
-            : isRejected
-            ? "Withdrawal request was rejected. Please contact support if you need assistance."
-            : "Your withdrawal request is currently under review by our admin team.",
+        });
+      });
+    }
+
+    // Map external withdrawals
+    if (extWithdrawalsData && Array.isArray(extWithdrawalsData)) {
+      extWithdrawalsData.forEach((ew) => {
+        const isCompleted = ew.status === "completed" || ew.status === "approved";
+        const isPending = ew.status === "pending";
+
+        list.push({
+          id: ew._id,
+          trxId: `TRX${String(ew._id).slice(-7).toUpperCase()}`,
+          rawType: "withdrawal",
+          title: isCompleted
+            ? "External Withdrawal Payment"
+            : isPending
+            ? "External Withdrawal Request"
+            : "External Withdrawal Rejected",
+          amount: Number(ew.amount || 0),
+          flow: "debit",
+          status: isCompleted ? "Paid" : isPending ? "Pending" : "Rejected",
+          statusCode: isCompleted ? "success" : isPending ? "pending" : "rejected",
+          createdAt: ew.createdAt,
+          updatedAt: ew.updatedAt,
+          method: ew.method || ew.gateway || "Payment Gateway",
+          account: ew.account || ew.walletNumber,
+          image: ew.image,
+          note: ew.note,
+          user: user,
         });
       });
     }
@@ -120,16 +177,65 @@ const Earnings = () => {
           gen: r.gen || 1,
           referredUser: r.user,
           user: user,
-          note: `Referral commission earned from Gen ${r.gen || 1} team member activation.`,
         });
       });
     }
 
-    // Sort by latest createdAt date
-    return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [withdrawalsData, referData, user]);
+    // Map submitted social works
+    if (workSubmitsData && Array.isArray(workSubmitsData)) {
+      workSubmitsData.forEach((ws) => {
+        const isCompleted = ws.status === "completed" || ws.status === "approved";
+        const isPending = ws.status === "pending";
+        const taskReward = Number(ws.amount || ws.workId?.reward || ws.workId?.amount || 0);
 
-  // 4. Apply Filters (Main Tab, Status Chip, Search Query)
+        list.push({
+          id: ws._id,
+          trxId: `TRX${String(ws._id).slice(-7).toUpperCase()}`,
+          rawType: "task",
+          title: ws.workId?.title || "Task Completed",
+          amount: taskReward,
+          flow: "credit",
+          status: isCompleted ? "Credit" : isPending ? "Pending" : "Rejected",
+          statusCode: isCompleted ? "success" : isPending ? "pending" : "rejected",
+          createdAt: ws.createdAt,
+          updatedAt: ws.updatedAt,
+          taskTitle: ws.workId?.title,
+          image: ws.proofImage || ws.image,
+          user: user,
+        });
+      });
+    }
+
+    // Map topups / deposits
+    if (topupData && Array.isArray(topupData)) {
+      topupData.forEach((tp) => {
+        const isCompleted = tp.status === "completed" || tp.status === "approved";
+        const isPending = tp.status === "pending";
+
+        list.push({
+          id: tp._id,
+          trxId: `TRX${String(tp._id).slice(-7).toUpperCase()}`,
+          rawType: "topup",
+          title: isCompleted ? "Wallet TopUp Completed" : isPending ? "Wallet TopUp Pending" : "Wallet TopUp Rejected",
+          amount: Number(tp.amount || 0),
+          flow: "credit",
+          status: isCompleted ? "Credit" : isPending ? "Pending" : "Rejected",
+          statusCode: isCompleted ? "success" : isPending ? "pending" : "rejected",
+          createdAt: tp.createdAt,
+          updatedAt: tp.updatedAt,
+          method: tp.method,
+          account: tp.account || tp.trxNumber,
+          image: tp.image,
+          user: user,
+        });
+      });
+    }
+
+    // Sort strictly by createdAt descending
+    return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [withdrawalsData, extWithdrawalsData, referData, workSubmitsData, topupData, user]);
+
+  // 7. Filters
   const filteredTransactions = useMemo(() => {
     return allTransactions.filter((item) => {
       // Main tab filter
@@ -146,7 +252,7 @@ const Earnings = () => {
         if (statusFilter === "Rejected" && item.statusCode !== "rejected") return false;
       }
 
-      // Search Query (matches TRX ID, username, name, or method)
+      // Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const matchTrx = item.trxId.toLowerCase().includes(q);
@@ -163,7 +269,7 @@ const Earnings = () => {
     });
   }, [allTransactions, mainTab, statusFilter, searchQuery]);
 
-  // 5. Pagination calculation
+  // 8. Pagination calculation
   const totalItems = filteredTransactions.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
   const paginatedList = useMemo(() => {
@@ -188,6 +294,7 @@ const Earnings = () => {
     const item = selectedTransaction;
     const isPaid = item.status === "Paid";
     const isPending = item.status === "Pending";
+    const isCredit = item.flow === "credit";
 
     return (
       <div className="bg-[#f8f9fd] min-h-screen pb-16 pt-4">
@@ -213,7 +320,7 @@ const Earnings = () => {
             {/* Top Status & Amount Card */}
             <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-xs text-center space-y-4">
               <div className="flex justify-center">
-                {isPaid || item.flow === "credit" ? (
+                {isPaid || isCredit ? (
                   <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-3xl shadow-sm border border-emerald-100">
                     <CheckCircleSolid className="w-10 h-10 text-emerald-500" />
                   </div>
@@ -233,7 +340,7 @@ const Earnings = () => {
                 <div className="flex items-center justify-center gap-2 mt-1">
                   <span
                     className={`px-2.5 py-0.5 rounded-md text-xs font-bold ${
-                      isPaid || item.flow === "credit"
+                      isPaid || isCredit
                         ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
                         : isPending
                         ? "bg-amber-50 text-amber-600 border border-amber-100"
@@ -282,18 +389,24 @@ const Earnings = () => {
                   <span className="text-gray-500 font-medium">Name</span>
                   <span className="font-bold text-gray-900">{user?.name || "User"}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 font-medium">Username</span>
-                  <span className="font-bold text-gray-900">{user?.username || "—"}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 font-medium">User ID</span>
-                  <span className="font-mono font-bold text-gray-900">#CNP{String(user?._id || "").slice(-5).toUpperCase()}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 font-medium">WhatsApp</span>
-                  <span className="font-bold text-gray-900">{user?.phone || "—"}</span>
-                </div>
+                {user?.username && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-medium">Username</span>
+                    <span className="font-bold text-gray-900">{user.username}</span>
+                  </div>
+                )}
+                {user?._id && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-medium">User ID</span>
+                    <span className="font-mono font-bold text-gray-900">#CNP{String(user._id).slice(-5).toUpperCase()}</span>
+                  </div>
+                )}
+                {user?.phone && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-medium">WhatsApp / Phone</span>
+                    <span className="font-bold text-gray-900">{user.phone}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -304,13 +417,13 @@ const Earnings = () => {
                   <WalletIcon className="w-4 h-4" />
                 </div>
                 <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider">
-                  {item.rawType === "withdrawal" ? "Withdrawal Information" : "Reward Information"}
+                  {item.rawType === "withdrawal" ? "Withdrawal Information" : "Transaction Information"}
                 </h3>
               </div>
 
               <div className="space-y-2.5 text-xs">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 font-medium">Withdrawal Amount</span>
+                  <span className="text-gray-500 font-medium">Amount</span>
                   <span className="font-bold text-gray-900">৳{item.amount.toFixed(2)}</span>
                 </div>
 
@@ -323,7 +436,7 @@ const Earnings = () => {
 
                 {item.account && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500 font-medium">Payment Number</span>
+                    <span className="text-gray-500 font-medium">Payment Number / Account</span>
                     <span className="font-mono font-bold text-gray-900">{item.account}</span>
                   </div>
                 )}
@@ -335,6 +448,15 @@ const Earnings = () => {
                   </div>
                 )}
 
+                {item.referredUser && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-medium">Referred Member</span>
+                    <span className="font-bold text-gray-900">
+                      {item.referredUser.name || item.referredUser.username || item.referredUser.email}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 font-medium">Request Date & Time</span>
                   <span className="font-medium text-gray-700">
@@ -342,9 +464,9 @@ const Earnings = () => {
                   </span>
                 </div>
 
-                {item.updatedAt && isPaid && (
+                {item.updatedAt && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500 font-medium">Approve Date & Time</span>
+                    <span className="text-gray-500 font-medium">Approve / Update Date</span>
                     <span className="font-medium text-gray-700">
                       {dayjs(item.updatedAt).format("DD MMM YYYY, hh:mm A")}
                     </span>
@@ -355,7 +477,7 @@ const Earnings = () => {
                   <span className="text-gray-500 font-medium">Status</span>
                   <span
                     className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                      isPaid || item.flow === "credit"
+                      isPaid || isCredit
                         ? "bg-emerald-50 text-emerald-600"
                         : isPending
                         ? "bg-amber-50 text-amber-600"
@@ -368,17 +490,17 @@ const Earnings = () => {
               </div>
             </div>
 
-            {/* Section 3: Admin Action / Payment Proof */}
-            {(item.image || isPaid || item.note) && (
+            {/* Section 3: Admin Action / Real Payment Proof */}
+            {(item.image || item.note) && (
               <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs space-y-3">
                 <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
                   <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
                     <ShieldCheckIcon className="w-4 h-4" />
                   </div>
-                  <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider">Admin Action</h3>
+                  <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider">Payment Verification</h3>
                 </div>
 
-                {/* Screenshot */}
+                {/* Real Screenshot from API */}
                 {item.image && (
                   <div className="space-y-1.5">
                     <p className="text-[11px] font-semibold text-gray-500">Payment Proof (Screenshot)</p>
@@ -390,38 +512,21 @@ const Earnings = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="flex-1 p-3 rounded-xl border border-dashed border-gray-200 hover:border-[#5a32fa] bg-gray-50 hover:bg-purple-50/50 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors text-center">
-                        <EyeIcon className="w-5 h-5 text-gray-400" />
-                        <span className="text-xs font-bold text-gray-700">View Full Size</span>
-                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* Admin Note */}
+                {/* Real Note from API */}
                 {item.note && (
                   <div className="p-3 bg-amber-50/70 border border-amber-200/60 rounded-xl">
-                    <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                      <span>📝 Admin Note</span>
+                    <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1">
+                      📝 Note
                     </p>
                     <p className="text-xs text-amber-900 font-medium leading-relaxed">
                       {item.note}
                     </p>
                   </div>
                 )}
-
-                <div className="pt-2 border-t border-gray-100 space-y-2 text-xs">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 font-medium">Admin</span>
-                    <span className="font-bold text-gray-900">Admin User</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 font-medium">Action Date</span>
-                    <span className="font-medium text-gray-700">
-                      {dayjs(item.updatedAt || item.createdAt).format("DD MMM YYYY, hh:mm A")}
-                    </span>
-                  </div>
-                </div>
               </div>
             )}
 
@@ -561,6 +666,7 @@ const Earnings = () => {
             paginatedList.map((item) => {
               const isPaid = item.status === "Paid";
               const isPending = item.status === "Pending";
+              const isCredit = item.flow === "credit";
 
               return (
                 <div
@@ -589,6 +695,10 @@ const Earnings = () => {
                         <div className="w-10 h-10 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center">
                           <GiftIcon className="w-5 h-5 text-pink-500" />
                         </div>
+                      ) : item.rawType === "topup" ? (
+                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
+                          <ArrowsRightLeftIcon className="w-5 h-5 text-blue-500" />
+                        </div>
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
                           <ClipboardDocumentCheckIcon className="w-5 h-5 text-amber-500" />
@@ -608,11 +718,11 @@ const Earnings = () => {
                   {/* Right: Amount + Status Badge */}
                   <div className="text-right shrink-0">
                     <p className="text-sm font-black text-gray-900">
-                      ৳{item.amount.toFixed(2)}
+                      {isCredit ? "+" : "-"} ৳{item.amount.toFixed(2)}
                     </p>
                     <span
                       className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                        isPaid || item.flow === "credit"
+                        isPaid || isCredit
                           ? "bg-emerald-50 text-emerald-600"
                           : isPending
                           ? "bg-amber-50 text-amber-600"
@@ -632,7 +742,7 @@ const Earnings = () => {
               </div>
               <h3 className="text-sm font-bold text-gray-800">No Transactions Found</h3>
               <p className="text-xs text-gray-400 max-w-xs mx-auto">
-                Try adjusting your search query or selected status filter.
+                No activity found matching the selected filters.
               </p>
             </div>
           )}

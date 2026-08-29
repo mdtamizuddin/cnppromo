@@ -159,14 +159,15 @@ const getAllWorkSubmits = async (status, options = {}) =>
         throw new Error('Error fetching work submits: ' + error.message);
     }
 }
-const getWorkSubmitById = async (workSubmitId, status) =>
-{
+const getWorkSubmitById = async (workSubmitId, status) => {
     try {
-        const workSubmit = await WorkSubmit.find({
-            userId: workSubmitId,
-            status: status
-        })
+        const query = { userId: workSubmitId };
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+        const workSubmit = await WorkSubmit.find(query)
             .populate('workId')
+            .sort({ createdAt: -1 });
 
         return workSubmit;
     }

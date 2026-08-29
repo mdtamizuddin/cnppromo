@@ -314,11 +314,13 @@ const getAllMessages = async (query) => {
 
 const getMessages = async (query) => {
     try {
-        const sender = query.sender
-        const receiver = query.receiver
+        const sender = query.sender;
+        const receiver = query.receiver;
+        const limit = Math.min(Math.max(parseInt(query.limit, 10) || 30, 1), 100);
+        const cursor = query.cursor; // ISO timestamp or message ID string
 
         if (!sender || !receiver) {
-            throw new Error("sender and receiver are required")
+            throw new Error("sender and receiver are required");
         }
 
         const filter = {
@@ -326,13 +328,37 @@ const getMessages = async (query) => {
                 { sender: sender, receiver: receiver },
                 { sender: receiver, receiver: sender },
             ]
+        };
+
+        if (cursor) {
+            const cursorDate = new Date(cursor);
+            if (!isNaN(cursorDate.getTime())) {
+                filter.createdAt = { $lt: cursorDate };
+            }
         }
+
         const messages = await Message.find(filter)
             .populate("reply")
             .sort({ createdAt: -1 })
-        return messages.reverse() // Reverse to get the latest messages first
+            .limit(limit + 1)
+            .lean();
+
+        const hasNextPage = messages.length > limit;
+        const sliced = hasNextPage ? messages.slice(0, limit) : messages;
+
+        // Oldest in this slice is the next cursor for older messages
+        const nextCursor = hasNextPage && sliced.length > 0
+            ? sliced[sliced.length - 1].createdAt
+            : null;
+
+        // Return chronological order (oldest to newest for this page)
+        return {
+            messages: sliced.reverse(),
+            nextCursor,
+            hasNextPage
+        };
     } catch (error) {
-        throw new Error(error)
+        throw new Error(error);
     }
 }
 const markChat = async (id) => {
