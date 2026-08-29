@@ -111,6 +111,23 @@ const ChatBox = ({ chatId, onBack }) => {
     if (String(message?.sender) === String(chatUserId)) socket?.emit("seen", message);
   }, [message, chat, chatUserId, socket]);
 
+  const [isOnline, setIsOnline] = useState(chatUser?.active);
+
+  useEffect(() => {
+    setIsOnline(chatUser?.active);
+  }, [chatUser?.active]);
+
+  useEffect(() => {
+    if (!socket || !chatUserId) return;
+    const handler = (payload) => {
+      if (String(payload?.userId) === String(chatUserId)) {
+        setIsOnline(!!payload?.active);
+      }
+    };
+    socket.on("user:presence", handler);
+    return () => socket.off("user:presence", handler);
+  }, [socket, chatUserId]);
+
   /* ── Read receipts ────────────────────────────────────────────────────── */
   useEffect(() => {
     if (!socket) return;
@@ -129,8 +146,8 @@ const ChatBox = ({ chatId, onBack }) => {
 
   const status = useMemo(() => {
     if (typing) return "typing";
-    return chatUser?.active ? "Online" : "Offline";
-  }, [typing, chatUser?.active]);
+    return isOnline ? "Online" : "Offline";
+  }, [typing, isOnline]);
 
   if (!chatId) {
     return (
@@ -177,14 +194,14 @@ const ChatBox = ({ chatId, onBack }) => {
           onClick={() => user?.role === "admin" && setShowProfile(true)}
           className="flex items-center gap-3 min-w-0 flex-1 text-left rounded-xl px-1 py-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
         >
-          <PresenceAvatar name={chatUser?.name} active={chatUser?.active} size={40} />
+          <PresenceAvatar name={chatUser?.name} active={isOnline} size={40} />
           <span className="min-w-0">
             <span className="block text-sm font-bold text-gray-900 truncate">
               {chatUser?.name || "Loading…"}
             </span>
             <span
               className={`flex items-center gap-1.5 text-xs ${
-                typing ? "text-brand font-semibold" : chatUser?.active ? "text-green-600 font-medium" : "text-gray-400"
+                typing ? "text-brand font-semibold" : isOnline ? "text-green-600 font-medium" : "text-gray-400"
               }`}
             >
               {status === "typing" ? (

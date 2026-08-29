@@ -13,6 +13,7 @@ const BannedUsers = lazy(() => import("../Pages/Admin/Users/BannedUsers"));
 const User = lazy(() => import("../Pages/Admin/Users/User"));
 const Topups = lazy(() => import("../Pages/Admin/TopUp/TopUp"));
 const Settings = lazy(() => import("../Pages/Settings/Settings"));
+const UserSettings = lazy(() => import("../Pages/Settings/UserSettings"));
 const Withdrawals = lazy(() => import("../Pages/Admin/Withdraw/Withdraw"));
 const ExternalWithdrawals = lazy(() => import("../Pages/Admin/ExternalWithdrawals/ExternalWithdrawals"));
 const AdminWorks = lazy(() => import("../Pages/Admin/ManageWorks/AdminWorks"));
@@ -75,6 +76,10 @@ export const adminRoutes = [
   {
     path: "topup",
     element: <AdminChecker><Lazy><Topups /></Lazy></AdminChecker>,
+  },
+  {
+    path: "profile",
+    element: <AdminChecker><Lazy><UserSettings /></Lazy></AdminChecker>,
   },
   {
     path: "settings",

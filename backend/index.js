@@ -67,7 +67,7 @@ const io = new Server(server, {
     credentials: true,
     methods: ["GET", "POST"],
   },
-  transports: ['websocket'],
+  transports: ['websocket', 'polling'],
 });
 
 // The Socket.IO Admin UI exposes every live socket, room and user. It is only
@@ -328,10 +328,19 @@ const statusUpdater = async (socketId, status) => {
   }
 };
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   const userId = socket.userId;
   socket.join(userId);
-  statusUpdater(userId, true);
+
+  try {
+    const sockets = await io.in(userId).fetchSockets();
+    if (sockets.length === 1) {
+      statusUpdater(userId, true);
+      io.emit("user:presence", { userId, active: true });
+    }
+  } catch (err) {
+    console.error("Presence check error:", err.message);
+  }
 
   socket.on("message", async (data) => {
     try {
@@ -390,16 +399,20 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Fast in-memory typing relay without querying MongoDB
   socket.on("typing", async (data) => {
     try {
+      const receiver = data?.receiver;
+      if (receiver) {
+        sendToSpecificUser(String(receiver), { from: userId, stop: !!data.stop }, "typing");
+        return;
+      }
+      // Fallback only if receiver was omitted
       if (!data?.chat) return;
       const chat = await Chat.findById(data.chat);
       if (!chat) return;
       if (chat.owner?.toString() !== userId && chat.user?.toString() !== userId) return;
 
-      // Each participant owns their own Chat document, so the typist's chat id is
-      // meaningless on the other side. Relay the typist's *user* id, which is what
-      // the receiver already identifies the conversation by.
       const other =
         chat.owner?.toString() === userId
           ? chat.user?.toString()
@@ -418,6 +431,7 @@ io.on("connection", (socket) => {
       const remaining = await io.in(userId).fetchSockets();
       if (remaining.length === 0) {
         statusUpdater(userId, false);
+        io.emit("user:presence", { userId, active: false });
       }
     } catch (error) {
       console.error("socket disconnect handler error:", error.message);

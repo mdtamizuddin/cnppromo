@@ -45,14 +45,23 @@ const Composer = ({ socket, chat, reply, setReply }) => {
   }, [message]);
 
   /* ── Typing signal ──────────────────────────────────────────────────── */
+  const isTypingRef = useRef(false);
+
   useEffect(() => {
-    if (!message || !chat || !connected || !socket) return;
-    // Sender and recipient are both derived server-side from the chat document.
-    socket.emit("typing", { chat: chat?._id });
+    if (!message || !chat?.user?._id || !connected || !socket) return;
+    
+    // Only send the start typing packet once when typing begins, not on every keystroke
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      socket.emit("typing", { receiver: chat?.user?._id, chat: chat?._id, stop: false });
+    }
+
     clearTimeout(typingTimerRef.current);
     typingTimerRef.current = setTimeout(() => {
-      socket.emit("typing", { chat: chat?._id, stop: true });
-    }, 2000);
+      isTypingRef.current = false;
+      socket.emit("typing", { receiver: chat?.user?._id, chat: chat?._id, stop: true });
+    }, 2500);
+
     return () => clearTimeout(typingTimerRef.current);
   }, [message, chat, connected, socket]);
 
@@ -93,7 +102,8 @@ const Composer = ({ socket, chat, reply, setReply }) => {
     if (!text) return;
     emit({ message: text });
     setMessage("");
-    socket.emit("typing", { chat: chat?._id, stop: true });
+    isTypingRef.current = false;
+    socket.emit("typing", { receiver: chat?.user?._id, chat: chat?._id, stop: true });
   };
 
   // Enter sends, Shift+Enter breaks the line. The old single-line input made a

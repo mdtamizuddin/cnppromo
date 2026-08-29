@@ -18,7 +18,7 @@ import { EmptyState } from "./components/Primitives";
  * act on, so desktop got one full-width panel that toggled.
  */
 const Message = () => {
-  const { message } = useSocketContext();
+  const { socket, message } = useSocketContext();
   const { user } = useSelector((state) => state.user);
   const location = useLocation();
   const navigate = useNavigate();
@@ -117,6 +117,38 @@ const Message = () => {
       return { ...oldData, pages: newPages };
     });
   }, [message, chatId, user?._id, sortby, queryClient]);
+
+  // Listen for real-time presence updates to update green online dots live
+  useEffect(() => {
+    if (!socket) return;
+    const handlePresence = (payload) => {
+      if (!payload?.userId) return;
+      queryClient.setQueryData(["chat-list", user?._id, sortby], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            chats: page.chats.map((c) => {
+              if (String(c?.user?._id) === String(payload.userId)) {
+                return {
+                  ...c,
+                  user: {
+                    ...c.user,
+                    active: !!payload.active,
+                  },
+                };
+              }
+              return c;
+            }),
+          })),
+        };
+      });
+    };
+
+    socket.on("user:presence", handlePresence);
+    return () => socket.off("user:presence", handlePresence);
+  }, [socket, user?._id, sortby, queryClient]);
 
   const openChat = useCallback(
     (id) => {

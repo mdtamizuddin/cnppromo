@@ -17,6 +17,8 @@ import {
   TicketIcon,
   ChatBubbleLeftRightIcon,
   UserCircleIcon,
+  UserIcon,
+  Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   DevicePhoneMobileIcon,
   XMarkIcon,
@@ -56,21 +58,21 @@ const sidebarData = [
     items: [
       { label: "Works", icon: BriefcaseIcon, to: "/admin/works", color: "text-amber-500" },
       { label: "Social Works", icon: ClipboardDocumentCheckIcon, to: "/admin/social-works", color: "text-teal-500" },
-      
-      
+
+
     ]
   },
   {
     category: "SUPPORT & COMMUNICATION",
     items: [
-      { label: "Support Ticket", icon: TicketIcon, to: "#", color: "text-red-400" },
       { label: "Message", icon: ChatBubbleLeftRightIcon, to: "/admin/message", color: "text-blue-500" },
     ]
   },
   {
     category: "ACCOUNT",
     items: [
-      { label: "Settings", icon: UserCircleIcon, to: "/admin/settings", color: "text-purple-600" },
+      { label: "Profile", icon: UserIcon, to: "/admin/profile", color: "text-indigo-500" },
+      { label: "Settings", icon: Cog6ToothIcon, to: "/admin/settings", color: "text-purple-600" },
       { label: "Login Devices", icon: DevicePhoneMobileIcon, to: "/admin/login-devices", color: "text-cyan-500" },
     ]
   }
