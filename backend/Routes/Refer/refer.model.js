@@ -21,5 +21,8 @@ const referSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Compound index on reffer and gen to make referral stats aggregation index-covered
+referSchema.index({ reffer: 1, gen: 1 });
+
 const Refer = mongoose.model("Refer", referSchema);
 module.exports = Refer

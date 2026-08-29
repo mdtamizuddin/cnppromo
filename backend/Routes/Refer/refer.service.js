@@ -169,15 +169,28 @@ const getAllRefer = async (user) => {
         throw new Error(error)
     }
 }
+// Helper to calculate referral stats per generation in 1 database aggregation query instead of 6 round-trips.
+// Performance impact: Reduces network/DB round-trips by ~83% (from 6 queries to 1 single index-backed aggregation).
+const getReferralStatsByUserId = async (userId) => {
+    const stats = await Refer.aggregate([
+        { $match: { reffer: userId } },
+        { $group: { _id: "$gen", count: { $sum: 1 } } }
+    ]);
+
+    const result = { gen1: 0, gen2: 0, gen3: 0, gen4: 0, gen5: 0, gen6: 0 };
+    for (const item of stats) {
+        if (item._id >= 1 && item._id <= 6) {
+            result[`gen${item._id}`] = item.count;
+        }
+    }
+    return result;
+};
+
 const statistic = async (user) => {
     try {
-        const gen1 = await Refer.countDocuments({ reffer: user, gen: 1 });
-        const gen2 = await Refer.countDocuments({ reffer: user, gen: 2 });
-        const gen3 = await Refer.countDocuments({ reffer: user, gen: 3 });
-        const gen4 = await Refer.countDocuments({ reffer: user, gen: 4 });
-        const gen5 = await Refer.countDocuments({ reffer: user, gen: 5 });
-        const gen6 = await Refer.countDocuments({ reffer: user, gen: 6 });
-        return { gen1, gen2, gen3, gen4, gen5, gen6 }
+        const mongoose = require("mongoose");
+        const userId = typeof user === "string" ? new mongoose.Types.ObjectId(user) : user;
+        return await getReferralStatsByUserId(userId);
     } catch (error) {
         throw new Error(error)
     }
@@ -188,13 +201,8 @@ const statistic2 = async (user) => {
         if (!userCheck) {
             throw new Error("User not found")
         }
-        const gen1 = await Refer.countDocuments({ reffer: userCheck._id, gen: 1 });
-        const gen2 = await Refer.countDocuments({ reffer: userCheck._id, gen: 2 });
-        const gen3 = await Refer.countDocuments({ reffer: userCheck._id, gen: 3 });
-        const gen4 = await Refer.countDocuments({ reffer: userCheck._id, gen: 4 });
-        const gen5 = await Refer.countDocuments({ reffer: userCheck._id, gen: 5 });
-        const gen6 = await Refer.countDocuments({ reffer: userCheck._id, gen: 6 });
-        return { gen1, gen2, gen3, gen4, gen5, gen6, user: userCheck }
+        const counts = await getReferralStatsByUserId(userCheck._id);
+        return { ...counts, user: userCheck }
     } catch (error) {
         throw new Error(error)
     }
