@@ -33,6 +33,9 @@ router.put('/new-password/:id', userService.password)
 // Get Loged In User
 router.get('/me', authChecker, userService.getCurrentUser)
 
+// Get Admins and Moderators for messaging support
+router.get('/admins', authChecker, userService.getAdmins)
+
 // Platform statistics
 router.get('/statistic', userService.getStatistic)
 

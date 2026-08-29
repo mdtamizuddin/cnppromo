@@ -158,17 +158,15 @@ const ChatList = ({ users, counts, refetch, loading, fetchNextPage, hasNextPage,
 
   const directoryParams = useMemo(() => {
     if (directoryQuery) return { search: directoryQuery, limit: 100 };
-    if (user?.role !== "admin") return { admin: true, limit: 100 };
     return { limit: 100 };
-  }, [directoryQuery, user?.role]);
+  }, [directoryQuery]);
 
   const { data: directory, isLoading: directoryLoading } = useQuery({
-    // Keyed on the search params only. Keying on the live socket message refetched
-    // the whole user directory every time any chat message arrived.
-    queryKey: ["users-chat-list", directoryParams],
+    queryKey: ["users-chat-list", user?.role, directoryParams],
     queryFn: async () => {
-      const res = await api.get(`/user`, { params: directoryParams });
-      return res.data || [];
+      const endpoint = user?.role === "admin" ? "/user" : "/user/admins";
+      const res = await api.get(endpoint, { params: directoryParams });
+      return res.data || { users: [] };
     },
     enabled: newChatOpen && !!user,
     refetchOnWindowFocus: false,

@@ -705,7 +705,29 @@ const resetPassword = async (req, res) => {
             message: error.message
         });
     }
-}
+};
+
+const getAdmins = async (req, res) => {
+    try {
+        const admins = await User.find({
+            role: "admin",
+            lock: { $ne: true }
+        })
+            .select("name username role image active lastActive")
+            .sort({ active: -1, createdAt: -1 })
+            .lean();
+
+        res.status(200).send({
+            users: admins,
+            total: admins.length
+        });
+    } catch (error) {
+        res.status(500).send({
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     createUser,
     getAllData,
@@ -722,5 +744,6 @@ module.exports = {
     withoutPass,
     password,
     resetPassword,
-    giveAccess
+    giveAccess,
+    getAdmins
 }
