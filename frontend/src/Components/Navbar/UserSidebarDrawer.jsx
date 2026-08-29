@@ -15,6 +15,7 @@ import {
   BellIcon,
   Cog6ToothIcon,
   ChatBubbleLeftRightIcon,
+  DevicePhoneMobileIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
@@ -49,6 +50,7 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
     },
     { label: "সেটিংস", to: "/user/settings", icon: Cog6ToothIcon },
     { label: "Message", to: "/user/message", icon: ChatBubbleLeftRightIcon },
+    { label: "লগইন ডিভাইস", to: "/user/login-devices", icon: DevicePhoneMobileIcon },
   ];
 
   return (

@@ -24,6 +24,7 @@ const WorksPage = lazy(() => import("../Pages/Admin/Works/WorksPage"));
 const WorkHistory = lazy(() => import("../Pages/SocialWork/WorkHistory"));
 const UserSettings = lazy(() => import("../Pages/Settings/UserSettings"));
 const Training = lazy(() => import("../Pages/Training/Training"));
+const LoginDevices = lazy(() => import("../Pages/Account/LoginDevices"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -133,5 +134,9 @@ export const userRoutes = [
   {
     path: "training",
     element: <AuthChecker><Lazy><Training /></Lazy></AuthChecker>,
+  },
+  {
+    path: "login-devices",
+    element: <AuthChecker><Lazy><LoginDevices /></Lazy></AuthChecker>,
   },
 ];

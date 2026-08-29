@@ -18,6 +18,7 @@ import {
   ChatBubbleLeftRightIcon,
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
+  DevicePhoneMobileIcon,
   XMarkIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/outline";
@@ -70,6 +71,7 @@ const sidebarData = [
     category: "ACCOUNT",
     items: [
       { label: "Settings", icon: UserCircleIcon, to: "/admin/settings", color: "text-purple-600" },
+      { label: "Login Devices", icon: DevicePhoneMobileIcon, to: "/admin/login-devices", color: "text-cyan-500" },
     ]
   }
 ];

@@ -1,6 +1,7 @@
 const User = require("../Routes/User/user.model");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = require("./jwtSecret");
+const sessionService = require("../Routes/Session/session.service");
 
 const authChecker = async (req, res, next) => {
     try {
@@ -15,6 +16,25 @@ const authChecker = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, JWT_SECRET);
+
+        // Tokens minted before sessions existed carry no `jti`. They stay valid
+        // until they expire on their own — rejecting them here would sign out
+        // every currently logged-in user the moment this deploys. Once the last
+        // 30-day token has aged out, this branch can go and a missing jti can
+        // become a 401.
+        if (decoded.jti) {
+            const session = await sessionService.loadLiveSession(decoded.jti);
+            if (!session) {
+                return res.status(401).json({ message: "Unauthorized: Session ended" });
+            }
+            if (String(session.user) !== String(decoded.id)) {
+                return res.status(401).json({ message: "Unauthorized: Session mismatch" });
+            }
+            sessionService.touchSession(session);
+            req.session = session;
+            req.sessionId = String(session._id);
+        }
+
         const user = await User.findOne({ _id: decoded.id }).select("-password");
 
         if (!user) {

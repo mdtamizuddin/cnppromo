@@ -22,9 +22,15 @@ const morgan = require("morgan");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const JWT_SECRET = require("./util/jwtSecret");
+const sessionService = require("./Routes/Session/session.service");
 
 const app = express();
 const port = process.env.PORT || 4000;
+
+// Behind a reverse proxy, req.ip is the proxy's address unless Express is told
+// to read X-Forwarded-For. Without this every login session records the same IP
+// and the rate limiters bucket the whole internet together.
+app.set("trust proxy", 1);
 
 // Safety net: never let an unhandled rejection take down the whole server
 process.on("unhandledRejection", (reason, promise) => {
@@ -266,6 +272,15 @@ io.use(async (socket, next) => {
       return next(new Error("Authentication error: Invalid or expired token"));
     }
 
+    // A revoked device must lose its live socket as well as its REST access.
+    if (decoded.jti) {
+      const session = await sessionService.loadLiveSession(decoded.jti);
+      if (!session || String(session.user) !== String(decoded.id)) {
+        return next(new Error("Authentication error: Session ended"));
+      }
+      socket.data.sessionId = String(session._id);
+    }
+
     const user = await User.findById(decoded.id);
     if (!user) {
       return next(new Error("Authentication error: User not found"));
@@ -278,6 +293,28 @@ io.use(async (socket, next) => {
     next(error);
   }
 });
+
+/**
+ * Disconnects the live sockets belonging to sessions that were just revoked.
+ *
+ * Exposed on the app so the session routes can reach it without importing the
+ * Socket.IO server (which would be a cycle: index -> routes -> index).
+ */
+const endSessions = async (sessionIds, userId) => {
+  try {
+    const doomed = new Set(sessionIds.map(String));
+    const sockets = await io.in(String(userId)).fetchSockets();
+    for (const s of sockets) {
+      if (s.data?.sessionId && doomed.has(s.data.sessionId)) {
+        s.emit("session:revoked");
+        s.disconnect(true);
+      }
+    }
+  } catch (error) {
+    console.error("endSessions error:", error.message);
+  }
+};
+app.set("endSessions", endSessions);
 
 const statusUpdater = async (socketId, status) => {
   try {

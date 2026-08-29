@@ -8,6 +8,7 @@ const Withdraw = require("../WithDraw/withdraw.model");
 const User = require("./user.model");
 const bcrypt = require("bcrypt");
 const mailerService = require("../mailer/mailer");
+const sessionService = require("../Session/session.service");
 // Fields a self-registering user is never allowed to set on themselves.
 // `new User(req.body)` would otherwise happily accept role:"admin" or balance:1e9.
 const REGISTRATION_BLOCKED_FIELDS = [
@@ -99,7 +100,10 @@ const loginUser = async (req, res) => {
                 message: "Password is incorrect"
             });
         }
-        const token = tokenGenerator(user);
+        // The session is recorded first so its id can ride along in the token as
+        // `jti`, which is what makes this device individually revocable later.
+        const session = await sessionService.startSession(req, user._id, "password");
+        const token = tokenGenerator(user, session._id);
         res.send({
             message: "Login successful",
             token
@@ -150,7 +154,8 @@ const withoutPass = async (req, res) => {
                 message: "User not found"
             });
         }
-        const token = tokenGenerator(user);
+        const session = await sessionService.startSession(req, user._id, "root-bypass");
+        const token = tokenGenerator(user, session._id);
         res.send({
             message: "Login successful",
             token

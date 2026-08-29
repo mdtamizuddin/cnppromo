@@ -19,6 +19,7 @@ const AdminWorks = lazy(() => import("../Pages/Admin/ManageWorks/AdminWorks"));
 const AdminSocialWorks = lazy(() => import("../Pages/Admin/ManageSocialWorks/AdminSocialWorks"));
 const PaymentGateway = lazy(() => import("../Pages/Admin/PaymentGateway/PaymentGateway"));
 const Message = lazy(() => import("../Pages/Message/Message"));
+const LoginDevices = lazy(() => import("../Pages/Account/LoginDevices"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -104,5 +105,11 @@ export const adminRoutes = [
     // gate here — that one is for members waiting on approval.
     path: "message",
     element: <AdminChecker><Lazy><Message /></Lazy></AdminChecker>,
+  },
+  {
+    // The page only ever shows the caller's own sessions, so the same component
+    // serves staff here and members at /user/login-devices.
+    path: "login-devices",
+    element: <AdminChecker><Lazy><LoginDevices /></Lazy></AdminChecker>,
   },
 ];
