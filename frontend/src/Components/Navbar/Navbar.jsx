@@ -21,7 +21,9 @@ const publicNavItems = [
   { label: "রিভিউ", to: "/reviews" },
 ];
 
-const Topbar = () => {
+// `hideHeader` keeps the sidebar and bottom nav mounted while dropping the app
+// header — used by full-height surfaces like messaging that supply their own.
+const Topbar = ({ hideHeader = false }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { user, settings } = useSelector((state) => state.user);
@@ -54,6 +56,7 @@ const Topbar = () => {
         />
 
         {/* Top App Header (with lg:pl-72 for desktop sidebar alignment) */}
+        {!hideHeader && (
         <header className="sticky top-0 z-30 bg-[#0b0c2a] text-white px-4 sm:px-6 py-3 border-b border-indigo-950/40 shadow-lg lg:pl-72 transition-all">
           <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
             
@@ -105,6 +108,7 @@ const Topbar = () => {
 
           </div>
         </header>
+        )}
 
         {/* Floating Bottom Navigation Bar for Mobile */}
         <UserBottomBar />

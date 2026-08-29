@@ -63,7 +63,7 @@ const sidebarData = [
     category: "SUPPORT & COMMUNICATION",
     items: [
       { label: "Support Ticket", icon: TicketIcon, to: "#", color: "text-red-400" },
-      { label: "Message", icon: ChatBubbleLeftRightIcon, to: "/user/message", color: "text-blue-500" },
+      { label: "Message", icon: ChatBubbleLeftRightIcon, to: "/admin/message", color: "text-blue-500" },
     ]
   },
   {

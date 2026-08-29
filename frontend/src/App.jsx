@@ -23,6 +23,10 @@ const MainLayout = () => {
   const { user } = useSelector((state) => state.user);
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
+  // Messaging is a full-height surface that manages its own header, so the app
+  // header and footer are dropped on it. The side rail and bottom nav stay —
+  // they are the only way out of the page.
+  const isMessageRoute = /^\/(user\/)?message\/?$/.test(location.pathname);
 
   if (isAdminRoute) {
     return (
@@ -40,11 +44,19 @@ const MainLayout = () => {
       <ScrollRestoration />
       <DefaultFetch />
       <Toaster />
-      <Topbar />
-      <div className={user ? "w-full lg:pl-72 pb-20 lg:pb-6 transition-all min-h-screen" : "w-full min-h-screen"}>
+      <Topbar hideHeader={isMessageRoute} />
+      <div
+        className={
+          !user
+            ? "w-full min-h-screen"
+            : isMessageRoute
+            ? "w-full lg:pl-72 transition-all"
+            : "w-full lg:pl-72 pb-20 lg:pb-6 transition-all min-h-screen"
+        }
+      >
         <Outlet />
       </div>
-      <Footer />
+      {!isMessageRoute && <Footer />}
     </>
   );
 };

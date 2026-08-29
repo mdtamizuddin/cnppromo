@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useQuery } from "react-query";
 import { useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { ClockIcon } from "@heroicons/react/24/outline";
 import { api } from "../../util/axios";
 import { useSocketContext } from "../../Components/SocketContext";
@@ -22,6 +22,10 @@ const Message = () => {
   const { user } = useSelector((state) => state.user);
   const location = useLocation();
   const navigate = useNavigate();
+  // Admin renders this page inside its own layout and passes the sidebar toggle
+  // down, since removing the top bar also removed the only way in to the menu.
+  const outlet = useOutletContext();
+  const onOpenMenu = outlet?.toggleSidebar;
 
   const params = new URLSearchParams(location.search);
   const chatId = params.get("chat");
@@ -82,7 +86,9 @@ const Message = () => {
     navigate(`${location.pathname}?${next.toString()}`);
   }, [location.pathname, location.search, navigate]);
 
-  if (user && user.status !== "active") {
+  const isStaff = user?.role === "admin" || user?.role === "moderator";
+
+  if (user && !isStaff && user.status !== "active") {
     return (
       <div className="message flex items-center justify-center min-h-[70dvh]">
         <EmptyState
@@ -100,8 +106,9 @@ const Message = () => {
           scroll regions flex instead of the two hardcoded `calc(100dvh - Npx)`
           guesses the list and the thread each used to carry. */}
       <div
-        className="mx-auto w-full max-w-[1400px] lg:px-4 lg:py-4"
-        style={{ height: "100dvh" }}
+        className={`message-shell mx-auto w-full max-w-[1400px] lg:px-4 lg:py-4 ${
+          onOpenMenu ? "message-shell--full" : ""
+        }`}
       >
         <div
           className="grid h-full min-h-0 overflow-hidden bg-white lg:rounded-2xl lg:border lg:border-gray-100 lg:shadow-sm
@@ -114,6 +121,7 @@ const Message = () => {
               refetch={refetch}
               activeId={chatId}
               onOpen={openChat}
+              onOpenMenu={onOpenMenu}
             />
           </div>
 

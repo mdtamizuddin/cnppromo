@@ -120,6 +120,26 @@ background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
   font-weight: 400;
 }
 
+/* The chat shell fills the viewport minus whatever chrome is pinned over it.
+   On mobile that is the floating bottom nav (48px tall, 12px off the bottom,
+   plus breathing room); on desktop the nav is a side rail, so nothing is
+   subtracted. Declared once here rather than guessed per component. */
+.message-shell {
+  --chat-bottom-inset: 84px;
+  height: calc(100dvh - var(--chat-bottom-inset));
+}
+
+/* Admin has no bottom nav, so its shell always gets the full viewport. */
+.message-shell--full {
+  --chat-bottom-inset: 0px;
+}
+
+@media (min-width: 1024px) {
+  .message-shell {
+    --chat-bottom-inset: 0px;
+  }
+}
+
 /* Typing indicator. Each dot is offset by its own animation-delay. */
 @keyframes chat-typing-bounce {
   0%,

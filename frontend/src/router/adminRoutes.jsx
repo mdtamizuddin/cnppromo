@@ -18,6 +18,7 @@ const ExternalWithdrawals = lazy(() => import("../Pages/Admin/ExternalWithdrawal
 const AdminWorks = lazy(() => import("../Pages/Admin/ManageWorks/AdminWorks"));
 const AdminSocialWorks = lazy(() => import("../Pages/Admin/ManageSocialWorks/AdminSocialWorks"));
 const PaymentGateway = lazy(() => import("../Pages/Admin/PaymentGateway/PaymentGateway"));
+const Message = lazy(() => import("../Pages/Message/Message"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -97,5 +98,11 @@ export const adminRoutes = [
   {
     path: "payment-gateway",
     element: <AdminChecker><Lazy><PaymentGateway /></Lazy></AdminChecker>,
+  },
+  {
+    // Staff reach messaging through the admin shell. There is no `requireActive`
+    // gate here — that one is for members waiting on approval.
+    path: "message",
+    element: <AdminChecker><Lazy><Message /></Lazy></AdminChecker>,
   },
 ];
