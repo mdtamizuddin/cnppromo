@@ -100,6 +100,10 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: null,
     },
+    notificationsEnabled: {
+        type: Boolean,
+        default: true,
+    },
 }, {
     timestamps: true,
 });

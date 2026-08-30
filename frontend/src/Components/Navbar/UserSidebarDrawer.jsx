@@ -21,10 +21,12 @@ import {
 } from "@heroicons/react/24/outline";
 import Cookie from "js-cookie";
 import toast from "react-hot-toast";
+import { useUnreadNotifications } from "../../util/useUnreadNotifications";
 
 const UserSidebarDrawer = ({ isOpen, onClose }) => {
   const { user } = useSelector((state) => state.user);
   const location = useLocation();
+  const unreadCount = useUnreadNotifications();
 
   const handleLogout = () => {
     Cookie.remove("token-you");
@@ -46,12 +48,17 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
       label: "নোটিফিকেশন",
       to: "/user/notifications",
       icon: BellIcon,
-      badge: 3,
     },
     { label: "সেটিংস", to: "/user/settings", icon: Cog6ToothIcon },
     { label: "Message", to: "/user/message", icon: ChatBubbleLeftRightIcon },
     { label: "লগইন ডিভাইস", to: "/user/login-devices", icon: DevicePhoneMobileIcon },
   ];
+
+  const navItems = navMenuItems.map((item) =>
+    item.to === "/user/notifications"
+      ? { ...item, badge: unreadCount > 0 ? unreadCount : undefined }
+      : item
+  );
 
   return (
     <>
@@ -122,7 +129,7 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
 
         {/* Navigation Items (Scrollable) */}
         <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-1.5 scrollbar-thin scrollbar-thumb-white/10">
-          {navMenuItems.map((item, idx) => {
+          {navItems.map((item, idx) => {
             const isActive =
               item.to &&
               (location.pathname === item.to ||

@@ -45,8 +45,27 @@ const UserSettings = () => {
   const [showNewPass, setShowNewPass] = useState(false);
 
   // Preferences
-  const [pushEnabled, setPushEnabled] = useState(true);
+  const [pushEnabled, setPushEnabled] = useState(user?.notificationsEnabled ?? true);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [prefSaving, setPrefSaving] = useState(false);
+
+  const handleToggleNotifications = async (checked) => {
+    setPushEnabled(checked);
+    setPrefSaving(true);
+    try {
+      const res = await api.put("/user/notification-settings", {
+        notificationsEnabled: checked,
+      });
+      toast.success(res.data?.message || "নোটিফিকেশন সেটিং আপডেট হয়েছে");
+    } catch (error) {
+      setPushEnabled(!checked);
+      toast.error(
+        error?.response?.data?.message || error?.message || "সেটিং আপডেট ব্যর্থ হয়েছে"
+      );
+    } finally {
+      setPrefSaving(false);
+    }
+  };
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -434,12 +453,15 @@ const UserSettings = () => {
               <div className="py-3 flex items-center justify-between">
                 <div>
                   <p className="font-bold text-[#0b0c2a]">পুশ নোটিফিকেশন</p>
-                  <p className="text-[11px] text-gray-400">নতুন টাস্ক ও উইথড্র আপডেট অ্যালার্ট</p>
+                  <p className="text-[11px] text-gray-400">
+                    বন্ধ করলে নতুন টাস্ক, উইথড্র ও পেমেন্টের কোনো নোটিফিকেশন তৈরি হবে না
+                  </p>
                 </div>
                 <input
                   type="checkbox"
+                  disabled={prefSaving}
                   checked={pushEnabled}
-                  onChange={(e) => setPushEnabled(e.target.checked)}
+                  onChange={(e) => handleToggleNotifications(e.target.checked)}
                   className="w-4 h-4 text-[#5a32fa] rounded cursor-pointer accent-[#5a32fa]"
                 />
               </div>

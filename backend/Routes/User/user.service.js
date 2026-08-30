@@ -5,10 +5,12 @@ const tokenGenerator = require("../../util/tokenGenerator");
 const { createRefer } = require("../Refer/refer.service");
 const Setting = require("../Settings/setting.model");
 const Withdraw = require("../WithDraw/withdraw.model");
+const Session = require("../Session/session.model");
 const User = require("./user.model");
 const bcrypt = require("bcrypt");
 const mailerService = require("../mailer/mailer");
 const sessionService = require("../Session/session.service");
+const { notifyUser } = require("../Notification/notification.service");
 // Fields a self-registering user is never allowed to set on themselves.
 // `new User(req.body)` would otherwise happily accept role:"admin" or balance:1e9.
 const REGISTRATION_BLOCKED_FIELDS = [
@@ -59,6 +61,13 @@ const createUser = async (req, res) => {
         req.body.time = new Date(req.body.time);
         const user = new User(req.body);
         await user.save();
+        notifyUser(user._id, {
+            category: "system",
+            type: "welcome",
+            title: "স্বাগতম CNP-PROMO প্ল্যাটফর্মে!",
+            message: "আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে। অ্যাডমিনের অনুমোদনের পর কাজ করে ইনকাম শুরু করুন।",
+            link: "/works",
+        });
         const token = tokenGenerator(user);
         res.send({
             message: "User created successfully",
@@ -105,6 +114,23 @@ const loginUser = async (req, res) => {
         // Signing in on a fourth device evicts the oldest rather than failing.
         const { session, evicted } = await sessionService.startSession(req, user._id, "password");
         if (evicted.length) req.app.get("endSessions")?.(evicted, user._id);
+        // Security alert: only when this device/IP combination has never been
+        // seen before, so regular logins do not flood the notification feed.
+        const isKnownDevice = await Session.exists({
+            user: user._id,
+            _id: { $ne: session._id },
+            "device.name": session.device?.name,
+            ip: session.ip,
+        });
+        if (!isKnownDevice) {
+            notifyUser(user._id, {
+                category: "security",
+                type: "new_login",
+                title: "নতুন ডিভাইসে লগইন হয়েছে",
+                message: `${session.device?.name || "অজানা ডিভাইস"} (${session.ip}) থেকে একটি নতুন লগইন হয়েছে। এটি আপনার না হলে পাসওয়ার্ড পরিবর্তন করুন।`,
+                link: "/settings",
+            });
+        }
         const token = tokenGenerator(user, session._id);
         res.send({
             message: "Login successful",
@@ -416,12 +442,25 @@ const updateUser = async (req, res) => {
         if (Object.keys(update).length === 0) {
             return res.status(400).send({ message: "No updatable fields provided" });
         }
+        const prevUser =
+            update.level !== undefined
+                ? await User.findById(req.params.id).select("level")
+                : null;
         const user = await User.findByIdAndUpdate(req.params.id, update, {
             new: true,
             runValidators: true
         }).select("-password");
         if (!user) {
             return res.status(404).send({ message: "User not found" });
+        }
+        if (prevUser && Number(prevUser.level) !== Number(update.level)) {
+            notifyUser(user._id, {
+                category: "levels",
+                type: "level_up",
+                title: `কনগ্র্যাচুলেশন! আপনার লেভেল ${update.level} হয়েছে`,
+                message: `আপনার লেভেল ${prevUser.level || 1} থেকে ${update.level}-এ উন্নীত হয়েছে। নতুন কমিশন হার ও বোনাস আনলক হয়েছে।`,
+                link: "/level",
+            });
         }
         res.send({
             message: "User updated successfully",
@@ -559,6 +598,30 @@ const deleteUser = async (req, res) => {
 const getCurrentUser = async (req, res) => {
     res.send(req.user);
 }
+
+// Turn the logged-in user's notifications on/off. When off, the notify
+// service stops inserting new notifications for that account entirely.
+const updateNotificationSettings = async (req, res) => {
+    try {
+        const enabled = req.body.notificationsEnabled;
+        if (typeof enabled !== "boolean") {
+            return res.status(400).send({
+                message: "notificationsEnabled must be a boolean"
+            });
+        }
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { notificationsEnabled: enabled },
+            { new: true }
+        ).select("notificationsEnabled");
+        res.send({
+            message: enabled ? "Notifications enabled" : "Notifications disabled",
+            notificationsEnabled: user.notificationsEnabled,
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+}
 const checkUser = async (req, res) => {
     try {
 
@@ -613,6 +676,14 @@ const activeAnUser = async (req, res) => {
         user.activatedAt = new Date();
         await user.save();
 
+        notifyUser(user._id, {
+            category: "system",
+            type: "activated",
+            title: "আপনার অ্যাকাউন্ট সক্রিয় হয়েছে!",
+            message: "অভিনন্দন! আপনার অ্যাকাউন্ট অনুমোদিত হয়েছে। এখন কাজ শুরু করে প্রতিদিন ইনকাম করুন।",
+            link: "/works",
+        });
+
         // Walk up the sponsor chain, paying one generation per hop. This replaces
         // six hand-unrolled nested blocks that did exactly the same thing.
         let currentRefferId = user.reffer;
@@ -633,6 +704,13 @@ const activeAnUser = async (req, res) => {
                 // concurrent payouts to the same upline.
                 await User.findByIdAndUpdate(upline._id, {
                     $inc: { balance: commition }
+                });
+                notifyUser(upline._id, {
+                    category: "referrals",
+                    type: "refer_commission",
+                    title: `নতুন রেফারেল কমিশন +৳${commition}`,
+                    message: `${user.name || user.username} আপনার রেফারালে যুক্ত হওয়ায় লেভেল-${gen} কমিশন পেয়েছেন।`,
+                    link: "/refer",
                 });
             }
 
@@ -745,5 +823,6 @@ module.exports = {
     password,
     resetPassword,
     giveAccess,
-    getAdmins
+    getAdmins,
+    updateNotificationSettings
 }

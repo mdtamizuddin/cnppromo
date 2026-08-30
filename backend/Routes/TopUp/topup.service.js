@@ -1,5 +1,6 @@
 const User = require("../User/user.model");
 const Withdraw = require("./topup.model");
+const { notifyUser } = require("../Notification/notification.service");
 
 const createWithDraw = async (data) => {
     try {
@@ -14,6 +15,13 @@ const createWithDraw = async (data) => {
 
         const withDraw = new Withdraw(data);
         await withDraw.save();
+        notifyUser(user, {
+            category: "payments",
+            type: "topup_request",
+            title: `টপ-আপ রিকোয়েস্ট সাবমিট হয়েছে`,
+            message: `৳${amount} টপ-আপের অনুরোধ প্রক্রিয়াধীন রয়েছে। অ্যাডমিন যাচাই করার পর ব্যালেন্সে যোগ হবে।`,
+            link: "/account/topup",
+        });
         // deduct amount from user balance
         return withDraw
     } catch (error) {
@@ -100,7 +108,17 @@ const getSingle = async (id) => {
 // update data
 const updateData = async (id, data) => {
     try {
+        const before = await Withdraw.findById(id);
         await Withdraw.findByIdAndUpdate(id, data, { new: true });
+        if (before && data.status === "rejected") {
+            notifyUser(before.user, {
+                category: "payments",
+                type: "topup_rejected",
+                title: `টপ-আপ রিকোয়েস্ট বাতিল হয়েছে`,
+                message: `৳${before.amount} টপ-আপের অনুরোধটি বাতিল হয়েছে। ট্রানজেকশন আইডি (${before.trx || "N/A"}) যাচাই করে আবার চেষ্টা করুন।`,
+                link: "/account/topup",
+            });
+        }
         return {
             message: "Data updated successfully",
         }
@@ -120,6 +138,13 @@ const rejectWithdraw = async (id) => {
         await User.findByIdAndUpdate(data.user, {
             $inc: { balance: data.amount }
         })
+        notifyUser(data.user, {
+            category: "payments",
+            type: "topup_accepted",
+            title: `টপ-আপ সফল হয়েছে`,
+            message: `৳${data.amount} আপনার ব্যালেন্সে যোগ হয়েছে। ধন্যবাদ!`,
+            link: "/account/topup",
+        });
         return data
     } catch (error) {
         throw new Error(error)

@@ -7,7 +7,6 @@ import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope } from '@fortawesome/free-regular-svg-icons';
 import { 
     faLock, 
     faEye, 
@@ -138,17 +137,17 @@ const Login = () => {
                     <p className="text-[15px] text-center text-gray-500 mb-8">আপনার একাউন্ট প্রবেশ করতে আপনার তথ্য দিন</p>
                     
                     <form onSubmit={SubmitHandler} className="space-y-5">
-                        {/* Email Field */}
+                        {/* Username / Email Field */}
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                <FontAwesomeIcon icon={faEnvelope} className="text-gray-400 text-[15px]" />
+                                <FontAwesomeIcon icon={faUser} className="text-gray-400 text-[15px]" />
                             </div>
                             <input 
-                                type="email" 
+                                type="text" 
                                 name="email"
                                 value={data.email}
                                 onChange={updateState}
-                                placeholder="ইমেইল অ্যাড্রেস লিখুন" 
+                                placeholder="ইউজারনেম বা ইমেইল লিখুন" 
                                 required
                                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-[14px] focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors bg-gray-50/50" 
                             />

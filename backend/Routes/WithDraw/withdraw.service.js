@@ -1,5 +1,6 @@
 const User = require("../User/user.model");
 const Withdraw = require("./withdraw.model");
+const { notifyUser } = require("../Notification/notification.service");
 
 const createWithDraw = async (data) =>
 {
@@ -42,6 +43,13 @@ const createWithDraw = async (data) =>
         }
         // userData.balance = userData.balance - amount;
         // await userData.save();
+        notifyUser(user, {
+            category: "payments",
+            type: "withdraw_request",
+            title: `উইথড্রয়াল রিকোয়েস্ট সাবমিট হয়েছে`,
+            message: `৳${numericAmount} উইথড্রয়াল রিকোয়েস্ট গ্রহণ করা হয়েছে। ১২-২৪ ঘন্টার মধ্যে প্রসেস করা হবে।`,
+            link: "/account/withdraw",
+        });
         return withDraw
     } catch (error) {
         throw new Error(error)
@@ -135,7 +143,17 @@ const getSingle = async (id) =>
 const updateData = async (id, data) =>
 {
     try {
+        const before = await Withdraw.findById(id);
         await Withdraw.findByIdAndUpdate(id, data, { new: true });
+        if (before && data.status === "completed") {
+            notifyUser(before.user, {
+                category: "payments",
+                type: "withdraw_paid",
+                title: `উইথড্রয়াল সফল হয়েছে`,
+                message: `৳${before.amount} আপনার অ্যাকাউন্টে পাঠানো হয়েছে। ধন্যবাদ!`,
+                link: "/account/withdraw",
+            });
+        }
         return {
             message: "Data updated successfully",
         }
@@ -156,6 +174,13 @@ const rejectWithdraw = async (id) =>
         await User.findByIdAndUpdate(data.user, {
             $inc: { balance: data.amount }
         })
+        notifyUser(data.user, {
+            category: "payments",
+            type: "withdraw_rejected",
+            title: `উইথড্রয়াল রিকোয়েস্ট বাতিল হয়েছে`,
+            message: `৳${data.amount} উত্তোলনের অনুরোধটি বাতিল হয়েছে এবং ব্যালেন্সে ফেরত যোগ করা হয়েছে।`,
+            link: "/account/withdraw",
+        });
         return data
     } catch (error) {
         throw new Error(error)

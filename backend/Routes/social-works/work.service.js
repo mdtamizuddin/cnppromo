@@ -1,11 +1,21 @@
 
 const { Work, WorkSubmit } = require('./work.model');
 const User = require('../User/user.model');
+const { notifyUser, notifyMany } = require('../Notification/notification.service');
 const createWork = async (workData) =>
 {
     try {
         const work = new Work(workData);
         await work.save();
+        const price = work.price ? ` · রিওয়ার্ড ৳${work.price}` : "";
+        const users = await User.find({ status: "active" }).select("_id");
+        notifyMany(users.map((u) => u._id), {
+            category: "tasks",
+            type: "new_task",
+            title: "নতুন টাস্ক যোগ হয়েছে",
+            message: `নতুন কাজ যোগ হয়েছে${price}। আজই সম্পন্ন করুন!`,
+            link: "/social-works",
+        });
         return work;
     } catch (error) {
         throw new Error('Error creating work: ' + error.message);
@@ -17,6 +27,13 @@ const createWorkSubmit = async (workSubmitData) =>
         const workSubmit = new WorkSubmit(workSubmitData);
         await workSubmit.save();
         await Work.findByIdAndUpdate(workSubmit.workId, { $push: { workers: workSubmitData.userId } })
+        notifyUser(workSubmitData.userId, {
+            category: "tasks",
+            type: "task_submitted",
+            title: "কাজ সাবমিট হয়েছে",
+            message: "আপনার কাজটি রিভিউয়ের জন্য জমা হয়েছে। অ্যাডমিন অনুমোদন দিলেই রিওয়ার্ড পাবেন।",
+            link: "/social-works",
+        });
         return workSubmit;
     } catch (error) {
         throw new Error('Error creating work submit: ' + error.message);
@@ -49,6 +66,15 @@ const completeWorkSubmit = async (workSubmitId, status) =>
                 $inc: { balance: price }
             }, { new: true });
         }
+        notifyUser(workSubmit.userId, {
+            category: "tasks",
+            type: "task_approved",
+            title: "কাজ অনুমোদিত হয়েছে!",
+            message: price > 0
+                ? `আপনার কাজের অনুমোদন পেয়েছেন এবং ৳${price} ব্যালেন্সে যোগ হয়েছে।`
+                : "আপনার কাজের অনুমোদন পেয়েছেন।",
+            link: "/social-works",
+        });
         return updatedWorkSubmit;
     }
     catch (error) {

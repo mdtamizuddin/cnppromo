@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import {
   BellIcon,
   ChevronLeftIcon,
@@ -14,133 +14,70 @@ import {
   ArrowRightIcon,
   MegaphoneIcon,
   ShieldCheckIcon,
+  TrophyIcon,
 } from "@heroicons/react/24/outline";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import toast from "react-hot-toast";
 import { api } from "../../util/axios";
+import Loader from "../../Components/Loader";
 
 dayjs.extend(relativeTime);
 
-const staticNotifications = [
-  {
-    id: "notif-1",
-    category: "system",
-    type: "welcome",
-    title: "স্বাগতম CNP-PROMO প্ল্যাটফর্মে! 🚀",
-    message: "আপনার অ্যাকাউন্ট সফলভাবে সক্রিয় করা হয়েছে। নিয়মিত কাজ সম্পন্ন করে প্রতিদিন ইনকাম করুন।",
-    time: "সকাল ৯:০০",
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    isRead: false,
-    icon: SparklesIcon,
-    iconBg: "bg-purple-50 text-[#5a32fa]",
-    cta: { text: "কাজ শুরু করুন", link: "/works" },
-  },
-  {
-    id: "notif-2",
-    category: "payments",
-    type: "payment_update",
-    title: "উইথড্রয়াল প্রসেসিং নোটিশ ⚡",
-    message: "বিকাশ ও নগদে আপনার সকল উইথড্রয়াল রিকোয়েস্ট ১২-২৪ ঘন্টার মধ্যে সফলভাবে পাঠিয়ে দেওয়া হবে।",
-    time: "২ ঘন্টা আগে",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    isRead: false,
-    icon: CreditCardIcon,
-    iconBg: "bg-emerald-50 text-emerald-600",
-    cta: { text: "উইথড্র হিস্ট্রি", link: "/account/withdraw" },
-  },
-  {
-    id: "notif-3",
-    category: "referrals",
-    type: "refer_boost",
-    title: "রেফারেল কমিশন অফার চালু 👑",
-    message: "প্রতিটি ১ম লেভেল রেফারে পাবেন ৩০ টাকা থেকে সর্বোচ্চ ৪০ টাকা পর্যন্ত আজীবন কমিশন!",
-    time: "গতকাল",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    isRead: true,
-    icon: UserGroupIcon,
-    iconBg: "bg-blue-50 text-blue-600",
-    cta: { text: "রেফারেল লিংক", link: "/refer" },
-  },
-  {
-    id: "notif-4",
-    category: "tasks",
-    type: "task_alert",
-    title: "নতুন ইউটিউব & সোশ্যাল টাস্ক যোগ হয়েছে 🎬",
-    message: "সহজ ভিডিও দেখা ও লাইক-শেয়ারের নতুন কাজগুলো সম্পন্ন করে ব্যালেন্স বাড়িয়ে নিন।",
-    time: "২ দিন আগে",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
-    isRead: true,
-    icon: BanknotesIcon,
-    iconBg: "bg-amber-50 text-amber-600",
-    cta: { text: "টাস্ক গ্যালারি", link: "/social-works" },
-  },
-  {
-    id: "notif-5",
-    category: "system",
-    type: "security",
-    title: "নিরাপত্তা ও একাউন্ট ভেরিফিকেশন গাইড 🛡️",
-    message: "আপনার পাসওয়ার্ড ও পার্সোনাল একাউন্ট নম্বর সুরক্ষিত রাখুন।",
-    time: "৩ দিন আগে",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72),
-    isRead: true,
-    icon: ShieldCheckIcon,
-    cta: { text: "সেটিংস দেখুন", link: "/settings" },
-  },
-];
+const CATEGORY_META = {
+  payments: { label: "পেমেন্ট", icon: CreditCardIcon, iconBg: "bg-emerald-50 text-emerald-600" },
+  referrals: { label: "রেফারেল", icon: UserGroupIcon, iconBg: "bg-blue-50 text-blue-600" },
+  tasks: { label: "টাস্ক", icon: BanknotesIcon, iconBg: "bg-amber-50 text-amber-600" },
+  system: { label: "সিস্টেম", icon: MegaphoneIcon, iconBg: "bg-purple-50 text-[#5a32fa]" },
+  levels: { label: "লেভেল", icon: TrophyIcon, iconBg: "bg-violet-50 text-violet-600" },
+  security: { label: "সিকিউরিটি", icon: ShieldCheckIcon, iconBg: "bg-rose-50 text-rose-600" },
+};
+
+const toLocalTime = (iso) =>
+  iso ? dayjs(iso).format("h:mm A") : "";
 
 const Notifications = () => {
   const { user } = useSelector((state) => state.user);
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState("all");
-  const [notifications, setNotifications] = useState(staticNotifications);
 
-  // Fetch real referral transactions to enrich notifications
-  const { data: referData } = useQuery({
-    queryKey: ["notifications-referrals", user?._id],
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["notifications", user?._id],
     queryFn: async () => {
-      const res = await api.get(`/refer/user/${user?._id}`);
+      const res = await api.get("/notification");
       return res.data;
     },
     enabled: !!user?._id,
-    onSuccess: (data) => {
-      if (data && data.length > 0) {
-        const dynamicRefNotifs = data.slice(0, 3).map((item, idx) => ({
-          id: `refer-dyn-${idx}`,
-          category: "referrals",
-          type: "refer_success",
-          title: `নতুন রেফারেল সফল! 🎉`,
-          message: `${item?.user?.name || "Member"} যুক্ত হয়েছেন (+৳৩০ কমিশন)।`,
-          time: dayjs(item?.createdAt).fromNow(),
-          timestamp: new Date(item?.createdAt),
-          isRead: false,
-          icon: UserGroupIcon,
-          iconBg: "bg-emerald-50 text-emerald-600",
-          cta: { text: "রেফারেল চেক", link: "/refer" },
-        }));
-
-        setNotifications((prev) => {
-          const nonRefer = prev.filter((p) => !p.id.startsWith("refer-dyn-"));
-          return [...dynamicRefNotifs, ...nonRefer];
-        });
-      }
-    },
   });
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const notifications = data?.data || [];
+  const unreadCount = data?.unread ?? notifications.filter((n) => !n.isRead).length;
 
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    toast.success("সব নোটিফিকেশন পড়া হয়েছে");
+  const refresh = () => queryClient.invalidateQueries(["notifications", user?._id]);
+
+  const handleMarkAllAsRead = async () => {
+    await api.put("/notification/read-all");
+    refresh();
+    toast.success("সব নোটিফিকেশন পড়া হয়েছে");
   };
 
-  const handleMarkAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+  const handleMarkAsRead = async (item) => {
+    if (item.isRead) return;
+    try {
+      await api.put(`/notification/read/${item._id}`);
+      refresh();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleDelete = (id) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  const handleDelete = async (item) => {
+    try {
+      await api.delete(`/notification/${item._id}`);
+      refresh();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "মুছে ফেলা যায়নি");
+    }
   };
 
   const filteredNotifications = notifications.filter((item) => {
@@ -149,17 +86,14 @@ const Notifications = () => {
   });
 
   const categories = [
-    { id: "all", label: "সবগুলো", icon: BellIcon },
-    { id: "payments", label: "পেমেন্ট", icon: CreditCardIcon },
-    { id: "referrals", label: "রেফারেল", icon: UserGroupIcon },
-    { id: "tasks", label: "টাস্ক", icon: BanknotesIcon },
-    { id: "system", label: "সিস্টেম", icon: MegaphoneIcon },
+    { id: "all", label: "সবগুলো" },
+    ...Object.entries(CATEGORY_META).map(([id, meta]) => ({ id, label: meta.label })),
   ];
 
   return (
     <div className="bg-[#f8faff] min-h-screen pb-24 pt-4">
       <div className="container mx-auto px-4 max-w-3xl space-y-3.5">
-        
+
         {/* 📱 Compact Top Header */}
         <div className="flex items-center justify-between pb-2 border-b border-gray-200/70">
           <div className="flex items-center gap-2.5">
@@ -187,7 +121,7 @@ const Notifications = () => {
               className="text-[11px] font-bold text-[#5a32fa] hover:text-[#4b26e0] flex items-center gap-1"
             >
               <CheckIcon className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>সব পড়া হয়েছে</span>
+              <span>সব পড়া হয়েছে</span>
             </button>
           )}
         </div>
@@ -212,16 +146,28 @@ const Notifications = () => {
           })}
         </div>
 
-        {/* 📜 Simple & Compact Notifications Feed */}
+        {/* 📜 Compact Notifications Feed */}
         <div className="space-y-2">
-          {filteredNotifications.length > 0 ? (
+          {isLoading ? (
+            <Loader />
+          ) : isError ? (
+            <div className="p-8 text-center bg-white rounded-2xl border border-gray-100 shadow-sm space-y-1.5">
+              <span className="text-2xl">⚠️</span>
+              <h3 className="text-xs font-bold text-[#0b0c2a]">লোড করতে ব্যর্থ হয়েছে</h3>
+            </div>
+          ) : filteredNotifications.length > 0 ? (
             filteredNotifications.map((item) => {
-              const Icon = item.icon || BellIcon;
+              const meta =
+                CATEGORY_META[item.category] || {
+                  icon: BellIcon,
+                  iconBg: "bg-gray-50 text-gray-500",
+                };
+              const Icon = meta.icon;
 
               return (
                 <div
-                  key={item.id}
-                  onClick={() => handleMarkAsRead(item.id)}
+                  key={item._id}
+                  onClick={() => handleMarkAsRead(item)}
                   className={`p-3 rounded-2xl border transition-all flex items-start gap-3 relative cursor-pointer ${
                     !item.isRead
                       ? "bg-white border-purple-200/80 shadow-sm"
@@ -229,7 +175,7 @@ const Notifications = () => {
                   }`}
                 >
                   {/* Category Icon */}
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${item.iconBg}`}>
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg}`}>
                     <Icon className="w-4 h-4" />
                   </div>
 
@@ -243,7 +189,7 @@ const Notifications = () => {
                         )}
                       </h4>
                       <span className="text-[10px] text-gray-400 shrink-0 font-mono">
-                        {item.time}
+                        {toLocalTime(item.createdAt)}
                       </span>
                     </div>
 
@@ -251,13 +197,13 @@ const Notifications = () => {
                       {item.message}
                     </p>
 
-                    {item.cta && (
+                    {item.link && (
                       <div className="pt-1">
                         <Link
-                          to={item.cta.link}
+                          to={item.link}
                           className="inline-flex items-center gap-1 text-[11px] font-bold text-[#5a32fa] hover:underline"
                         >
-                          <span>{item.cta.text}</span>
+                          <span>বিস্তারিত দেখুন</span>
                           <ArrowRightIcon className="w-3 h-3" />
                         </Link>
                       </div>
@@ -268,7 +214,7 @@ const Notifications = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete(item.id);
+                      handleDelete(item);
                     }}
                     className="text-gray-300 hover:text-rose-500 p-1 shrink-0 rounded-lg hover:bg-gray-50 transition-colors"
                     title="মুছে ফেলুন"

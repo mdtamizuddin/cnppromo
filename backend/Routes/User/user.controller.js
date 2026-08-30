@@ -36,6 +36,9 @@ router.get('/me', authChecker, userService.getCurrentUser)
 // Get Admins and Moderators for messaging support
 router.get('/admins', authChecker, userService.getAdmins)
 
+// Toggle the logged-in user's notifications on/off
+router.put('/notification-settings', authChecker, userService.updateNotificationSettings)
+
 // Platform statistics
 router.get('/statistic', userService.getStatistic)
 

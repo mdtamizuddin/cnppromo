@@ -11,6 +11,7 @@ import ProfileMenu from "./ProfileMenu";
 import AdminDropdown from "./AdminDropdown";
 import UserSidebarDrawer from "./UserSidebarDrawer";
 import UserBottomBar from "./UserBottomBar";
+import { useUnreadNotifications } from "../../util/useUnreadNotifications";
 
 const publicNavItems = [
   { label: "হোম", to: "/" },
@@ -28,6 +29,7 @@ const Topbar = ({ hideHeader = false }) => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { user, settings } = useSelector((state) => state.user);
   const { pathname } = useLocation();
+  const unreadCount = useUnreadNotifications();
 
   const handleWindowResize = () => {
     if (window.innerWidth >= 1024) setMobileNavOpen(false);
@@ -98,9 +100,11 @@ const Topbar = ({ hideHeader = false }) => {
                 title="নোটিফিকেশন"
               >
                 <BellIcon className="w-5 h-5 text-gray-200" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-[10px] font-black text-white flex items-center justify-center border-2 border-[#0b0c2a] animate-pulse">
-                  3
+                {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-[10px] font-black text-white flex items-center justify-center border-2 border-[#0b0c2a] animate-pulse">
+                  {unreadCount}
                 </span>
+                )}
               </Link>
 
               <ProfileMenu user={user} />
