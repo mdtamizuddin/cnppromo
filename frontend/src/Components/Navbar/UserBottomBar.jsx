@@ -4,77 +4,103 @@ import {
   HomeIcon,
   ClipboardDocumentListIcon,
   PlusIcon,
-  WalletIcon,
-  Cog6ToothIcon,
+  ChatBubbleLeftRightIcon,
+  Bars3Icon,
 } from "@heroicons/react/24/outline";
 
-const UserBottomBar = () => {
+const UserBottomBar = ({ onOpenMenu }) => {
   const { pathname } = useLocation();
 
-  const isHome = pathname === "/user/home" || pathname === "/user/welcome" || pathname === "/";
+  const isHome =
+    pathname === "/user/home" ||
+    pathname === "/user/welcome" ||
+    pathname === "/user" ||
+    pathname === "/";
   const isWorks = pathname.startsWith("/user/works");
-  const isEarn = pathname.startsWith("/user/social-works");
-  const isWallet = pathname.startsWith("/user/account");
-  const isSettings = pathname === "/user/settings";
+  const isMessage =
+    pathname === "/user/message" ||
+    pathname === "/message" ||
+    pathname.startsWith("/user/all-message") ||
+    pathname.startsWith("/user/message/");
+
+  // Don't show bottom bar in message pages (matches admin full-bleed behavior)
+  if (isMessage) {
+    return null;
+  }
 
   return (
-    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md bg-white/95 backdrop-blur-xl border border-gray-200/80 rounded-full shadow-2xl px-3 py-2 flex items-center justify-between lg:hidden">
-      
+    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[94%] max-w-md bg-white/95 backdrop-blur-xl border border-gray-200/80 rounded-full shadow-2xl px-2 py-1.5 flex items-center justify-around lg:hidden transition-all">
       {/* 1. Home */}
       <Link
         to="/user/home"
-        className={`flex flex-col items-center gap-0.5 flex-1 transition-colors ${
-          isHome ? "text-[#5a32fa] font-bold" : "text-gray-400 hover:text-gray-600"
+        className={`flex flex-col items-center justify-center py-1 px-2 rounded-2xl flex-1 transition-all ${
+          isHome
+            ? "text-[#5a32fa] font-black scale-105"
+            : "text-gray-400 hover:text-gray-600"
         }`}
       >
-        <HomeIcon className="w-5 h-5" />
-        <span className="text-[10px]">হোম</span>
+        <div
+          className={`p-1 rounded-xl transition-all ${
+            isHome ? "bg-purple-50" : ""
+          }`}
+        >
+          <HomeIcon className="w-5 h-5 stroke-[2]" />
+        </div>
+        <span className="text-[10px] tracking-tight mt-0.5">হোম</span>
       </Link>
 
       {/* 2. Tasks */}
       <Link
         to="/user/works"
-        className={`flex flex-col items-center gap-0.5 flex-1 transition-colors ${
-          isWorks ? "text-[#5a32fa] font-bold" : "text-gray-400 hover:text-gray-600"
+        className={`flex flex-col items-center justify-center py-1 px-2 rounded-2xl flex-1 transition-all ${
+          isWorks
+            ? "text-[#5a32fa] font-black scale-105"
+            : "text-gray-400 hover:text-gray-600"
         }`}
       >
-        <ClipboardDocumentListIcon className="w-5 h-5" />
-        <span className="text-[10px]">টাস্ক</span>
+        <div
+          className={`p-1 rounded-xl transition-all ${
+            isWorks ? "bg-purple-50" : ""
+          }`}
+        >
+          <ClipboardDocumentListIcon className="w-5 h-5 stroke-[2]" />
+        </div>
+        <span className="text-[10px] tracking-tight mt-0.5">টাস্ক</span>
       </Link>
 
-      {/* 3. Center Earn Button (Raised round purple button) */}
+      {/* 3. Center Earn Button (Raised gradient circular button) */}
       <div className="flex-1 flex justify-center -mt-6">
         <Link
           to="/user/social-works"
-          className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#5a32fa] to-[#7c3aed] text-white flex items-center justify-center shadow-lg shadow-indigo-500/40 hover:scale-110 active:scale-95 transition-all border-4 border-white"
+          className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#5a32fa] via-[#7c3aed] to-[#d9176c] text-white flex items-center justify-center shadow-lg shadow-purple-500/40 hover:scale-110 active:scale-95 transition-all border-[3px] border-white"
           title="Watch & Earn"
         >
-          <PlusIcon className="w-6 h-6 stroke-[2.5]" />
+          <PlusIcon className="w-6 h-6 stroke-[2.8]" />
         </Link>
       </div>
 
-      {/* 4. Wallet */}
+      {/* 4. Message */}
       <Link
-        to="/user/account/withdraw"
-        className={`flex flex-col items-center gap-0.5 flex-1 transition-colors ${
-          isWallet ? "text-[#5a32fa] font-bold" : "text-gray-400 hover:text-gray-600"
-        }`}
+        to="/user/message"
+        className="flex flex-col items-center justify-center py-1 px-2 rounded-2xl flex-1 text-gray-400 hover:text-gray-600 transition-all"
       >
-        <WalletIcon className="w-5 h-5" />
-        <span className="text-[10px]">ওয়ালেট</span>
+        <div className="p-1 rounded-xl">
+          <ChatBubbleLeftRightIcon className="w-5 h-5 stroke-[2]" />
+        </div>
+        <span className="text-[10px] tracking-tight mt-0.5">মেসেজ</span>
       </Link>
 
-      {/* 5. Settings */}
-      <Link
-        to="/user/settings"
-        className={`flex flex-col items-center gap-0.5 flex-1 transition-colors ${
-          isSettings ? "text-[#5a32fa] font-bold" : "text-gray-400 hover:text-gray-600"
-        }`}
+      {/* 5. Menu Drawer Trigger */}
+      <button
+        type="button"
+        onClick={onOpenMenu}
+        className="flex flex-col items-center justify-center py-1 px-2 rounded-2xl flex-1 text-gray-400 hover:text-gray-700 active:scale-95 transition-all"
       >
-        <Cog6ToothIcon className="w-5 h-5" />
-        <span className="text-[10px]">সেটিংস</span>
-      </Link>
-
+        <div className="p-1 rounded-xl">
+          <Bars3Icon className="w-5 h-5 stroke-[2.3]" />
+        </div>
+        <span className="text-[10px] tracking-tight mt-0.5">মেনু</span>
+      </button>
     </div>
   );
 };

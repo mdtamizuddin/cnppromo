@@ -24,12 +24,19 @@ const publicNavItems = [
 
 // `hideHeader` keeps the sidebar and bottom nav mounted while dropping the app
 // header — used by full-height surfaces like messaging that supply their own.
-const Topbar = ({ hideHeader = false }) => {
-  const [drawerOpen, setDrawerOpen] = useState(false);
+const Topbar = ({
+  hideHeader = false,
+  drawerOpen: propDrawerOpen,
+  setDrawerOpen: propSetDrawerOpen,
+}) => {
+  const [localDrawerOpen, setLocalDrawerOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { user, settings } = useSelector((state) => state.user);
   const { pathname } = useLocation();
   const unreadCount = useUnreadNotifications();
+
+  const drawerOpen = propDrawerOpen !== undefined ? propDrawerOpen : localDrawerOpen;
+  const setDrawerOpen = propSetDrawerOpen || setLocalDrawerOpen;
 
   const handleWindowResize = () => {
     if (window.innerWidth >= 1024) setMobileNavOpen(false);
@@ -46,7 +53,7 @@ const Topbar = ({ hideHeader = false }) => {
   }, [pathname]);
 
   // ----------------------------------------------------
-  // LOGGED-IN USER: APP-SHELL HEADER (WITH DESKTOP SIDEBAR)
+  // LOGGED-IN USER: NO TOPBAR, KEEP DESKTOP SIDEBAR & MOBILE BOTTOM BAR
   // ----------------------------------------------------
   if (user) {
     return (
@@ -57,65 +64,8 @@ const Topbar = ({ hideHeader = false }) => {
           onClose={() => setDrawerOpen(false)}
         />
 
-        {/* Top App Header (with lg:pl-72 for desktop sidebar alignment) */}
-        {!hideHeader && (
-        <header className="sticky top-0 z-30 bg-[#0b0c2a] text-white px-4 sm:px-6 py-3 border-b border-indigo-950/40 shadow-lg lg:pl-72 transition-all">
-          <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-            
-            {/* Left: Mobile Hamburger & Welcome Greeting */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setDrawerOpen(true)}
-                className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-95 transition-all flex items-center justify-center text-white shrink-0 border border-white/10 shadow-sm lg:hidden"
-                title="মেনু খুলুন"
-              >
-                <Bars3Icon className="w-6 h-6 stroke-[2.2]" />
-              </button>
-
-              <div className="leading-tight">
-                <p className="text-[11px] text-indigo-200/80 font-medium">
-                  Welcome back,
-                </p>
-                <h2 className="text-sm sm:text-base font-black text-white flex items-center gap-1">
-                  <span>{user?.name || "Member"}</span>
-                  <span>👋</span>
-                </h2>
-                <p className="text-[10px] text-gray-400 hidden sm:block">
-                  Let's complete tasks and earn more!
-                </p>
-              </div>
-            </div>
-
-            {/* Right: Admin Controls (if admin), Notifications & Profile Menu */}
-            <div className="flex items-center gap-3">
-              {user?.role === "admin" && (
-                <div className="hidden sm:block">
-                  <AdminDropdown />
-                </div>
-              )}
-
-              <Link
-                to="/user/notifications"
-                className="relative w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/15 transition-all flex items-center justify-center text-white border border-white/10 shadow-sm"
-                title="নোটিফিকেশন"
-              >
-                <BellIcon className="w-5 h-5 text-gray-200" />
-                {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-[10px] font-black text-white flex items-center justify-center border-2 border-[#0b0c2a] animate-pulse">
-                  {unreadCount}
-                </span>
-                )}
-              </Link>
-
-              <ProfileMenu user={user} />
-            </div>
-
-          </div>
-        </header>
-        )}
-
         {/* Floating Bottom Navigation Bar for Mobile */}
-        <UserBottomBar />
+        <UserBottomBar onOpenMenu={() => setDrawerOpen(true)} />
       </>
     );
   }

@@ -244,18 +244,16 @@ const ChatList = ({ users, counts, refetch, loading, fetchNextPage, hasNextPage,
       <div className="shrink-0 px-4 pt-4 pb-3 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 min-w-0">
-            {/* Only rendered where the surrounding layout has no other way back to
-                the menu — admin, whose top bar this page hides. */}
+            {/* Hamburger menu button on mobile */}
             {onOpenMenu && (
               <button
                 type="button"
                 onClick={onOpenMenu}
                 aria-label="Open menu"
-                className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl text-gray-600
-                  hover:text-brand hover:bg-brand-soft transition-colors shrink-0
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl text-gray-700 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all shrink-0 focus:outline-none"
+                title="Open menu"
               >
-                <Bars3Icon className="w-5 h-5" />
+                <Bars3Icon className="w-5 h-5 stroke-[2.3]" />
               </button>
             )}
             <h1 className="text-lg font-black tracking-tight text-gray-900">Messages</h1>

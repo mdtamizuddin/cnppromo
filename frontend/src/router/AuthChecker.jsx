@@ -8,6 +8,7 @@ import RequierActive from './RequierActive';
 const Login = lazy(() => import('../Pages/Auth/Login/Login'));
 
 const AuthChecker = ({ children, requireActive = false }) => {
+    const location = useLocation();
     const { user } = useSelector((state) => state.user);
     const token = Cookie.get("token-you");
 
@@ -29,8 +30,6 @@ const AuthChecker = ({ children, requireActive = false }) => {
     if (requireActive && user.role !== "admin" && user.role !== "moderator" && user.status !== "active") {
         return <RequierActive />;
     }
-
-    const location = useLocation();
 
     // 4. Redirect admins away from the main user dashboards
     if ((user.role === "admin" || user.role === "moderator") && 

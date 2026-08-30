@@ -22,11 +22,12 @@ import { useLocation } from "react-router-dom";
 const MainLayout = () => {
   const { user } = useSelector((state) => state.user);
   const location = useLocation();
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const isAdminRoute = location.pathname.startsWith("/admin");
   // Messaging is a full-height surface that manages its own header, so the app
   // header and footer are dropped on it. The side rail and bottom nav stay —
   // they are the only way out of the page.
-  const isMessageRoute = /^\/(user\/)?message\/?$/.test(location.pathname);
+  const isMessageRoute = /^\/(user\/)?message(\/.*)?$/.test(location.pathname);
 
   if (isAdminRoute) {
     return (
@@ -39,12 +40,18 @@ const MainLayout = () => {
     );
   }
 
+  const toggleSidebar = () => setDrawerOpen((prev) => !prev);
+
   return (
     <>
       <ScrollRestoration />
       <DefaultFetch />
       <Toaster />
-      <Topbar hideHeader={isMessageRoute} />
+      <Topbar
+        hideHeader={isMessageRoute}
+        drawerOpen={drawerOpen}
+        setDrawerOpen={setDrawerOpen}
+      />
       <div
         className={
           !user
@@ -54,7 +61,7 @@ const MainLayout = () => {
             : "w-full lg:pl-72 pb-20 lg:pb-6 transition-all min-h-screen"
         }
       >
-        <Outlet />
+        <Outlet context={{ toggleSidebar, setDrawerOpen }} />
       </div>
       {!isMessageRoute && <Footer />}
     </>
