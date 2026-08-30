@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Card, Dialog } from "@material-tailwind/react";
 import {
@@ -24,7 +24,7 @@ import { refreshUser } from "../../redux/features/user/userSlice";
 import HistoryTable from "./HistoryTable";
 import Loader from "../../Components/Loader";
 
-const paymentMethods = [
+const defaultPaymentMethods = [
   {
     id: "Bkash",
     name: "bKash",
@@ -32,6 +32,7 @@ const paymentMethods = [
     logo: "/logo/bkash.png",
     minAmount: 300,
     maxAmount: 25000,
+    fee: "1.50%",
     themeColor: "from-pink-500 to-rose-600",
     accentColor: "#d9176c",
     bgActive: "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20",
@@ -43,6 +44,7 @@ const paymentMethods = [
     logo: "/logo/nagad.png",
     minAmount: 300,
     maxAmount: 25000,
+    fee: "1.50%",
     themeColor: "from-orange-500 to-amber-600",
     accentColor: "#f97316",
     bgActive: "border-orange-400 bg-orange-50/30 ring-2 ring-orange-400/20",
@@ -54,20 +56,22 @@ const paymentMethods = [
     logo: "/logo/rocket.png",
     minAmount: 300,
     maxAmount: 25000,
+    fee: "1.50%",
     themeColor: "from-purple-500 to-indigo-600",
     accentColor: "#8b5cf6",
     bgActive: "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20",
   },
   {
-    id: "Mobile Recharge",
-    name: "Mobile Recharge",
-    subtitle: "সকল মোবাইল অপারেটর",
-    logo: "/logo/recharge.png",
-    minAmount: 100,
-    maxAmount: 1000,
-    themeColor: "from-emerald-500 to-teal-600",
-    accentColor: "#10b981",
-    bgActive: "border-emerald-400 bg-emerald-50/30 ring-2 ring-emerald-400/20",
+    id: "Bank Transfer",
+    name: "Bank Transfer",
+    subtitle: "ব্যাংক একাউন্ট",
+    logo: "/logo/upay.png",
+    minAmount: 500,
+    maxAmount: 500000,
+    fee: "0.00%",
+    themeColor: "from-blue-600 to-indigo-700",
+    accentColor: "#2563eb",
+    bgActive: "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20",
   },
 ];
 
@@ -99,6 +103,72 @@ const Withdraw = () => {
 
   const { user } = useSelector((state) => state.user);
   const dispatch = useDispatch();
+
+  // Fetch dynamic active gateways from database
+  const { data: dynamicGateways = [] } = useQuery({
+    queryKey: ["active-payment-gateways"],
+    queryFn: async () => {
+      try {
+        const res = await api.get("/gateway");
+        return Array.isArray(res.data) ? res.data : [];
+      } catch {
+        return [];
+      }
+    },
+  });
+
+  const paymentMethods = useMemo(() => {
+    if (!dynamicGateways || dynamicGateways.length === 0) return defaultPaymentMethods;
+    return dynamicGateways.map((g) => {
+      const nameLower = g.name.toLowerCase();
+      let logo = "/logo/bkash.png";
+      let themeColor = "from-pink-500 to-rose-600";
+      let accentColor = "#d9176c";
+      let bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
+
+      if (nameLower.includes("nagad")) {
+        logo = "/logo/nagad.png";
+        themeColor = "from-orange-500 to-amber-600";
+        accentColor = "#f97316";
+        bgActive = "border-orange-400 bg-orange-50/30 ring-2 ring-orange-400/20";
+      } else if (nameLower.includes("rocket")) {
+        logo = "/logo/rocket.png";
+        themeColor = "from-purple-500 to-indigo-600";
+        accentColor = "#8b5cf6";
+        bgActive = "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20";
+      } else if (nameLower.includes("bank")) {
+        logo = "/logo/upay.png";
+        themeColor = "from-blue-600 to-indigo-700";
+        accentColor = "#2563eb";
+        bgActive = "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20";
+      } else if (nameLower.includes("paypal")) {
+        logo = "/logo/upay.png";
+        themeColor = "from-sky-600 to-blue-700";
+        accentColor = "#0284c7";
+        bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
+      } else if (nameLower.includes("stripe") || nameLower.includes("payeer")) {
+        logo = "/logo/upay.png";
+        themeColor = "from-indigo-600 to-purple-700";
+        accentColor = "#4f46e5";
+        bgActive = "border-indigo-400 bg-indigo-50/30 ring-2 ring-indigo-400/20";
+      }
+
+      return {
+        id: g.name,
+        name: g.name,
+        subtitle: g.subName || "ক্যাশআউট",
+        logo: g.icon || logo,
+        minAmount: Number(g.minAmount) || 300,
+        maxAmount: Number(g.maxAmount) || 25000,
+        dailyLimit: Number(g.dailyLimit) || 200000,
+        fee: g.fee || "1.50%",
+        currency: g.currency || "BDT",
+        themeColor,
+        accentColor,
+        bgActive,
+      };
+    });
+  }, [dynamicGateways]);
 
   // Fetch user's pending withdrawals to show accurate pending balance
   const { data: pendingData, refetch: refetchPending } = useQuery({

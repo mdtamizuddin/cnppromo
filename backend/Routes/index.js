@@ -18,5 +18,6 @@ router.use("/session", require("./Session/session.controller"));
 router.use('/notification', authChecker, require('./Notification/notification.controller'))
 router.use('/review', require('./Review/review.controller'))
 router.use('/payment-proof', require('./PaymentProof/proof.controller'))
+router.use('/gateway', require('./Gateway/gateway.controller'))
 
 module.exports = router

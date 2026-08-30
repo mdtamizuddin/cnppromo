@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Card, Dialog } from "@material-tailwind/react";
 import {
@@ -28,13 +28,14 @@ import { refreshUser } from "../../redux/features/user/userSlice";
 import HistoryTable from "./HistoryTable";
 import Loader from "../../Components/Loader";
 
-const paymentMethods = [
+const defaultPaymentMethods = [
   {
     id: "Bkash",
     name: "bKash",
     subtitle: "Send Money (Personal)",
     logo: "/logo/bkash.png",
     accountKey: "bkash",
+    accountNumber: "",
     minAmount: 100,
     maxAmount: 25000,
     themeColor: "from-pink-500 to-rose-600",
@@ -47,6 +48,7 @@ const paymentMethods = [
     subtitle: "Send Money (Personal)",
     logo: "/logo/nagad.png",
     accountKey: "nagad",
+    accountNumber: "",
     minAmount: 100,
     maxAmount: 25000,
     themeColor: "from-orange-500 to-amber-600",
@@ -59,6 +61,7 @@ const paymentMethods = [
     subtitle: "Send Money (DBBL)",
     logo: "/logo/rocket.png",
     accountKey: "rocket",
+    accountNumber: "",
     minAmount: 100,
     maxAmount: 25000,
     themeColor: "from-purple-500 to-indigo-600",
@@ -66,15 +69,16 @@ const paymentMethods = [
     bgActive: "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20",
   },
   {
-    id: "Payeer",
-    name: "Payeer",
-    subtitle: "USD / RUB Wallet",
+    id: "Bank Transfer",
+    name: "Bank Transfer",
+    subtitle: "Bank Account Transfer",
     logo: "/logo/upay.png",
-    accountKey: "payeer",
-    minAmount: 100,
-    maxAmount: 50000,
-    themeColor: "from-blue-500 to-cyan-600",
-    accentColor: "#3b82f6",
+    accountKey: "bank_transfer",
+    accountNumber: "",
+    minAmount: 500,
+    maxAmount: 500000,
+    themeColor: "from-blue-600 to-indigo-700",
+    accentColor: "#2563eb",
     bgActive: "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20",
   },
 ];
@@ -105,6 +109,74 @@ const TopUp = () => {
   const { user, settings } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
+  // Fetch dynamic active gateways from database
+  const { data: dynamicGateways = [] } = useQuery({
+    queryKey: ["active-payment-gateways"],
+    queryFn: async () => {
+      try {
+        const res = await api.get("/gateway");
+        return Array.isArray(res.data) ? res.data : [];
+      } catch {
+        return [];
+      }
+    },
+  });
+
+  const paymentMethods = useMemo(() => {
+    if (!dynamicGateways || dynamicGateways.length === 0) return defaultPaymentMethods;
+    return dynamicGateways.map((g) => {
+      const nameLower = g.name.toLowerCase();
+      let logo = "/logo/bkash.png";
+      let themeColor = "from-pink-500 to-rose-600";
+      let accentColor = "#d9176c";
+      let bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
+
+      if (nameLower.includes("nagad")) {
+        logo = "/logo/nagad.png";
+        themeColor = "from-orange-500 to-amber-600";
+        accentColor = "#f97316";
+        bgActive = "border-orange-400 bg-orange-50/30 ring-2 ring-orange-400/20";
+      } else if (nameLower.includes("rocket")) {
+        logo = "/logo/rocket.png";
+        themeColor = "from-purple-500 to-indigo-600";
+        accentColor = "#8b5cf6";
+        bgActive = "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20";
+      } else if (nameLower.includes("bank")) {
+        logo = "/logo/upay.png";
+        themeColor = "from-blue-600 to-indigo-700";
+        accentColor = "#2563eb";
+        bgActive = "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20";
+      } else if (nameLower.includes("paypal")) {
+        logo = "/logo/upay.png";
+        themeColor = "from-sky-600 to-blue-700";
+        accentColor = "#0284c7";
+        bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
+      } else if (nameLower.includes("stripe") || nameLower.includes("payeer")) {
+        logo = "/logo/upay.png";
+        themeColor = "from-indigo-600 to-purple-700";
+        accentColor = "#4f46e5";
+        bgActive = "border-indigo-400 bg-indigo-50/30 ring-2 ring-indigo-400/20";
+      }
+
+      return {
+        id: g.name,
+        name: g.name,
+        subtitle: g.subName || g.instructions || "Send Money",
+        logo: g.icon || logo,
+        accountKey: g.name.toLowerCase().replace(/\s+/g, "_"),
+        accountNumber: g.accountNumber,
+        minAmount: Number(g.minAmount) || 10,
+        maxAmount: Number(g.maxAmount) || 50000,
+        dailyLimit: Number(g.dailyLimit) || 200000,
+        fee: g.fee || "1.50%",
+        currency: g.currency || "BDT",
+        themeColor,
+        accentColor,
+        bgActive,
+      };
+    });
+  }, [dynamicGateways]);
+
   // Fetch user's pending top-ups to display accurate pending balance
   const { data: pendingData, refetch: refetchPending } = useQuery({
     queryKey: ["user-pending-topup", user?._id],
@@ -121,7 +193,11 @@ const TopUp = () => {
   const currentMethod =
     paymentMethods.find((m) => m.id === selectedMethod) || paymentMethods[0];
 
-  const adminNumber = settings?.accounts?.[currentMethod.accountKey] || "N/A";
+  const adminNumber =
+    currentMethod.accountNumber ||
+    settings?.accounts?.[currentMethod.accountKey] ||
+    settings?.accounts?.[selectedMethod.toLowerCase()] ||
+    "N/A";
 
   const userBalance = Number(user?.balance || 0);
   const numAmount = Number(amount || 0);

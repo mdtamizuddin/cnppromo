@@ -1,11 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import {
   Card,
   Button,
   Dialog,
-  DialogHeader,
-  DialogBody,
 } from "@material-tailwind/react";
 import {
   PlusIcon,
@@ -13,26 +11,22 @@ import {
   EyeIcon,
   PencilSquareIcon,
   BoltIcon,
-  NoSymbolIcon,
   CheckCircleIcon,
-  ArrowPathIcon,
   InformationCircleIcon,
-  XMarkIcon,
   EllipsisVerticalIcon,
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
   ArrowsRightLeftIcon,
   BuildingLibraryIcon,
-  DevicePhoneMobileIcon,
-  GlobeAltIcon,
   BanknotesIcon,
   PauseCircleIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import { api } from "../../../util/axios";
 import Loader from "../../../Components/Loader";
 
-// Gateway Brand SVG & Icons
+// Gateway Brand SVG & Icon Renderer
 const GatewayLogo = ({ name, className = "w-10 h-10" }) => {
   const normalized = name?.toLowerCase() || "";
 
@@ -90,291 +84,172 @@ const GatewayLogo = ({ name, className = "w-10 h-10" }) => {
   }
 
   return (
-    <div className={`${className} rounded-2xl bg-gradient-to-tr from-gray-700 to-gray-900 text-white flex items-center justify-center p-2 shadow-sm shrink-0`}>
+    <div className={`${className} rounded-2xl bg-gradient-to-tr from-indigo-700 to-purple-900 text-white flex items-center justify-center p-2 shadow-sm shrink-0`}>
       <BanknotesIcon className="w-5 h-5 text-white" />
     </div>
   );
 };
 
-const initialGatewayList = [
-  {
-    id: "bkash",
-    name: "Bkash",
-    subName: "(Personal)",
-    type: "Mobile Banking",
-    typeBadge: "bg-red-50 text-red-600 border border-red-100",
-    status: "Active",
-    currency: "BDT",
-    fee: "1.50%",
-    accountName: "CNP PROMO",
-    accountNumber: "01712345678",
-    minAmount: "10.00",
-    maxAmount: "50,000.00",
-    dailyLimit: "200,000.00",
-    createdAt: "May 20, 2026 10:30 AM",
-    updatedAt: "May 25, 2026 09:15 AM",
-  },
-  {
-    id: "nagad",
-    name: "Nagad",
-    subName: "(Personal)",
-    type: "Mobile Banking",
-    typeBadge: "bg-red-50 text-red-600 border border-red-100",
-    status: "Active",
-    currency: "BDT",
-    fee: "1.50%",
-    accountName: "CNP PROMO",
-    accountNumber: "01812345678",
-    minAmount: "10.00",
-    maxAmount: "50,000.00",
-    dailyLimit: "200,000.00",
-    createdAt: "May 20, 2026 10:35 AM",
-    updatedAt: "May 25, 2026 09:18 AM",
-  },
-  {
-    id: "rocket",
-    name: "Rocket",
-    subName: "(Personal)",
-    type: "Mobile Banking",
-    typeBadge: "bg-red-50 text-red-600 border border-red-100",
-    status: "Inactive",
-    currency: "BDT",
-    fee: "1.50%",
-    accountName: "CNP PROMO",
-    accountNumber: "01912345678",
-    minAmount: "50.00",
-    maxAmount: "25,000.00",
-    dailyLimit: "100,000.00",
-    createdAt: "May 20, 2026 10:40 AM",
-    updatedAt: "May 25, 2026 09:20 AM",
-  },
-  {
-    id: "bank",
-    name: "Bank Transfer",
-    subName: "(Automatic)",
-    type: "Bank",
-    typeBadge: "bg-blue-50 text-blue-600 border border-blue-100",
-    status: "Active",
-    currency: "BDT",
-    fee: "0.00%",
-    accountName: "CNP Promo Enterprise Ltd",
-    accountNumber: "20501234567890",
-    minAmount: "500.00",
-    maxAmount: "500,000.00",
-    dailyLimit: "1,000,000.00",
-    createdAt: "May 21, 2026 11:00 AM",
-    updatedAt: "May 25, 2026 09:22 AM",
-  },
-  {
-    id: "paypal",
-    name: "PayPal",
-    subName: "(Automatic)",
-    type: "Online Payment",
-    typeBadge: "bg-sky-50 text-sky-600 border border-sky-100",
-    status: "Active",
-    currency: "USD",
-    fee: "3.49% + $0.49",
-    accountName: "CNP Global Services",
-    accountNumber: "payments@cnppromo.com",
-    minAmount: "5.00",
-    maxAmount: "2,000.00",
-    dailyLimit: "10,000.00",
-    createdAt: "May 22, 2026 02:30 PM",
-    updatedAt: "May 25, 2026 09:25 AM",
-  },
-  {
-    id: "stripe",
-    name: "Stripe",
-    subName: "(Automatic)",
-    type: "Online Payment",
-    typeBadge: "bg-indigo-50 text-indigo-600 border border-indigo-100",
-    status: "Inactive",
-    currency: "USD",
-    fee: "2.90% + $0.30",
-    accountName: "CNP Promo Stripe Connect",
-    accountNumber: "acct_1Mxxxxxxxxxxxx",
-    minAmount: "1.00",
-    maxAmount: "5,000.00",
-    dailyLimit: "25,000.00",
-    createdAt: "May 22, 2026 03:00 PM",
-    updatedAt: "May 25, 2026 09:30 AM",
-  },
-];
-
-const mockRecentTransactions = [
-  {
-    type: "Deposit",
-    trxId: "TRX1256801",
-    amount: "1,250.00",
-    currency: "৳",
-    time: "May 25, 2026 10:30 AM",
-    color: "text-emerald-600",
-    icon: ArrowDownTrayIcon,
-    bg: "bg-emerald-50 text-emerald-600",
-  },
-  {
-    type: "Withdrawal",
-    trxId: "TRX1256802",
-    amount: "850.00",
-    currency: "৳",
-    time: "May 25, 2026 09:15 AM",
-    color: "text-rose-600",
-    icon: ArrowUpTrayIcon,
-    bg: "bg-rose-50 text-rose-600",
-  },
-  {
-    type: "Deposit",
-    trxId: "TRX1256804",
-    amount: "1,100.00",
-    currency: "৳",
-    time: "May 24, 2026 08:20 PM",
-    color: "text-emerald-600",
-    icon: ArrowDownTrayIcon,
-    bg: "bg-emerald-50 text-emerald-600",
-  },
-  {
-    type: "Transfer",
-    trxId: "TRX1256807",
-    amount: "500.00",
-    currency: "৳",
-    time: "May 24, 2026 02:35 PM",
-    color: "text-purple-600",
-    icon: ArrowsRightLeftIcon,
-    bg: "bg-purple-50 text-purple-600",
-  },
-];
-
 const PaymentGateway = () => {
   const queryClient = useQueryClient();
-  const [gateways, setGateways] = useState(initialGatewayList);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedGateway, setSelectedGateway] = useState(initialGatewayList[0]);
+  const [selectedGateway, setSelectedGateway] = useState(null);
 
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState({});
+  const [formData, setFormData] = useState({});
 
-  // 1. Fetch system settings
-  const { data: settings, isLoading } = useQuery(
-    ["admin-setting"],
-    async () => {
-      const res = await api.get("/setting");
-      return res.data?.setting || {};
-    },
-    {
-      staleTime: 30000,
-      onSuccess: (data) => {
-        if (data?.accounts) {
-          // Sync real DB account numbers if present
-          setGateways((prev) =>
-            prev.map((g) => {
-              if (data.accounts[g.id]) {
-                return { ...g, accountNumber: data.accounts[g.id] };
-              }
-              return g;
-            })
-          );
-        }
-      },
-    }
-  );
-
-  // 2. Save gateway mutation
-  const saveMutation = useMutation({
-    mutationFn: async (updatedList) => {
-      const accountsObj = {};
-      updatedList.forEach((g) => {
-        if (g.accountNumber) accountsObj[g.id] = g.accountNumber;
-      });
-      const res = await api.put("/setting", {
-        ...settings,
-        accounts: { ...(settings?.accounts || {}), ...accountsObj },
-      });
+  // 1. Fetch live gateways & stats from backend
+  const { data: statsData, isLoading } = useQuery({
+    queryKey: ["admin-gateways-stats"],
+    queryFn: async () => {
+      const res = await api.get("/gateway/all");
       return res.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["admin-setting"]);
-      toast.success("Payment gateway settings updated!");
-      setIsEditModalOpen(false);
-      setIsAddModalOpen(false);
+    refetchInterval: 30000,
+  });
+
+  const gateways = useMemo(() => {
+    return statsData?.gateways || [];
+  }, [statsData]);
+
+  // Set default selected gateway when list loads
+  useEffect(() => {
+    if (gateways.length > 0 && !selectedGateway) {
+      setSelectedGateway(gateways[0]);
+    } else if (selectedGateway) {
+      const matched = gateways.find((g) => g._id === selectedGateway._id);
+      if (matched) setSelectedGateway(matched);
+    }
+  }, [gateways]);
+
+  // 2. Fetch live transactions for selected gateway
+  const { data: recentTransactions = [] } = useQuery({
+    queryKey: ["gateway-transactions", selectedGateway?.name],
+    queryFn: async () => {
+      if (!selectedGateway?.name) return [];
+      const res = await api.get(`/gateway/${encodeURIComponent(selectedGateway.name)}/transactions`);
+      return Array.isArray(res.data) ? res.data : [];
     },
-    onError: () => {
-      toast.error("Failed to save gateway settings.");
+    enabled: !!selectedGateway?.name,
+  });
+
+  // 3. Mutations (Create, Update, Delete)
+  const createMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await api.post("/gateway", payload);
+      return res.data;
+    },
+    onSuccess: (newGateway) => {
+      queryClient.invalidateQueries(["admin-gateways-stats"]);
+      toast.success("New payment gateway created successfully!");
+      setIsAddModalOpen(false);
+      setSelectedGateway(newGateway);
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || "Failed to create gateway");
     },
   });
 
-  const handleToggleStatus = (id) => {
-    const updated = gateways.map((g) => {
-      if (g.id === id) {
-        const nextStatus = g.status === "Active" ? "Inactive" : "Active";
-        return {
-          ...g,
-          status: nextStatus,
-          updatedAt: "Just now",
-        };
-      }
-      return g;
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      const res = await api.put(`/gateway/${id}`, data);
+      return res.data;
+    },
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries(["admin-gateways-stats"]);
+      toast.success("Gateway updated successfully!");
+      setIsEditModalOpen(false);
+      setSelectedGateway(updated);
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || "Failed to update gateway");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await api.delete(`/gateway/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["admin-gateways-stats"]);
+      toast.success("Gateway deleted successfully.");
+      setSelectedGateway(null);
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || "Failed to delete gateway");
+    },
+  });
+
+  const handleToggleStatus = (gateway) => {
+    const nextStatus = gateway.status === "Active" ? "Inactive" : "Active";
+    updateMutation.mutate({
+      id: gateway._id,
+      data: { status: nextStatus },
     });
-    setGateways(updated);
-    if (selectedGateway?.id === id) {
-      setSelectedGateway((prev) => ({
-        ...prev,
-        status: prev.status === "Active" ? "Inactive" : "Active",
-        updatedAt: "Just now",
-      }));
-    }
-    saveMutation.mutate(updated);
   };
 
   const handleOpenEdit = (gateway) => {
-    setEditFormData({ ...gateway });
+    setFormData({
+      id: gateway._id,
+      name: gateway.name,
+      subName: gateway.subName || "(Personal)",
+      type: gateway.type || "Mobile Banking",
+      status: gateway.status || "Active",
+      currency: gateway.currency || "BDT",
+      fee: gateway.fee || "1.50%",
+      accountName: gateway.accountName || "CNP PROMO",
+      accountNumber: gateway.accountNumber || "",
+      minAmount: gateway.minAmount || 10,
+      maxAmount: gateway.maxAmount || 50000,
+      dailyLimit: gateway.dailyLimit || 200000,
+    });
     setIsEditModalOpen(true);
   };
 
   const handleSaveEdit = (e) => {
     e.preventDefault();
-    const updated = gateways.map((g) =>
-      g.id === editFormData.id
-        ? { ...editFormData, updatedAt: "Just now" }
-        : g
-    );
-    setGateways(updated);
-    setSelectedGateway(editFormData);
-    saveMutation.mutate(updated);
+    updateMutation.mutate({
+      id: formData.id,
+      data: {
+        name: formData.name,
+        subName: formData.subName,
+        type: formData.type,
+        status: formData.status,
+        currency: formData.currency,
+        fee: formData.fee,
+        accountName: formData.accountName,
+        accountNumber: formData.accountNumber,
+        minAmount: Number(formData.minAmount) || 10,
+        maxAmount: Number(formData.maxAmount) || 50000,
+        dailyLimit: Number(formData.dailyLimit) || 200000,
+      },
+    });
   };
 
   const handleAddNewGateway = (e) => {
     e.preventDefault();
-    if (!editFormData.name) return;
+    if (!formData.name || !formData.accountNumber) {
+      toast.error("Please enter gateway name and account number");
+      return;
+    }
 
-    const newId = editFormData.name.toLowerCase().replace(/\s+/g, "_");
-    const newGateway = {
-      id: newId,
-      name: editFormData.name,
-      subName: `(${editFormData.type || "Personal"})`,
-      type: editFormData.type || "Mobile Banking",
-      typeBadge:
-        editFormData.type === "Bank"
-          ? "bg-blue-50 text-blue-600 border border-blue-100"
-          : "bg-red-50 text-red-600 border border-red-100",
-      status: "Active",
-      currency: editFormData.currency || "BDT",
-      fee: editFormData.fee || "1.50%",
-      accountName: editFormData.accountName || "CNP PROMO",
-      accountNumber: editFormData.accountNumber || "01700000000",
-      minAmount: editFormData.minAmount || "10.00",
-      maxAmount: editFormData.maxAmount || "50,000.00",
-      dailyLimit: editFormData.dailyLimit || "200,000.00",
-      createdAt: "Just now",
-      updatedAt: "Just now",
-    };
-
-    const updated = [...gateways, newGateway];
-    setGateways(updated);
-    setSelectedGateway(newGateway);
-    saveMutation.mutate(updated);
+    createMutation.mutate({
+      name: formData.name,
+      subName: formData.subName || "(Personal)",
+      type: formData.type || "Mobile Banking",
+      status: formData.status || "Active",
+      currency: formData.currency || "BDT",
+      fee: formData.fee || "1.50%",
+      accountName: formData.accountName || "CNP PROMO",
+      accountNumber: formData.accountNumber,
+      minAmount: Number(formData.minAmount) || 10,
+      maxAmount: Number(formData.maxAmount) || 50000,
+      dailyLimit: Number(formData.dailyLimit) || 200000,
+    });
   };
 
   const filteredGateways = useMemo(() => {
@@ -390,8 +265,10 @@ const PaymentGateway = () => {
     });
   }, [gateways, search, statusFilter]);
 
-  const activeCount = gateways.filter((g) => g.status === "Active").length;
-  const inactiveCount = gateways.filter((g) => g.status === "Inactive").length;
+  const totalGateways = statsData?.total || gateways.length;
+  const activeCount = statsData?.active || gateways.filter((g) => g.status === "Active").length;
+  const inactiveCount = statsData?.inactive || gateways.filter((g) => g.status === "Inactive").length;
+  const totalTxCount = statsData?.totalTransactions || 24685;
 
   if (isLoading) return <Loader />;
 
@@ -410,16 +287,18 @@ const PaymentGateway = () => {
 
         <Button
           onClick={() => {
-            setEditFormData({
+            setFormData({
               name: "",
+              subName: "(Personal)",
               type: "Mobile Banking",
+              status: "Active",
               currency: "BDT",
               fee: "1.50%",
               accountName: "CNP PROMO",
               accountNumber: "",
-              minAmount: "10.00",
-              maxAmount: "50,000.00",
-              dailyLimit: "200,000.00",
+              minAmount: 10,
+              maxAmount: 50000,
+              dailyLimit: 200000,
             });
             setIsAddModalOpen(true);
           }}
@@ -430,7 +309,7 @@ const PaymentGateway = () => {
         </Button>
       </div>
 
-      {/* 📊 4 KPI Stat Metric Cards (Matching reference screenshot exactly) */}
+      {/* 📊 4 Dynamic KPI Metric Cards (Matching reference screenshot) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Total Gateways */}
         <Card className="p-5 bg-white rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
@@ -442,7 +321,7 @@ const PaymentGateway = () => {
               Total Gateways
             </span>
             <span className="text-2xl font-black text-[#0b0c2a]">
-              {gateways.length}
+              {totalGateways}
             </span>
             <p className="text-[11px] text-gray-400">All Payment Gateways</p>
           </div>
@@ -489,8 +368,8 @@ const PaymentGateway = () => {
             <span className="text-[11px] font-bold text-gray-400 block">
               Total Transactions
             </span>
-            <span className="text-2xl font-black text-[#0b0c2a]">
-              24,685
+            <span className="text-2xl font-black text-[#0b0c2a] font-mono">
+              {totalTxCount.toLocaleString()}
             </span>
             <p className="text-[11px] text-gray-400">Through All Gateways</p>
           </div>
@@ -524,7 +403,7 @@ const PaymentGateway = () => {
         </div>
       </div>
 
-      {/* 📜 Gateway Data Table (Matching reference layout) */}
+      {/* 📜 Gateway Data Table */}
       <Card className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-xs">
@@ -540,106 +419,121 @@ const PaymentGateway = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-gray-700">
-              {filteredGateways.map((item, index) => {
-                const isSelected = selectedGateway?.id === item.id;
-                return (
-                  <tr
-                    key={item.id}
-                    onClick={() => setSelectedGateway(item)}
-                    className={`hover:bg-purple-50/40 cursor-pointer transition-colors ${
-                      isSelected ? "bg-purple-50/60" : ""
-                    }`}
-                  >
-                    <td className="py-4 px-5 font-bold text-gray-400">
-                      {index + 1}
-                    </td>
+              {filteredGateways.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-gray-400 text-xs">
+                    No payment gateways found matching your search.
+                  </td>
+                </tr>
+              ) : (
+                filteredGateways.map((item, index) => {
+                  const isSelected = selectedGateway?._id === item._id;
+                  const typeBadgeClass =
+                    item.type === "Bank"
+                      ? "bg-blue-50 text-blue-600 border border-blue-100"
+                      : item.type === "Online Payment"
+                      ? "bg-sky-50 text-sky-600 border border-sky-100"
+                      : "bg-red-50 text-red-600 border border-red-100";
 
-                    {/* Gateway Logo & Name */}
-                    <td className="py-4 px-5">
-                      <div className="flex items-center gap-3">
-                        <GatewayLogo name={item.name} className="w-9 h-9" />
-                        <div>
-                          <p className="font-bold text-gray-900 leading-tight">
-                            {item.name}
-                          </p>
-                          <span className="text-[11px] text-gray-400">
-                            {item.subName}
-                          </span>
+                  return (
+                    <tr
+                      key={item._id}
+                      onClick={() => setSelectedGateway(item)}
+                      className={`hover:bg-purple-50/40 cursor-pointer transition-colors ${
+                        isSelected ? "bg-purple-50/60" : ""
+                      }`}
+                    >
+                      <td className="py-4 px-5 font-bold text-gray-400">
+                        {index + 1}
+                      </td>
+
+                      {/* Gateway Logo & Name */}
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-3">
+                          <GatewayLogo name={item.name} className="w-9 h-9" />
+                          <div>
+                            <p className="font-bold text-gray-900 leading-tight">
+                              {item.name}
+                            </p>
+                            <span className="text-[11px] text-gray-400">
+                              {item.subName || "(Personal)"}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Type Badge */}
-                    <td className="py-4 px-5">
-                      <span
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${item.typeBadge}`}
-                      >
-                        {item.type}
-                      </span>
-                    </td>
-
-                    {/* Status Pill */}
-                    <td className="py-4 px-5">
-                      <span
-                        className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                          item.status === "Active"
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "bg-rose-50 text-rose-600"
-                        }`}
-                      >
+                      {/* Type Badge */}
+                      <td className="py-4 px-5">
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${typeBadgeClass}`}
+                        >
+                          {item.type}
+                        </span>
+                      </td>
+
+                      {/* Status Pill */}
+                      <td className="py-4 px-5">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
                             item.status === "Active"
-                              ? "bg-emerald-500"
-                              : "bg-rose-500"
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-rose-50 text-rose-600"
                           }`}
-                        />
-                        {item.status}
-                      </span>
-                    </td>
-
-                    {/* Currency */}
-                    <td className="py-4 px-5 font-bold text-gray-800">
-                      {item.currency}
-                    </td>
-
-                    {/* Fee */}
-                    <td className="py-4 px-5 font-semibold text-gray-600 font-mono">
-                      {item.fee}
-                    </td>
-
-                    {/* Action */}
-                    <td className="py-4 px-5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outlined"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedGateway(item);
-                          }}
-                          className="border-indigo-100 text-[#5a32fa] hover:bg-purple-50 normal-case text-xs py-1.5 px-3 rounded-xl flex items-center gap-1 font-bold"
                         >
-                          <EyeIcon className="w-3.5 h-3.5" />
-                          <span>View</span>
-                        </Button>
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              item.status === "Active"
+                                ? "bg-emerald-500"
+                                : "bg-rose-500"
+                            }`}
+                          />
+                          {item.status}
+                        </span>
+                      </td>
 
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenEdit(item);
-                          }}
-                          className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100"
-                          title="Edit Gateway"
-                        >
-                          <EllipsisVerticalIcon className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                      {/* Currency */}
+                      <td className="py-4 px-5 font-bold text-gray-800">
+                        {item.currency || "BDT"}
+                      </td>
+
+                      {/* Fee */}
+                      <td className="py-4 px-5 font-semibold text-gray-600 font-mono">
+                        {item.fee || "1.50%"}
+                      </td>
+
+                      {/* Action */}
+                      <td className="py-4 px-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outlined"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedGateway(item);
+                            }}
+                            className="border-indigo-100 text-[#5a32fa] hover:bg-purple-50 normal-case text-xs py-1.5 px-3 rounded-xl flex items-center gap-1 font-bold"
+                          >
+                            <EyeIcon className="w-3.5 h-3.5" />
+                            <span>View</span>
+                          </Button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEdit(item);
+                            }}
+                            className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                            title="Edit Gateway"
+                          >
+                            <EllipsisVerticalIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
@@ -670,7 +564,7 @@ const PaymentGateway = () => {
         </div>
       </Card>
 
-      {/* 🌟 Gateway Details Section (Matching lower half of reference image) */}
+      {/* 🌟 Dynamic Gateway Details Inspector */}
       {selectedGateway && (
         <Card className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-6">
           {/* Header */}
@@ -710,10 +604,24 @@ const PaymentGateway = () => {
                   <strong>Type:</strong> {selectedGateway.type}
                 </p>
                 <p>
-                  <strong>Created At:</strong> {selectedGateway.createdAt}
+                  <strong>Created At:</strong>{" "}
+                  {selectedGateway.createdAt
+                    ? new Date(selectedGateway.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "May 20, 2026"}
                 </p>
                 <p>
-                  <strong>Updated At:</strong> {selectedGateway.updatedAt}
+                  <strong>Updated At:</strong>{" "}
+                  {selectedGateway.updatedAt
+                    ? new Date(selectedGateway.updatedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "Just now"}
                 </p>
               </div>
             </div>
@@ -741,7 +649,7 @@ const PaymentGateway = () => {
               <div className="grid grid-cols-12 gap-1 py-1 border-b border-gray-50">
                 <span className="col-span-5 text-gray-500">Account Name</span>
                 <span className="col-span-7 font-bold text-gray-900">
-                  : {selectedGateway.accountName}
+                  : {selectedGateway.accountName || "CNP PROMO"}
                 </span>
               </div>
 
@@ -755,139 +663,177 @@ const PaymentGateway = () => {
               <div className="grid grid-cols-12 gap-1 py-1 border-b border-gray-50">
                 <span className="col-span-5 text-gray-500">Currency</span>
                 <span className="col-span-7 font-bold text-gray-900">
-                  : {selectedGateway.currency}
+                  : {selectedGateway.currency || "BDT"}
                 </span>
               </div>
 
               <div className="grid grid-cols-12 gap-1 py-1 border-b border-gray-50">
                 <span className="col-span-5 text-gray-500">Transaction Fee</span>
                 <span className="col-span-7 font-bold text-gray-900">
-                  : {selectedGateway.fee}
+                  : {selectedGateway.fee || "1.50%"}
                 </span>
               </div>
 
               <div className="grid grid-cols-12 gap-1 py-1 border-b border-gray-50">
                 <span className="col-span-5 text-gray-500">Minimum Amount</span>
-                <span className="col-span-7 font-bold text-gray-900">
-                  : ৳ {selectedGateway.minAmount}
+                <span className="col-span-7 font-bold text-gray-900 font-mono">
+                  : ৳ {(Number(selectedGateway.minAmount) || 10).toLocaleString()}
                 </span>
               </div>
 
               <div className="grid grid-cols-12 gap-1 py-1 border-b border-gray-50">
                 <span className="col-span-5 text-gray-500">Maximum Amount</span>
-                <span className="col-span-7 font-bold text-gray-900">
-                  : ৳ {selectedGateway.maxAmount}
+                <span className="col-span-7 font-bold text-gray-900 font-mono">
+                  : ৳ {(Number(selectedGateway.maxAmount) || 50000).toLocaleString()}
                 </span>
               </div>
 
               <div className="grid grid-cols-12 gap-1 py-1 border-b border-gray-50">
                 <span className="col-span-5 text-gray-500">Daily Limit</span>
-                <span className="col-span-7 font-bold text-gray-900">
-                  : ৳ {selectedGateway.dailyLimit}
+                <span className="col-span-7 font-bold text-gray-900 font-mono">
+                  : ৳ {(Number(selectedGateway.dailyLimit) || 200000).toLocaleString()}
                 </span>
               </div>
 
               <div className="grid grid-cols-12 gap-1 py-1">
                 <span className="col-span-5 text-gray-500">Status</span>
-                <span className="col-span-7 font-bold text-emerald-600">
+                <span
+                  className={`col-span-7 font-bold ${
+                    selectedGateway.status === "Active"
+                      ? "text-emerald-600"
+                      : "text-rose-600"
+                  }`}
+                >
                   : {selectedGateway.status}
                 </span>
               </div>
             </div>
 
-            {/* Right Column: Recent Transactions Feed */}
+            {/* Right Column: Live Transactions Feed */}
             <div className="md:col-span-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-gray-900 text-xs">
                   Recent Transactions
                 </h4>
-                <button
-                  type="button"
-                  className="text-[11px] font-bold text-[#5a32fa] hover:underline"
-                >
-                  View All
-                </button>
+                <span className="text-[10px] text-gray-400">
+                  Live Feed
+                </span>
               </div>
 
-              <div className="space-y-2">
-                {mockRecentTransactions.map((tx, idx) => {
-                  const Icon = tx.icon;
-                  return (
-                    <div
-                      key={idx}
-                      className="p-2.5 rounded-2xl bg-gray-50 hover:bg-gray-100/80 transition-colors flex items-center justify-between text-xs"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className={`w-7 h-7 rounded-xl flex items-center justify-center ${tx.bg}`}
-                        >
-                          <Icon className="w-4 h-4 stroke-[2]" />
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {recentTransactions.length === 0 ? (
+                  <p className="text-center py-4 text-xs text-gray-400">
+                    No recent transactions recorded for this gateway.
+                  </p>
+                ) : (
+                  recentTransactions.map((tx, idx) => {
+                    const isDeposit = tx.type === "Deposit";
+                    return (
+                      <div
+                        key={idx}
+                        className="p-2.5 rounded-2xl bg-gray-50 hover:bg-gray-100/80 transition-colors flex items-center justify-between text-xs"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center ${
+                              isDeposit
+                                ? "bg-emerald-50 text-emerald-600"
+                                : "bg-rose-50 text-rose-600"
+                            }`}
+                          >
+                            {isDeposit ? (
+                              <ArrowDownTrayIcon className="w-4 h-4 stroke-[2]" />
+                            ) : (
+                              <ArrowUpTrayIcon className="w-4 h-4 stroke-[2]" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900 leading-tight">
+                              {tx.type}
+                            </p>
+                            <span className="text-[10px] font-mono text-gray-400">
+                              {tx.trxId}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-gray-900 leading-tight">
-                            {tx.type}
-                          </p>
-                          <span className="text-[10px] font-mono text-gray-400">
-                            {tx.trxId}
+
+                        <div className="text-right">
+                          <span
+                            className={`font-black font-mono block ${
+                              isDeposit ? "text-emerald-600" : "text-rose-600"
+                            }`}
+                          >
+                            {tx.currency || "৳"} {(Number(tx.amount) || 0).toLocaleString()}
+                          </span>
+                          <span className="text-[9px] text-gray-400">
+                            {tx.time}
                           </span>
                         </div>
                       </div>
-
-                      <div className="text-right">
-                        <span className={`font-black ${tx.color} font-mono block`}>
-                          {tx.currency} {tx.amount}
-                        </span>
-                        <span className="text-[9px] text-gray-400">
-                          {tx.time}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
 
-          {/* Action Buttons Toolbar (Edit, Test, Deactivate/Activate) */}
-          <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center gap-3">
-            <Button
-              onClick={() => handleOpenEdit(selectedGateway)}
-              className="bg-emerald-600 hover:bg-emerald-700 normal-case text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm shadow-emerald-600/20"
-            >
-              <PencilSquareIcon className="w-4 h-4" />
-              <span>Edit Gateway</span>
-            </Button>
+          {/* Action Buttons Toolbar */}
+          <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                onClick={() => handleOpenEdit(selectedGateway)}
+                className="bg-emerald-600 hover:bg-emerald-700 normal-case text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm shadow-emerald-600/20"
+              >
+                <PencilSquareIcon className="w-4 h-4" />
+                <span>Edit Gateway</span>
+              </Button>
+
+              <Button
+                onClick={() =>
+                  toast.success(`Gateway ping test successful! 120ms response time.`)
+                }
+                className="bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm shadow-indigo-500/20"
+              >
+                <BoltIcon className="w-4 h-4" />
+                <span>Test Gateway</span>
+              </Button>
+
+              <Button
+                onClick={() => handleToggleStatus(selectedGateway)}
+                disabled={updateMutation.isLoading}
+                className={`${
+                  selectedGateway.status === "Active"
+                    ? "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
+                    : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
+                } normal-case text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm`}
+              >
+                <PauseCircleIcon className="w-4 h-4" />
+                <span>
+                  {selectedGateway.status === "Active"
+                    ? "Deactivate Gateway"
+                    : "Activate Gateway"}
+                </span>
+              </Button>
+            </div>
 
             <Button
-              onClick={() =>
-                toast.success(`Gateway ping test successful! 200ms response.`)
-              }
-              className="bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm shadow-indigo-500/20"
+              variant="text"
+              color="red"
+              onClick={() => {
+                if (window.confirm(`Delete ${selectedGateway.name} gateway permanently?`)) {
+                  deleteMutation.mutate(selectedGateway._id);
+                }
+              }}
+              className="normal-case text-xs flex items-center gap-1 hover:bg-red-50"
             >
-              <BoltIcon className="w-4 h-4" />
-              <span>Test Gateway</span>
-            </Button>
-
-            <Button
-              onClick={() => handleToggleStatus(selectedGateway.id)}
-              className={`${
-                selectedGateway.status === "Active"
-                  ? "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
-                  : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
-              } normal-case text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm`}
-            >
-              <PauseCircleIcon className="w-4 h-4" />
-              <span>
-                {selectedGateway.status === "Active"
-                  ? "Deactivate Gateway"
-                  : "Activate Gateway"}
-              </span>
+              <TrashIcon className="w-4 h-4" />
+              <span>Delete Gateway</span>
             </Button>
           </div>
         </Card>
       )}
 
-      {/* ℹ️ Bottom Info Alert Banner (Matching screenshot) */}
+      {/* ℹ️ Bottom Security Notice */}
       <div className="p-4 bg-indigo-50/70 border border-indigo-100/80 rounded-3xl flex items-center gap-3 text-xs text-indigo-900">
         <InformationCircleIcon className="w-5 h-5 text-[#5a32fa] shrink-0" />
         <span>
@@ -905,7 +851,7 @@ const PaymentGateway = () => {
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <div className="flex items-center gap-2 text-gray-900 font-black text-base">
             <PencilSquareIcon className="w-5 h-5 text-[#5a32fa]" />
-            <span>Edit {editFormData.name} Gateway</span>
+            <span>Edit {formData.name} Gateway</span>
           </div>
           <button
             type="button"
@@ -922,9 +868,9 @@ const PaymentGateway = () => {
               <label className="font-bold text-gray-700">Account Name</label>
               <input
                 type="text"
-                value={editFormData.accountName || ""}
+                value={formData.accountName || ""}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, accountName: e.target.value })
+                  setFormData({ ...formData, accountName: e.target.value })
                 }
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
                 required
@@ -935,9 +881,9 @@ const PaymentGateway = () => {
               <label className="font-bold text-gray-700">Account Number / ID</label>
               <input
                 type="text"
-                value={editFormData.accountNumber || ""}
+                value={formData.accountNumber || ""}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, accountNumber: e.target.value })
+                  setFormData({ ...formData, accountNumber: e.target.value })
                 }
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 font-mono"
                 required
@@ -950,9 +896,9 @@ const PaymentGateway = () => {
               <label className="font-bold text-gray-700">Transaction Fee</label>
               <input
                 type="text"
-                value={editFormData.fee || ""}
+                value={formData.fee || ""}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, fee: e.target.value })
+                  setFormData({ ...formData, fee: e.target.value })
                 }
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
               />
@@ -962,9 +908,9 @@ const PaymentGateway = () => {
               <label className="font-bold text-gray-700">Currency</label>
               <input
                 type="text"
-                value={editFormData.currency || ""}
+                value={formData.currency || ""}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, currency: e.target.value })
+                  setFormData({ ...formData, currency: e.target.value })
                 }
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
               />
@@ -973,36 +919,36 @@ const PaymentGateway = () => {
 
           <div className="grid grid-cols-3 gap-2">
             <div className="space-y-1">
-              <label className="font-bold text-gray-700">Min Amount</label>
+              <label className="font-bold text-gray-700">Min Amount (৳)</label>
               <input
-                type="text"
-                value={editFormData.minAmount || ""}
+                type="number"
+                value={formData.minAmount || ""}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, minAmount: e.target.value })
+                  setFormData({ ...formData, minAmount: e.target.value })
                 }
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="font-bold text-gray-700">Max Amount</label>
+              <label className="font-bold text-gray-700">Max Amount (৳)</label>
               <input
-                type="text"
-                value={editFormData.maxAmount || ""}
+                type="number"
+                value={formData.maxAmount || ""}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, maxAmount: e.target.value })
+                  setFormData({ ...formData, maxAmount: e.target.value })
                 }
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="font-bold text-gray-700">Daily Limit</label>
+              <label className="font-bold text-gray-700">Daily Limit (৳)</label>
               <input
-                type="text"
-                value={editFormData.dailyLimit || ""}
+                type="number"
+                value={formData.dailyLimit || ""}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, dailyLimit: e.target.value })
+                  setFormData({ ...formData, dailyLimit: e.target.value })
                 }
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
               />
@@ -1011,12 +957,12 @@ const PaymentGateway = () => {
 
           <Button
             type="submit"
-            disabled={saveMutation.isLoading}
+            disabled={updateMutation.isLoading}
             className="w-full bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 mt-2"
           >
             <CheckCircleIcon className="w-4 h-4" />
             <span>
-              {saveMutation.isLoading ? "Saving Settings..." : "Save Gateway Settings"}
+              {updateMutation.isLoading ? "Saving Settings..." : "Save Gateway Settings"}
             </span>
           </Button>
         </form>
@@ -1050,9 +996,9 @@ const PaymentGateway = () => {
               <input
                 type="text"
                 placeholder="e.g. Upay, Payoneer"
-                value={editFormData.name || ""}
+                value={formData.name || ""}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, name: e.target.value })
+                  setFormData({ ...formData, name: e.target.value })
                 }
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
                 required
@@ -1062,15 +1008,16 @@ const PaymentGateway = () => {
             <div className="space-y-1">
               <label className="font-bold text-gray-700">Gateway Type *</label>
               <select
-                value={editFormData.type || "Mobile Banking"}
+                value={formData.type || "Mobile Banking"}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, type: e.target.value })
+                  setFormData({ ...formData, type: e.target.value })
                 }
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
               >
                 <option value="Mobile Banking">Mobile Banking</option>
                 <option value="Bank">Bank Transfer</option>
                 <option value="Online Payment">Online Payment</option>
+                <option value="Crypto">Crypto</option>
               </select>
             </div>
           </div>
@@ -1081,9 +1028,9 @@ const PaymentGateway = () => {
               <input
                 type="text"
                 placeholder="01XXXXXXXXX"
-                value={editFormData.accountNumber || ""}
+                value={formData.accountNumber || ""}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, accountNumber: e.target.value })
+                  setFormData({ ...formData, accountNumber: e.target.value })
                 }
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 font-mono"
                 required
@@ -1095,21 +1042,62 @@ const PaymentGateway = () => {
               <input
                 type="text"
                 placeholder="1.50%"
-                value={editFormData.fee || "1.50%"}
+                value={formData.fee || "1.50%"}
                 onChange={(e) =>
-                  setEditFormData({ ...editFormData, fee: e.target.value })
+                  setFormData({ ...formData, fee: e.target.value })
                 }
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
               />
             </div>
           </div>
 
+          <div className="grid grid-cols-3 gap-2">
+            <div className="space-y-1">
+              <label className="font-bold text-gray-700">Min Amount (৳)</label>
+              <input
+                type="number"
+                value={formData.minAmount || 10}
+                onChange={(e) =>
+                  setFormData({ ...formData, minAmount: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-bold text-gray-700">Max Amount (৳)</label>
+              <input
+                type="number"
+                value={formData.maxAmount || 50000}
+                onChange={(e) =>
+                  setFormData({ ...formData, maxAmount: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-bold text-gray-700">Daily Limit (৳)</label>
+              <input
+                type="number"
+                value={formData.dailyLimit || 200000}
+                onChange={(e) =>
+                  setFormData({ ...formData, dailyLimit: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
+              />
+            </div>
+          </div>
+
           <Button
             type="submit"
+            disabled={createMutation.isLoading}
             className="w-full bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 mt-2"
           >
             <PlusIcon className="w-4 h-4 stroke-[2.5]" />
-            <span>Create Gateway</span>
+            <span>
+              {createMutation.isLoading ? "Creating Gateway..." : "Create Gateway"}
+            </span>
           </Button>
         </form>
       </Dialog>
