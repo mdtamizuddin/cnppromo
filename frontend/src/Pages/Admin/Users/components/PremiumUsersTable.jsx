@@ -182,7 +182,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
           <table className="w-full min-w-[800px] table-auto text-left whitespace-nowrap">
             <thead>
               <tr>
-                {["User", "Contact Info", "Balance", "Referer", status === "active" ? "Activated" : "Joined", "Action"].map((head) => (
+                {["User", "Contact Info", "Balance", "Device Limit", "Referer", status === "active" ? "Activated" : "Joined", "Action"].map((head) => (
                   <th key={head} className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     {head}
                   </th>
@@ -238,6 +238,11 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">৳ {user.balance}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold border border-amber-100">
+                        {user.maxActiveSessions ?? 5}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{user.reffer ? user.reffer.name : "Direct"}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col">

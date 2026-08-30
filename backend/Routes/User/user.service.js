@@ -5,7 +5,6 @@ const tokenGenerator = require("../../util/tokenGenerator");
 const { createRefer } = require("../Refer/refer.service");
 const Setting = require("../Settings/setting.model");
 const Withdraw = require("../WithDraw/withdraw.model");
-const Session = require("../Session/session.model");
 const User = require("./user.model");
 const bcrypt = require("bcrypt");
 const mailerService = require("../mailer/mailer");
@@ -114,23 +113,13 @@ const loginUser = async (req, res) => {
         // Signing in on a fourth device evicts the oldest rather than failing.
         const { session, evicted } = await sessionService.startSession(req, user._id, "password");
         if (evicted.length) req.app.get("endSessions")?.(evicted, user._id);
-        // Security alert: only when this device/IP combination has never been
-        // seen before, so regular logins do not flood the notification feed.
-        const isKnownDevice = await Session.exists({
-            user: user._id,
-            _id: { $ne: session._id },
-            "device.name": session.device?.name,
-            ip: session.ip,
+        notifyUser(user._id, {
+            category: "security",
+            type: "new_login",
+            title: "নতুন ডিভাইসে লগইন হয়েছে",
+            message: `${session.device?.name || "অজানা ডিভাইস"} (${session.ip}) থেকে একটি নতুন লগইন হয়েছে। এটি আপনার না হলে পাসওয়ার্ড পরিবর্তন করুন।`,
+            link: "/settings",
         });
-        if (!isKnownDevice) {
-            notifyUser(user._id, {
-                category: "security",
-                type: "new_login",
-                title: "নতুন ডিভাইসে লগইন হয়েছে",
-                message: `${session.device?.name || "অজানা ডিভাইস"} (${session.ip}) থেকে একটি নতুন লগইন হয়েছে। এটি আপনার না হলে পাসওয়ার্ড পরিবর্তন করুন।`,
-                link: "/settings",
-            });
-        }
         const token = tokenGenerator(user, session._id);
         res.send({
             message: "Login successful",
@@ -622,6 +611,31 @@ const updateNotificationSettings = async (req, res) => {
         res.status(500).send({ message: error.message });
     }
 }
+
+// Set how many devices this user may be signed in on simultaneously. Used by
+// the Account Settings page; the login-devices page displays the same value.
+const updateDeviceLimit = async (req, res) => {
+    try {
+        const limit = parseInt(req.body.maxActiveSessions, 10);
+        if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
+            return res.status(400).send({
+                message: "maxActiveSessions must be a whole number between 1 and 20"
+            });
+        }
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { maxActiveSessions: limit },
+            { new: true }
+        ).select("maxActiveSessions");
+        res.send({
+            message: "Device limit updated",
+            maxActiveSessions: user.maxActiveSessions,
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+}
+
 const checkUser = async (req, res) => {
     try {
 
@@ -824,5 +838,6 @@ module.exports = {
     resetPassword,
     giveAccess,
     getAdmins,
-    updateNotificationSettings
+    updateNotificationSettings,
+    updateDeviceLimit
 }

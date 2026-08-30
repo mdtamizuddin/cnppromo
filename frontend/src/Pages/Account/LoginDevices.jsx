@@ -255,12 +255,12 @@ const LoginDevices = () => {
                 <Skeleton className="h-8 w-32 my-1" />
               ) : (
                 <p className="text-2xl font-black text-brand">
-                  {summary?.activeCount || 0} of {summary?.maxDevices ?? 3}{" "}
+                  {summary?.activeCount || 0} of {summary?.maxDevices ?? 5}{" "}
                   {summary?.maxDevices === 1 ? "device" : "devices"}
                 </p>
               )}
               <p className="text-xs text-gray-500 max-w-[44ch]">
-                You can stay signed in on up to {summary?.maxDevices ?? 3} devices. Logging
+                You can stay signed in on up to {summary?.maxDevices ?? 5} devices. Logging
                 in on a new one signs out the device you logged into longest ago.
               </p>
             </div>
@@ -272,7 +272,7 @@ const LoginDevices = () => {
             {[
               {
                 k: "Active devices",
-                v: `${summary?.activeCount ?? 0} / ${summary?.maxDevices ?? 3}`,
+                v: `${summary?.activeCount ?? 0} / ${summary?.maxDevices ?? 5}`,
                 dot: "bg-emerald-500",
               },
               { k: "Signed-out devices", v: summary?.endedCount ?? 0, dot: "bg-gray-300" },

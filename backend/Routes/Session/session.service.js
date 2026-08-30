@@ -1,13 +1,15 @@
 const mongoose = require("mongoose");
 const Session = require("./session.model");
+const User = require("../User/user.model");
 const { describeRequest } = require("../../util/requestContext");
 
 // Must match the token lifetime in util/tokenGenerator.
 const SESSION_DAYS = 30;
-// How many devices one account may be signed in on at once. A fourth login does
-// not fail — it evicts the least recently started session so the person is never
-// locked out of the device in their hand.
-const MAX_ACTIVE_SESSIONS = 3;
+// Default devices one account may be signed in on at once (per-user override
+// lives on User.maxActiveSessions). A login past the limit does not fail — it
+// evicts the least recently started session so the person is never locked out
+// of the device in their hand.
+const DEFAULT_MAX_ACTIVE_SESSIONS = 5;
 // How long an ended session stays visible in the history list.
 const RETENTION_DAYS = 90;
 // `lastActiveAt` is only rewritten once the stored value is this stale, so an
@@ -40,25 +42,30 @@ const startSession = async (req, userId, loginMethod = "password") => {
 };
 
 /**
- * Holds an account to MAX_ACTIVE_SESSIONS live devices.
+ * Holds an account to its configured live-device limit (User.maxActiveSessions,
+ * defaulting to DEFAULT_MAX_ACTIVE_SESSIONS).
  *
  * Keeps the most recently started sessions and revokes the rest. Ordering is by
  * `createdAt` — when the device signed in — not `lastActiveAt`, so a device that
  * merely sat idle isn't punished ahead of one that logged in long ago.
  */
 const enforceDeviceLimit = async (userId, protectSessionId) => {
-    const live = await Session.find({
-        user: userId,
-        revokedAt: null,
-        expiresAt: { $gt: new Date() },
-    })
-        .sort({ createdAt: -1 })
-        .select("_id");
+    const [user, live] = await Promise.all([
+        User.findById(userId).select("maxActiveSessions").lean(),
+        Session.find({
+            user: userId,
+            revokedAt: null,
+            expiresAt: { $gt: new Date() },
+        })
+            .sort({ createdAt: -1 })
+            .select("_id"),
+    ]);
 
-    if (live.length <= MAX_ACTIVE_SESSIONS) return [];
+    const maxActiveSessions = user?.maxActiveSessions || DEFAULT_MAX_ACTIVE_SESSIONS;
+    if (live.length <= maxActiveSessions) return [];
 
     const evicted = live
-        .slice(MAX_ACTIVE_SESSIONS)
+        .slice(maxActiveSessions)
         .map((s) => String(s._id))
         // The session being created is newest and so always inside the keep set;
         // this guards the case where two logins land in the same millisecond.
@@ -159,7 +166,10 @@ const present = (session, currentSessionId, now = new Date()) => ({
 
 const listSessions = async (userId, currentSessionId) => {
     const now = new Date();
-    const sessions = await Session.find({ user: userId }).sort({ lastActiveAt: -1 }).limit(100);
+    const [user, sessions] = await Promise.all([
+        User.findById(userId).select("maxActiveSessions").lean(),
+        Session.find({ user: userId }).sort({ lastActiveAt: -1 }).limit(100),
+    ]);
     const rows = sessions.map((s) => present(s, currentSessionId, now));
 
     const active = rows.filter((r) => r.status === "active");
@@ -171,7 +181,7 @@ const listSessions = async (userId, currentSessionId) => {
         summary: {
             activeCount: active.length,
             endedCount: ended.length,
-            maxDevices: MAX_ACTIVE_SESSIONS,
+            maxDevices: user?.maxActiveSessions || DEFAULT_MAX_ACTIVE_SESSIONS,
             // The newest sign-in, which is what "Last Login" means to a reader —
             // not the newest activity.
             lastLoginAt: rows.length
@@ -191,5 +201,5 @@ module.exports = {
     revokeAllSessions,
     listSessions,
     SESSION_DAYS,
-    MAX_ACTIVE_SESSIONS,
+    DEFAULT_MAX_ACTIVE_SESSIONS,
 };

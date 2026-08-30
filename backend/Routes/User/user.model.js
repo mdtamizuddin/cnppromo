@@ -104,6 +104,12 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    maxActiveSessions: {
+        type: Number,
+        default: 5,
+        min: 1,
+        max: 20,
+    },
 }, {
     timestamps: true,
 });

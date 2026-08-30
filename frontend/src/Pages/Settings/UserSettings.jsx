@@ -13,6 +13,7 @@ import {
   ArrowRightOnRectangleIcon,
   EyeIcon,
   EyeSlashIcon,
+  DevicePhoneMobileIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import Cookie from "js-cookie";
@@ -48,6 +49,10 @@ const UserSettings = () => {
   const [pushEnabled, setPushEnabled] = useState(user?.notificationsEnabled ?? true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [prefSaving, setPrefSaving] = useState(false);
+
+  // Device Limit
+  const [deviceLimit, setDeviceLimit] = useState(user?.maxActiveSessions ?? 5);
+  const [deviceLimitSaving, setDeviceLimitSaving] = useState(false);
 
   const handleToggleNotifications = async (checked) => {
     setPushEnabled(checked);
@@ -118,10 +123,30 @@ const UserSettings = () => {
     }
   };
 
+const handleDeviceLimitSubmit = async (e) => {
+    e.preventDefault();
+    const limit = Number(deviceLimit);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
+      toast.error("ডিভাইস লিমিট ১ থেকে ২০ এর মধ্যে হতে হবে!");
+      return;
+    }
+    setDeviceLimitSaving(true);
+    try {
+      const res = await api.put("/user/device-limit", { maxActiveSessions: limit });
+      toast.success(res.data?.message || "ডিভাইস লিমিট আপডেট হয়েছে");
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || error?.message || "ডিভাইস লিমিট আপডেট ব্যর্থ হয়েছে"
+      );
+    } finally {
+      setDeviceLimitSaving(false);
+    }
+  };
+
   const handleLogout = () => {
     Cookie.remove("token-you");
     localStorage.clear();
-    toast.success("লগআউট সফল হয়েছে");
+    toast.success("লগআউট সফল হয়েছে");
     window.location.href = "/";
   };
 
@@ -308,6 +333,7 @@ const UserSettings = () => {
 
         {/* 🔒 Tab 2: Security & Password */}
         {activeTab === "security" && (
+          <>
           <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
             <div>
               <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-1.5">
@@ -386,6 +412,48 @@ const UserSettings = () => {
               </div>
             </form>
           </Card>
+
+          {/* 📱 Tab 2b: Active Device Limit */}
+          <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-1.5">
+                <DevicePhoneMobileIcon className="w-4 h-4 text-[#5a32fa]" />
+                <span>সক্রিয় ডিভাইস সীমা</span>
+              </h3>
+              <p className="text-[11px] text-gray-400">
+                একই সাথে কয়টি ডিভাইসে লগইন থাকতে পারবেন তা নির্ধারণ করুন (১-২০)। ডিফল্ট ৫।
+              </p>
+            </div>
+
+            <form onSubmit={handleDeviceLimitSubmit} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-gray-700">সর্বোচ্চ ডিভাইস সংখ্যা</label>
+                <div className="relative">
+                  <DevicePhoneMobileIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    required
+                    value={deviceLimit}
+                    onChange={(e) => setDeviceLimit(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:border-[#5a32fa]"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  disabled={deviceLimitSaving}
+                  className="w-full sm:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
+                >
+                  {deviceLimitSaving ? "সেভ হচ্ছে..." : "ডিভাইস লিমিট সেভ করুন"}
+                </Button>
+              </div>
+            </form>
+          </Card>
+          </>
         )}
 
         {/* 💳 Tab 3: Withdrawal Accounts */}
