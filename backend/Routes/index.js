@@ -16,5 +16,6 @@ router.use("/social-works", authChecker, require("./social-works/work.controller
 router.use("/dashboard", authChecker, require("./Dashboard/dashboard.controller"));
 router.use("/session", require("./Session/session.controller"));
 router.use('/notification', authChecker, require('./Notification/notification.controller'))
+router.use('/review', require('./Review/review.controller'))
 
 module.exports = router
