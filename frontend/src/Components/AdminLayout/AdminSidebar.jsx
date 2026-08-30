@@ -21,6 +21,7 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   DevicePhoneMobileIcon,
+  BellIcon,
   XMarkIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/outline";
@@ -31,6 +32,7 @@ const sidebarData = [
     category: "OVERVIEW",
     items: [
       { label: "Dashboard", icon: Squares2X2Icon, to: "/admin/dashboard", color: "text-indigo-500" },
+      { label: "Notifications", icon: BellIcon, to: "/admin/notifications", color: "text-orange-500" },
     ]
   },
   {

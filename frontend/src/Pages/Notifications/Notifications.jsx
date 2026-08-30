@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import toast from "react-hot-toast";
 import { api } from "../../util/axios";
+import { resolveNotificationLink } from "../../util/notificationLink";
 import Loader from "../../Components/Loader";
 
 dayjs.extend(relativeTime);
@@ -200,7 +201,7 @@ const Notifications = () => {
                     {item.link && (
                       <div className="pt-1">
                         <Link
-                          to={item.link}
+                          to={resolveNotificationLink(item.link, user?.role)}
                           className="inline-flex items-center gap-1 text-[11px] font-bold text-[#5a32fa] hover:underline"
                         >
                           <span>বিস্তারিত দেখুন</span>

@@ -14,6 +14,7 @@ const User = lazy(() => import("../Pages/Admin/Users/User"));
 const Topups = lazy(() => import("../Pages/Admin/TopUp/TopUp"));
 const Settings = lazy(() => import("../Pages/Settings/Settings"));
 const UserSettings = lazy(() => import("../Pages/Settings/UserSettings"));
+const Notifications = lazy(() => import("../Pages/Notifications/Notifications"));
 const Withdrawals = lazy(() => import("../Pages/Admin/Withdraw/Withdraw"));
 const ExternalWithdrawals = lazy(() => import("../Pages/Admin/ExternalWithdrawals/ExternalWithdrawals"));
 const AdminWorks = lazy(() => import("../Pages/Admin/ManageWorks/AdminWorks"));
@@ -32,6 +33,10 @@ export const adminRoutes = [
   {
     path: "dashboard",
     element: <AdminChecker><Lazy><AdminDashboard /></Lazy></AdminChecker>,
+  },
+  {
+    path: "notifications",
+    element: <AdminChecker><Lazy><Notifications /></Lazy></AdminChecker>,
   },
   {
     path: "admins",
