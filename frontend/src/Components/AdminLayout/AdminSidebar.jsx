@@ -25,6 +25,7 @@ import {
   XMarkIcon,
   Squares2X2Icon,
   StarIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { IconButton } from "@material-tailwind/react";
 
@@ -53,6 +54,7 @@ const sidebarData = [
       { label: "Withdrawal", icon: CurrencyDollarIcon, to: "/admin/withdrawals", color: "text-indigo-600" },
       { label: "External Withdraw", icon: ArrowsRightLeftIcon, to: "/admin/external-withdrawals", color: "text-purple-600" },
       { label: "TopUp / Transaction", icon: ArrowsRightLeftIcon, to: "/admin/topup", color: "text-blue-500" },
+      { label: "Payment Proofs", icon: PhotoIcon, to: "/admin/payment-proofs", color: "text-pink-500" },
       { label: "Payment Gateway", icon: CreditCardIcon, to: "/admin/payment-gateway", color: "text-cyan-500" },
     ]
   },

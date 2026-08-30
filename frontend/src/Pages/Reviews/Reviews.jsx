@@ -130,7 +130,7 @@ const Reviews = () => {
   return (
     <div className="bg-[#f8faff] min-h-screen pb-20 pt-6">
       <div className="container mx-auto px-4 max-w-6xl space-y-10">
-        
+
         {/* 🌟 Top Hero Banner */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b0c2a] via-[#151954] to-[#0b0c2a] p-6 sm:p-8 lg:p-10 text-white shadow-xl border border-indigo-900/30">
           <div className="absolute -right-10 -top-10 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -182,7 +182,7 @@ const Reviews = () => {
 
         {/* ⭐ Rating Breakdown & Trust Guarantees */}
         <Card className="p-6 sm:p-8 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-8">
-          
+
           {/* Left Score */}
           <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
             <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-amber-50 border border-amber-100 w-36 aspect-square shrink-0">
@@ -270,7 +270,7 @@ const Reviews = () => {
                     <img
                       src={image}
                       alt={`Review Screenshot ${index + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-contain transition-transform duration-500"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
@@ -288,7 +288,7 @@ const Reviews = () => {
 
         {/* 🏷️ Filter Categories & Instant Search */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-          
+
           {/* Filter Pills */}
           <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
             {[
@@ -299,11 +299,10 @@ const Reviews = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                  activeTab === tab.id
-                    ? "bg-[#5a32fa] text-white shadow-md shadow-indigo-500/20"
-                    : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/80"
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${activeTab === tab.id
+                  ? "bg-[#5a32fa] text-white shadow-md shadow-indigo-500/20"
+                  : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/80"
+                  }`}
               >
                 {tab.label}
               </button>
@@ -379,11 +378,10 @@ const Reviews = () => {
 
                 <button
                   onClick={() => handleLike(story._id || story.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all ${
-                    likedReviews[story._id || story.id]
-                      ? "bg-purple-50 text-[#5a32fa] font-bold"
-                      : "hover:bg-gray-50 text-gray-500"
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all ${likedReviews[story._id || story.id]
+                    ? "bg-purple-50 text-[#5a32fa] font-bold"
+                    : "hover:bg-gray-50 text-gray-500"
+                    }`}
                 >
                   <HandThumbUpIcon className="w-3.5 h-3.5" />
                   <span>লাইক</span>

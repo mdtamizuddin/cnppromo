@@ -25,6 +25,7 @@ const LoginDevices = lazy(() => import("../Pages/Account/LoginDevices"));
 const AdminEarnings = lazy(() => import("../Pages/Admin/Earnings/AdminEarnings"));
 const AdminBroadcast = lazy(() => import("../Pages/Admin/Broadcast/AdminBroadcast"));
 const AdminReviews = lazy(() => import("../Pages/Admin/Reviews/AdminReviews"));
+const AdminPaymentProofs = lazy(() => import("../Pages/Admin/PaymentProofs/AdminPaymentProofs"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -40,6 +41,10 @@ export const adminRoutes = [
   {
     path: "earnings",
     element: <AdminChecker><Lazy><AdminEarnings /></Lazy></AdminChecker>,
+  },
+  {
+    path: "payment-proofs",
+    element: <AdminChecker><Lazy><AdminPaymentProofs /></Lazy></AdminChecker>,
   },
   {
     path: "broadcast",
