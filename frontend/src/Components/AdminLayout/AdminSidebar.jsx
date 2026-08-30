@@ -24,6 +24,7 @@ import {
   BellIcon,
   XMarkIcon,
   Squares2X2Icon,
+  StarIcon,
 } from "@heroicons/react/24/outline";
 import { IconButton } from "@material-tailwind/react";
 
@@ -48,10 +49,10 @@ const sidebarData = [
   {
     category: "FINANCIAL MANAGEMENT",
     items: [
+      { label: "Earning & Financials", icon: ChartBarIcon, to: "/admin/earnings", color: "text-emerald-500" },
       { label: "Withdrawal", icon: CurrencyDollarIcon, to: "/admin/withdrawals", color: "text-indigo-600" },
       { label: "External Withdraw", icon: ArrowsRightLeftIcon, to: "/admin/external-withdrawals", color: "text-purple-600" },
       { label: "TopUp / Transaction", icon: ArrowsRightLeftIcon, to: "/admin/topup", color: "text-blue-500" },
-      { label: "Earning Overview", icon: ChartBarIcon, to: "#", color: "text-emerald-500" },
       { label: "Payment Gateway", icon: CreditCardIcon, to: "/admin/payment-gateway", color: "text-cyan-500" },
     ]
   },
@@ -60,14 +61,14 @@ const sidebarData = [
     items: [
       { label: "Works", icon: BriefcaseIcon, to: "/admin/works", color: "text-amber-500" },
       { label: "Social Works", icon: ClipboardDocumentCheckIcon, to: "/admin/social-works", color: "text-teal-500" },
-
-
     ]
   },
   {
     category: "SUPPORT & COMMUNICATION",
     items: [
-      { label: "Message", icon: ChatBubbleLeftRightIcon, to: "/admin/message", color: "text-blue-500" },
+      { label: "Live Message", icon: ChatBubbleLeftRightIcon, to: "/admin/message", color: "text-blue-500" },
+      { label: "Broadcast Alerts", icon: MegaphoneIcon, to: "/admin/broadcast", color: "text-purple-500" },
+      { label: "Reviews & Feedback", icon: StarIcon, to: "/admin/reviews", color: "text-amber-500" },
     ]
   },
   {

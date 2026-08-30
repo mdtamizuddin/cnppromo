@@ -48,4 +48,38 @@ router.delete("/", authChecker, async (req, res) => {
     }
 });
 
+// Broadcast notification to users (Admin only)
+router.post("/broadcast", authChecker, async (req, res) => {
+    try {
+        if (req.user.role !== "admin" && req.user.role !== "moderator") {
+            return res.status(403).send({ message: "Forbidden" });
+        }
+        const { title, message, category, target } = req.body;
+        if (!title || !message) {
+            return res.status(400).send({ message: "Title and message are required" });
+        }
+
+        const User = require("../User/user.model");
+        let query = {};
+        if (target === "active") query.status = "active";
+        if (target === "non-active") query.status = { $ne: "active" };
+
+        const targetUsers = await User.find(query).select("_id");
+        const userIds = targetUsers.map((u) => u._id);
+
+        const result = await service.notifyMany(userIds, {
+            title,
+            message,
+            category: category || "announcement",
+        });
+
+        res.send({
+            message: `Notification broadcasted to ${result.length} users`,
+            count: result.length,
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+});
+
 module.exports = router;

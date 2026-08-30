@@ -22,6 +22,9 @@ const AdminSocialWorks = lazy(() => import("../Pages/Admin/ManageSocialWorks/Adm
 const PaymentGateway = lazy(() => import("../Pages/Admin/PaymentGateway/PaymentGateway"));
 const Message = lazy(() => import("../Pages/Message/Message"));
 const LoginDevices = lazy(() => import("../Pages/Account/LoginDevices"));
+const AdminEarnings = lazy(() => import("../Pages/Admin/Earnings/AdminEarnings"));
+const AdminBroadcast = lazy(() => import("../Pages/Admin/Broadcast/AdminBroadcast"));
+const AdminReviews = lazy(() => import("../Pages/Admin/Reviews/AdminReviews"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -33,6 +36,18 @@ export const adminRoutes = [
   {
     path: "dashboard",
     element: <AdminChecker><Lazy><AdminDashboard /></Lazy></AdminChecker>,
+  },
+  {
+    path: "earnings",
+    element: <AdminChecker><Lazy><AdminEarnings /></Lazy></AdminChecker>,
+  },
+  {
+    path: "broadcast",
+    element: <AdminChecker><Lazy><AdminBroadcast /></Lazy></AdminChecker>,
+  },
+  {
+    path: "reviews",
+    element: <AdminChecker><Lazy><AdminReviews /></Lazy></AdminChecker>,
   },
   {
     path: "notifications",
