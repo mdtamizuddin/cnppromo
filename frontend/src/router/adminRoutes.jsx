@@ -42,6 +42,7 @@ const AdminEarnings = lazyRetry(() => import("../Pages/Admin/Earnings/AdminEarni
 const AdminBroadcast = lazyRetry(() => import("../Pages/Admin/Broadcast/AdminBroadcast"));
 const AdminReviews = lazyRetry(() => import("../Pages/Admin/Reviews/AdminReviews"));
 const AdminPaymentProofs = lazyRetry(() => import("../Pages/Admin/PaymentProofs/AdminPaymentProofs"));
+const LeaderBoard = lazyRetry(() => import("../Pages/LeaderBoard/LeaderBoard"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -53,6 +54,10 @@ export const adminRoutes = [
   {
     path: "dashboard",
     element: <AdminChecker><Lazy><AdminDashboard /></Lazy></AdminChecker>,
+  },
+  {
+    path: "leaderboard",
+    element: <AdminChecker><Lazy><LeaderBoard /></Lazy></AdminChecker>,
   },
   {
     path: "earnings",

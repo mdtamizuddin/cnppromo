@@ -42,7 +42,6 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
     { label: "উইথড্র", to: "/user/account/withdraw", icon: CreditCardIcon },
     { label: "রেফার & আর্ন", to: "/user/refer", icon: UserGroupIcon },
     { label: "ওয়ালেট", to: "/user/account", icon: WalletIcon },
-    { label: "লিডারবোর্ড", to: "/user/leaderboard", icon: TrophyIcon },
     { label: "ট্রেনিং & সাপোর্ট", to: "/user/training", icon: AcademicCapIcon },
     {
       label: "নোটিফিকেশন",

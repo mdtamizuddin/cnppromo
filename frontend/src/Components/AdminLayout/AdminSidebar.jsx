@@ -27,6 +27,7 @@ import {
   StarIcon,
   PhotoIcon,
   AcademicCapIcon,
+  TrophyIcon,
 } from "@heroicons/react/24/outline";
 import { IconButton } from "@material-tailwind/react";
 
@@ -35,6 +36,7 @@ const sidebarData = [
     category: "OVERVIEW",
     items: [
       { label: "Dashboard", icon: Squares2X2Icon, to: "/admin/dashboard", color: "text-indigo-500" },
+      { label: "Leaderboard", icon: TrophyIcon, to: "/admin/leaderboard", color: "text-amber-500" },
       { label: "Notifications", icon: BellIcon, to: "/admin/notifications", color: "text-orange-500" },
     ]
   },

@@ -230,15 +230,6 @@ const Welcome = () => {
       badge: "NEW",
     },
     {
-      id: "leaderboard",
-      title: "Leaderboard",
-      subtitle: "Top earners",
-      to: "/user/leaderboard",
-      icon: TrophyIcon,
-      color: "#a855f7",
-      bg: "bg-purple-50",
-    },
-    {
       id: "tips",
       title: "Work Tips",
       subtitle: "Tips & tricks",

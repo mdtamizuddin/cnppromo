@@ -75,19 +75,6 @@ const Refer = () => {
     enabled: !!user?._id,
   });
 
-  // 3. Fetch top referrers leaderboard
-  const { data: topReferrersData } = useQuery({
-    queryKey: ["refer-leaderboard"],
-    queryFn: async () => {
-      try {
-        const res = await api.get("/refer/board?type=referrers&timeframe=month");
-        return Array.isArray(res.data) ? res.data : res.data?.data || [];
-      } catch {
-        return [];
-      }
-    },
-  });
-
   const totalReferrals =
     (stats?.gen1 || 0) +
     (stats?.gen2 || 0) +
@@ -158,31 +145,6 @@ const Refer = () => {
       handleCopy();
     }
   };
-
-  // Sample top referrers fallback if leaderboard empty
-  const displayTopReferrers =
-    topReferrersData && topReferrersData.length > 0
-      ? topReferrersData.slice(0, 3)
-      : [
-          {
-            name: "Rasel Ahmed",
-            count: 126,
-            earnings: 4560,
-            avatar: "https://i.pravatar.cc/150?u=rasel",
-          },
-          {
-            name: "Nusrat Jahan",
-            count: 98,
-            earnings: 3250,
-            avatar: "https://i.pravatar.cc/150?u=nusrat",
-          },
-          {
-            name: "Madina Akter",
-            count: 75,
-            earnings: 2150,
-            avatar: "https://i.pravatar.cc/150?u=madina",
-          },
-        ];
 
   // Sample recent referrals from API or fallback
   const displayRecentReferrals =
@@ -432,61 +394,6 @@ const Refer = () => {
         </div>
       </div>
 
-      {/* 🏆 Top Referrers */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">
-            Top Referrers
-          </h3>
-          <Link
-            to="/user/leaderboard"
-            className="text-xs font-bold text-purple-600 hover:underline"
-          >
-            View All
-          </Link>
-        </div>
-
-        <div className="space-y-3">
-          {displayTopReferrers.map((item, idx) => {
-            const rankBadgeColor =
-              idx === 0
-                ? "bg-amber-400 text-white"
-                : idx === 1
-                ? "bg-gray-300 text-gray-700"
-                : "bg-amber-700 text-white";
-
-            return (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-2 rounded-2xl hover:bg-gray-50/80 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-6 h-6 rounded-full ${rankBadgeColor} text-[11px] font-black flex items-center justify-center shrink-0 shadow-sm`}
-                  >
-                    {idx + 1}
-                  </div>
-                  <img
-                    src={item.avatar || `https://i.pravatar.cc/150?u=${item.name}`}
-                    alt={item.name}
-                    className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                  />
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900">{item.name}</h4>
-                    <p className="text-[11px] text-gray-400">
-                      {item.count || item.gen1 || 50} Referrals
-                    </p>
-                  </div>
-                </div>
-
-                <span className="text-xs sm:text-sm font-black text-purple-600">
-                  ৳{formatCurrency(item.earnings || 3000)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 
