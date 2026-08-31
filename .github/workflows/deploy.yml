@@ -123,23 +123,12 @@ jobs:
             tar -xzf backend-release.tar.gz
             rm -f backend-release.tar.gz
 
-            # Load user profile & NVM if available
+            # Load environment & NVM
+            export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/root/.nvm/versions/node/$(ls /root/.nvm/versions/node 2>/dev/null | tail -n 1)/bin
             source ~/.profile || true
             source ~/.bashrc || true
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-            # Ensure pnpm or npm is available
-            if command -v corepack &> /dev/null; then
-              corepack enable && corepack prepare pnpm@9 --activate || true
-            fi
-
-            # Install production dependencies
-            if command -v pnpm &> /dev/null; then
-              pnpm install --prod
-            else
-              npm install --omit=dev
-            fi
 
             # Create or update .env if secret is provided
             if [ -n "$BACKEND_ENV_CONTENT" ]; then
@@ -147,7 +136,22 @@ jobs:
               echo "✅ .env created from GitHub Secret."
             fi
 
-            # Reload PM2 application with zero downtime or start if not already running
+            # Ensure pnpm is available
+            if ! command -v pnpm &> /dev/null; then
+              if command -v corepack &> /dev/null; then
+                corepack enable && corepack prepare pnpm@9 --activate || true
+              fi
+            fi
+            if ! command -v pnpm &> /dev/null; then
+              npm install -g pnpm@9 || true
+            fi
+
+            # Install production dependencies cleanly with pnpm
+            echo "📦 Installing production dependencies with pnpm..."
+            pnpm install --prod --no-frozen-lockfile --shamefully-hoist
+
+            # Reload or start PM2 application
+            echo "🚀 Reloading PM2 process..."
             pm2 reload ecosystem.config.cjs --env production || pm2 start ecosystem.config.cjs --env production
             pm2 save
-            echo "✅ Backend deployed and PM2 reloaded."
+            echo "✅ Backend deployed and PM2 running."
