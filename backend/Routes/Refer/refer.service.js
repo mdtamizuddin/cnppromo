@@ -160,27 +160,68 @@ const getAll = async (user, gen) => {
 }
 const getAllRefer = async (user) => {
     try {
-        const refer = await Refer.find({ reffer: user })
+        const mongoose = require("mongoose");
+        const userId = typeof user === "string" ? new mongoose.Types.ObjectId(user) : user;
+        const refer = await Refer.find({ reffer: userId })
             .sort({ createdAt: -1 })
-            .populate("user", "name email phone")
-            .populate("reffer", "name email phone");
-        return refer
+            .limit(20)
+            .populate("user", "name username email phone status createdAt")
+            .populate("reffer", "name username");
+        return refer;
     } catch (error) {
-        throw new Error(error)
+        throw new Error(error);
     }
-}
-// Helper to calculate referral stats per generation in 1 database aggregation query instead of 6 round-trips.
-// Performance impact: Reduces network/DB round-trips by ~83% (from 6 queries to 1 single index-backed aggregation).
+};
+
+// Helper to calculate referral stats per generation in 1 database aggregation query.
 const getReferralStatsByUserId = async (userId) => {
     const stats = await Refer.aggregate([
         { $match: { reffer: userId } },
-        { $group: { _id: "$gen", count: { $sum: 1 } } }
+        {
+            $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "userData"
+            }
+        },
+        {
+            $unwind: {
+                path: "$userData",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $group: {
+                _id: "$gen",
+                count: { $sum: 1 },
+                totalCommission: { $sum: "$commition" },
+                activeCount: {
+                    $sum: {
+                        $cond: [{ $eq: ["$userData.status", "active"] }, 1, 0]
+                    }
+                }
+            }
+        }
     ]);
 
-    const result = { gen1: 0, gen2: 0, gen3: 0, gen4: 0, gen5: 0, gen6: 0 };
+    const result = {
+        gen1: 0, gen2: 0, gen3: 0, gen4: 0, gen5: 0, gen6: 0,
+        commGen1: 0, commGen2: 0, commGen3: 0, commGen4: 0, commGen5: 0, commGen6: 0,
+        activeGen1: 0, activeGen2: 0, activeGen3: 0, activeGen4: 0, activeGen5: 0, activeGen6: 0,
+        totalReferrals: 0,
+        activeReferrals: 0,
+        totalEarnings: 0
+    };
+
     for (const item of stats) {
         if (item._id >= 1 && item._id <= 6) {
             result[`gen${item._id}`] = item.count;
+            result[`commGen${item._id}`] = item.totalCommission || 0;
+            result[`activeGen${item._id}`] = item.activeCount || 0;
+            result.totalReferrals += item.count;
+            result.activeReferrals += (item.activeCount || 0);
+            result.totalEarnings += (item.totalCommission || 0);
         }
     }
     return result;
@@ -192,21 +233,22 @@ const statistic = async (user) => {
         const userId = typeof user === "string" ? new mongoose.Types.ObjectId(user) : user;
         return await getReferralStatsByUserId(userId);
     } catch (error) {
-        throw new Error(error)
+        throw new Error(error);
     }
-}
+};
+
 const statistic2 = async (user) => {
     try {
         const userCheck = await User.findOne({ $or: [{ username: user }, { email: user }] });
         if (!userCheck) {
-            throw new Error("User not found")
+            throw new Error("User not found");
         }
         const counts = await getReferralStatsByUserId(userCheck._id);
-        return { ...counts, user: userCheck }
+        return { ...counts, user: userCheck };
     } catch (error) {
-        throw new Error(error)
+        throw new Error(error);
     }
-}
+};
 module.exports = {
     createRefer,
     getReferHintory,

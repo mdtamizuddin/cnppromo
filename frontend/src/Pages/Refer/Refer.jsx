@@ -14,10 +14,9 @@ import {
   UserGroupIcon,
   UserIcon,
   BanknotesIcon,
-  GiftIcon,
   CheckCircleIcon,
   ArrowRightIcon,
-  StarIcon,
+  ShieldCheckIcon,
   ClockIcon,
   ChartPieIcon,
   TrophyIcon,
@@ -52,6 +51,8 @@ const Refer = () => {
   useEffect(() => {
     if (user?.username) {
       setRefLink(`${window.location.origin}/register?ref=${user.username}`);
+    } else if (user?._id) {
+      setRefLink(`${window.location.origin}/register?ref=${user._id}`);
     }
   }, [user]);
 
@@ -75,48 +76,101 @@ const Refer = () => {
     enabled: !!user?._id,
   });
 
-  const totalReferrals =
+  // Real data calculations
+  const totalReferrals = stats?.totalReferrals ?? (
     (stats?.gen1 || 0) +
     (stats?.gen2 || 0) +
     (stats?.gen3 || 0) +
     (stats?.gen4 || 0) +
     (stats?.gen5 || 0) +
-    (stats?.gen6 || 0);
+    (stats?.gen6 || 0)
+  );
 
+  const activeReferrals = stats?.activeReferrals ?? 0;
   const directReferrals = stats?.gen1 || 0;
-  const activeReferrals = Math.round(totalReferrals * 0.75) || directReferrals;
+  const totalEarnings = stats?.totalEarnings ?? (
+    (stats?.commGen1 || 0) +
+    (stats?.commGen2 || 0) +
+    (stats?.commGen3 || 0) +
+    (stats?.commGen4 || 0) +
+    (stats?.commGen5 || 0) +
+    (stats?.commGen6 || 0)
+  );
 
-  // Calculate total earnings from referral commissions
-  const calculatedTotalEarnings = useMemo(() => {
-    if (!stats || !settings?.ref_comm) return 1250;
-    const g1 = (stats.gen1 || 0) * (settings.ref_comm.gen1 || 30);
-    const g2 = (stats.gen2 || 0) * (settings.ref_comm.gen2 || 15);
-    const g3 = (stats.gen3 || 0) * (settings.ref_comm.gen3 || 10);
-    const g4 = (stats.gen4 || 0) * (settings.ref_comm.gen4 || 5);
-    const g5 = (stats.gen5 || 0) * (settings.ref_comm.gen5 || 2);
-    const g6 = (stats.gen6 || 0) * (settings.ref_comm.gen6 || 1);
-    const sum = g1 + g2 + g3 + g4 + g5 + g6;
-    return sum > 0 ? sum : 1250;
-  }, [stats, settings]);
-
-  const totalPaid = Math.max(0, calculatedTotalEarnings - 270);
-
-  // Breakdown amounts for the donut chart
-  const breakdownData = useMemo(() => {
-    const total = calculatedTotalEarnings || 1250;
-    const registration = Math.round(total * 0.4);
-    const task = Math.round(total * 0.32);
-    const withdrawal = Math.round(total * 0.24);
-    const other = Math.max(0, total - (registration + task + withdrawal));
-
-    return {
-      registration,
-      task,
-      withdrawal,
-      other,
-      total,
+  // Real 6-Generation breakdown
+  const genStats = useMemo(() => {
+    const rates = settings?.ref_comm || {
+      gen1: 30,
+      gen2: 15,
+      gen3: 10,
+      gen4: 5,
+      gen5: 2,
+      gen6: 1,
     };
-  }, [calculatedTotalEarnings]);
+
+    return [
+      {
+        gen: 1,
+        title: "১ম জেনারেশন (সরাসরি)",
+        count: stats?.gen1 || 0,
+        activeCount: stats?.activeGen1 || 0,
+        rate: rates.gen1 || 30,
+        earned: stats?.commGen1 || (stats?.gen1 || 0) * (rates.gen1 || 30),
+        color: "bg-teal-500 text-white",
+        badgeColor: "bg-teal-50 text-teal-700 border-teal-200",
+      },
+      {
+        gen: 2,
+        title: "২য় জেনারেশন",
+        count: stats?.gen2 || 0,
+        activeCount: stats?.activeGen2 || 0,
+        rate: rates.gen2 || 15,
+        earned: stats?.commGen2 || (stats?.gen2 || 0) * (rates.gen2 || 15),
+        color: "bg-emerald-500 text-white",
+        badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      },
+      {
+        gen: 3,
+        title: "৩য় জেনারেশন",
+        count: stats?.gen3 || 0,
+        activeCount: stats?.activeGen3 || 0,
+        rate: rates.gen3 || 10,
+        earned: stats?.commGen3 || (stats?.gen3 || 0) * (rates.gen3 || 10),
+        color: "bg-cyan-500 text-white",
+        badgeColor: "bg-cyan-50 text-cyan-700 border-cyan-200",
+      },
+      {
+        gen: 4,
+        title: "৪র্থ জেনারেশন",
+        count: stats?.gen4 || 0,
+        activeCount: stats?.activeGen4 || 0,
+        rate: rates.gen4 || 5,
+        earned: stats?.commGen4 || (stats?.gen4 || 0) * (rates.gen4 || 5),
+        color: "bg-sky-500 text-white",
+        badgeColor: "bg-sky-50 text-sky-700 border-sky-200",
+      },
+      {
+        gen: 5,
+        title: "৫ম জেনারেশন",
+        count: stats?.gen5 || 0,
+        activeCount: stats?.activeGen5 || 0,
+        rate: rates.gen5 || 2,
+        earned: stats?.commGen5 || (stats?.gen5 || 0) * (rates.gen5 || 2),
+        color: "bg-indigo-500 text-white",
+        badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      },
+      {
+        gen: 6,
+        title: "৬ষ্ঠ জেনারেশন",
+        count: stats?.gen6 || 0,
+        activeCount: stats?.activeGen6 || 0,
+        rate: rates.gen6 || 1,
+        earned: stats?.commGen6 || (stats?.gen6 || 0) * (rates.gen6 || 1),
+        color: "bg-violet-500 text-white",
+        badgeColor: "bg-violet-50 text-violet-700 border-violet-200",
+      },
+    ];
+  }, [stats, settings]);
 
   const handleCopy = () => {
     if (!refLink) return;
@@ -127,7 +181,7 @@ const Refer = () => {
   };
 
   const shareText = encodeURIComponent(
-    `CNP-Promo তে জয়েন করুন এবং প্রতিদিন সহজ ভিডিও দেখে ও টাস্ক করে নিশ্চিত ইনকাম করুন! আমার রেফারেল লিংক: ${refLink}`
+    `CNP-Promo তে জয়েন করুন এবং প্রতিদিন কাজ করে নিশ্চিত ইনকাম করুন! আমার রেফারেল লিংক: ${refLink}`
   );
 
   const handleNativeShare = async () => {
@@ -146,39 +200,8 @@ const Refer = () => {
     }
   };
 
-  // Sample recent referrals from API or fallback
-  const displayRecentReferrals =
-    userReferralsData && userReferralsData.length > 0
-      ? userReferralsData.slice(0, 3).map((r, idx) => ({
-          name: r.user?.name || r.user?.username || `Member ${idx + 1}`,
-          joined: "Recently",
-          tasks: 10 + idx * 2,
-          earned: (r.commition || 30) * 4,
-          avatar: `https://i.pravatar.cc/150?u=${r.user?._id || idx}`,
-        }))
-      : [
-          {
-            name: "Sakib Hasan",
-            joined: "2 days ago",
-            tasks: 12,
-            earned: 120,
-            avatar: "https://i.pravatar.cc/150?u=sakib",
-          },
-          {
-            name: "Faria Islam",
-            joined: "5 days ago",
-            tasks: 8,
-            earned: 80,
-            avatar: "https://i.pravatar.cc/150?u=faria",
-          },
-          {
-            name: "Rimon Ahmed",
-            joined: "1 week ago",
-            tasks: 15,
-            earned: 150,
-            avatar: "https://i.pravatar.cc/150?u=rimon",
-          },
-        ];
+  // Real recent referrals from API
+  const recentReferrals = userReferralsData || [];
 
   if (isStatsLoading) {
     return <Loader />;
@@ -187,37 +210,31 @@ const Refer = () => {
   // ── Render Screen 1: Overview Component ──────────────────────────────────────
   const renderOverviewTab = () => (
     <div className="space-y-5 animate-fadeIn">
-      {/* 🌟 Top Hero Card (Matching Screen 1) */}
+      {/* 🌟 Top Hero Card */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#042f2e] via-[#0f766e] to-[#0284c7] text-white p-6 sm:p-7 shadow-xl shadow-teal-900/20 border border-teal-400/20">
         <div className="absolute -top-10 -right-10 w-44 h-44 bg-teal-300/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-sky-400/20 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex items-center justify-between">
-          <div className="space-y-2 max-w-[62%]">
+          <div className="space-y-2 max-w-[65%]">
             <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">
               Refer Friends <br />
               <span className="text-amber-300">Earn More</span>
             </h2>
             <p className="text-xs text-teal-100/90 leading-relaxed">
-              Invite your friends and earn exciting rewards!
+              বন্ধুদের ইনভাইট করুন এবং ৬ জেনারেশন পর্যন্ত ইনস্ট্যান্ট রেফার কমিশন উপভোগ করুন!
             </p>
           </div>
 
-          {/* 3D Gift Box Graphic */}
           <div className="relative shrink-0 -mr-2">
-            <img
-              src="/gift_3d_illustration.png"
-              alt="Gift 3D"
-              className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-2xl select-none pointer-events-none transform hover:scale-105 transition-transform"
-              onError={(e) => {
-                e.target.style.display = "none";
-              }}
-            />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl">
+              <UserGroupIcon className="w-10 h-10 sm:w-12 sm:h-12 text-teal-200" />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 📊 Split Stats Card */}
+      {/* 📊 Split Real Stats Card */}
       <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm grid grid-cols-2 divide-x divide-gray-100">
         {/* Left: Total Earnings */}
         <div className="pr-4 space-y-1">
@@ -235,8 +252,8 @@ const Refer = () => {
               )}
             </button>
           </div>
-          <p className="text-lg sm:text-xl font-black text-primary">
-            ৳{showBalance ? formatCurrency(calculatedTotalEarnings) : "••••••"}
+          <p className="text-lg sm:text-2xl font-black text-primary">
+            ৳{showBalance ? formatCurrency(totalEarnings) : "••••••"}
           </p>
         </div>
 
@@ -246,7 +263,7 @@ const Refer = () => {
             <UserGroupIcon className="w-3.5 h-3.5 text-primary" />
             <span>Total Referrals</span>
           </div>
-          <p className="text-lg sm:text-xl font-black text-gray-900 flex items-center gap-1.5">
+          <p className="text-lg sm:text-2xl font-black text-gray-900 flex items-center gap-1.5">
             <UserIcon className="w-4 h-4 text-primary" />
             <span>{totalReferrals}</span>
           </p>
@@ -273,7 +290,7 @@ const Refer = () => {
             <div>
               <h4 className="text-xs font-bold text-gray-900">Share</h4>
               <p className="text-[10px] sm:text-[11px] text-gray-500 leading-tight mt-0.5">
-                Share your referral link with friends
+                আপনার রেফারেল লিংক বন্ধুদের শেয়ার করুন
               </p>
             </div>
           </div>
@@ -291,7 +308,7 @@ const Refer = () => {
             <div>
               <h4 className="text-xs font-bold text-gray-900">Join</h4>
               <p className="text-[10px] sm:text-[11px] text-gray-500 leading-tight mt-0.5">
-                Your friends join using your link
+                বন্ধুরা আপনার লিংকে অ্যাকাউন্ট খুলবে
               </p>
             </div>
           </div>
@@ -300,7 +317,7 @@ const Refer = () => {
           <div className="flex flex-col items-center text-center space-y-2 relative">
             <div className="relative">
               <div className="w-12 h-12 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
-                <GiftIcon className="w-5 h-5 stroke-[2]" />
+                <BanknotesIcon className="w-5 h-5 stroke-[2]" />
               </div>
               <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white border-2 border-amber-500 text-amber-600 text-[10px] font-black flex items-center justify-center">
                 3
@@ -309,7 +326,7 @@ const Refer = () => {
             <div>
               <h4 className="text-xs font-bold text-gray-900">Earn</h4>
               <p className="text-[10px] sm:text-[11px] text-gray-500 leading-tight mt-0.5">
-                You earn when they complete tasks
+                অ্যাকাউন্ট সক্রিয় হলে কমিশন পাবেন
               </p>
             </div>
           </div>
@@ -350,57 +367,41 @@ const Refer = () => {
         </button>
       </div>
 
-      {/* 💎 Earning Details */}
+      {/* 💎 Real 6-Generation Rates Overview */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-3.5">
-        <h3 className="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">
-          Earning Details
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">
+            ৬-জেনারেশন রেফারেল কমিশন রেট
+          </h3>
+          <span className="text-[11px] font-semibold text-primary">অ্যাক্টিভেশন বোনাস</span>
+        </div>
 
-        <div className="space-y-3 text-xs">
-          {/* Row 1 */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-primary-light text-primary flex items-center justify-center shrink-0">
-                <UserIcon className="w-4 h-4" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          {genStats.map((item) => (
+            <div
+              key={item.gen}
+              className="p-3 rounded-2xl bg-gray-50/80 border border-gray-100 flex flex-col justify-between space-y-1.5"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-gray-600">Gen {item.gen}</span>
+                <span className="text-[10px] font-semibold text-gray-400">
+                  {item.count} মেম্বার
+                </span>
               </div>
-              <span className="font-semibold text-gray-800">For Each Registered User</span>
-            </div>
-            <span className="font-black text-emerald-600 text-sm">
-              ৳{settings?.ref_comm?.gen1 || 20}.00
-            </span>
-          </div>
-
-          {/* Row 2 */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center shrink-0">
-                <CheckCircleIcon className="w-4 h-4" />
+              <div className="text-sm font-black text-emerald-600">
+                +৳{formatCurrency(item.rate)}
               </div>
-              <span className="font-semibold text-gray-800">For Each Task Completed</span>
             </div>
-            <span className="font-black text-emerald-600 text-sm">৳10.00</span>
-          </div>
-
-          {/* Row 3 */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                <StarIcon className="w-4 h-4" />
-              </div>
-              <span className="font-semibold text-gray-800">For Each Withdrawal</span>
-            </div>
-            <span className="font-black text-emerald-600 text-sm">৳15.00</span>
-          </div>
+          ))}
         </div>
       </div>
-
     </div>
   );
 
   // ── Render Screen 2: Statistics & Breakdown Component ────────────────────────
   const renderBreakdownTab = () => (
     <div className="space-y-5 animate-fadeIn">
-      {/* 🌟 Top Balance Hero Card (Matching Screen 2) */}
+      {/* 🌟 Top Balance Hero Card */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#042f2e] via-[#0f766e] to-[#0284c7] text-white p-6 sm:p-7 shadow-xl shadow-teal-900/20 border border-teal-400/20">
         <div className="absolute -top-10 -right-10 w-44 h-44 bg-teal-300/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-sky-400/20 rounded-full blur-2xl pointer-events-none" />
@@ -408,7 +409,7 @@ const Refer = () => {
         <div className="relative z-10 flex items-start justify-between">
           <div className="space-y-1.5 max-w-[65%]">
             <div className="flex items-center gap-2 text-teal-100 text-xs font-semibold">
-              <span>Total Earnings</span>
+              <span>Total Referral Earnings</span>
               <button
                 type="button"
                 onClick={() => setShowBalance(!showBalance)}
@@ -424,7 +425,7 @@ const Refer = () => {
 
             <div className="text-3xl sm:text-4xl font-black tracking-tight text-white flex items-baseline gap-1">
               <span>৳</span>
-              <span>{showBalance ? formatCurrency(calculatedTotalEarnings) : "••••••"}</span>
+              <span>{showBalance ? formatCurrency(totalEarnings) : "••••••"}</span>
             </div>
 
             <div className="text-[11px] font-medium text-teal-100/90 pt-0.5">
@@ -432,21 +433,15 @@ const Refer = () => {
             </div>
           </div>
 
-          {/* 3D Wallet Visual */}
           <div className="relative shrink-0 -mt-2 -mr-1">
-            <img
-              src="/wallet_3d_illustration.png"
-              alt="Wallet 3D"
-              className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-2xl select-none pointer-events-none transform hover:scale-105 transition-transform"
-              onError={(e) => {
-                e.target.style.display = "none";
-              }}
-            />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl">
+              <BanknotesIcon className="w-10 h-10 sm:w-12 sm:h-12 text-teal-200" />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 📊 3 Metrics Cards */}
+      {/* 📊 3 Real Metrics Cards */}
       <div className="grid grid-cols-3 gap-3">
         {/* Card 1: Total Referrals */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm text-center space-y-1">
@@ -459,147 +454,75 @@ const Refer = () => {
 
         {/* Card 2: Active Referrals */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm text-center space-y-1">
-          <div className="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center mx-auto">
+          <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+            <ShieldCheckIcon className="w-4 h-4" />
+          </div>
+          <p className="text-[10px] text-gray-500 font-semibold">Active Members</p>
+          <p className="text-base sm:text-lg font-black text-emerald-600">{activeReferrals}</p>
+        </div>
+
+        {/* Card 3: Direct Gen 1 */}
+        <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm text-center space-y-1">
+          <div className="w-8 h-8 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center mx-auto">
             <UserIcon className="w-4 h-4" />
           </div>
-          <p className="text-[10px] text-gray-500 font-semibold">Active Referrals</p>
-          <p className="text-base sm:text-lg font-black text-gray-900">{activeReferrals}</p>
-        </div>
-
-        {/* Card 3: Total Paid */}
-        <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm text-center space-y-1">
-          <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-            <BanknotesIcon className="w-4 h-4" />
-          </div>
-          <p className="text-[10px] text-gray-500 font-semibold">Total Paid</p>
-          <p className="text-base sm:text-lg font-black text-emerald-600">
-            ৳{totalPaid}
+          <p className="text-[10px] text-gray-500 font-semibold">Direct (Gen 1)</p>
+          <p className="text-base sm:text-lg font-black text-teal-600">
+            {directReferrals}
           </p>
         </div>
       </div>
 
-      {/* ⭐ Special Bonus Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#6035f8] via-[#a81c85] to-[#d9176c] text-white p-5 shadow-md flex items-center justify-between">
-        <div className="space-y-1 max-w-[65%]">
-          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-amber-300 text-[10px] font-bold">
-            <StarIcon className="w-3 h-3 fill-amber-300 text-amber-300" />
-            <span>Special Bonus</span>
-          </div>
-          <p className="text-xs sm:text-sm font-bold text-white leading-tight">
-            Get extra ৳50 when your friend completes 10 tasks!
-          </p>
-        </div>
-
-        <img
-          src="/gift_3d_illustration.png"
-          alt="Gift"
-          className="w-16 h-16 object-contain drop-shadow-lg shrink-0"
-        />
-      </div>
-
-      {/* 🍩 Earning Breakdown (Interactive Donut Chart Section) */}
+      {/* 💎 6-Generation Real Income Breakdown */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
-        <h3 className="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">
-          Earning Breakdown
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">
+            জেনারেশন ভিত্তিক আয় বিবরণী
+          </h3>
+          <span className="text-[11px] font-bold text-emerald-600">
+            মোট: ৳{formatCurrency(totalEarnings)}
+          </span>
+        </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-6 justify-between">
-          {/* SVG Donut Chart */}
-          <div className="relative w-36 h-36 flex items-center justify-center shrink-0">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-              {/* Circle background */}
-              <path
-                className="text-gray-100"
-                strokeWidth="4"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              {/* Registration: 40% (Purple) */}
-              <path
-                className="text-purple-600"
-                strokeDasharray="40, 100"
-                strokeWidth="4"
-                strokeLinecap="round"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              {/* Task: 32% (Orange) */}
-              <path
-                className="text-amber-500"
-                strokeDasharray="32, 100"
-                strokeDashoffset="-40"
-                strokeWidth="4"
-                strokeLinecap="round"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              {/* Withdrawal: 24% (Pink) */}
-              <path
-                className="text-pink-500"
-                strokeDasharray="24, 100"
-                strokeDashoffset="-72"
-                strokeWidth="4"
-                strokeLinecap="round"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-            </svg>
+        <div className="space-y-3">
+          {genStats.map((item) => {
+            const percentage =
+              totalEarnings > 0
+                ? Math.min(100, Math.round((item.earned / totalEarnings) * 100))
+                : 0;
 
-            {/* Center Label */}
-            <div className="absolute flex flex-col items-center justify-center text-center">
-              <span className="text-sm font-black text-gray-900">
-                ৳{formatCurrency(breakdownData.total)}
-              </span>
-              <span className="text-[9px] font-semibold text-gray-400">Total Earnings</span>
-            </div>
-          </div>
+            return (
+              <div
+                key={item.gen}
+                className="p-3.5 rounded-2xl bg-gray-50/70 border border-gray-100 space-y-2"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-primary-light text-primary font-black text-[11px] flex items-center justify-center">
+                      {item.gen}
+                    </span>
+                    <span className="font-bold text-gray-800">{item.title}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-black text-gray-900">
+                      ৳{formatCurrency(item.earned)}
+                    </span>
+                    <span className="text-[10px] text-gray-400 ml-1.5">
+                      ({item.count} জন)
+                    </span>
+                  </div>
+                </div>
 
-          {/* Breakdown Legend Items */}
-          <div className="flex-1 w-full space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-600" />
-                <span className="font-semibold text-gray-700">Registration Bonus</span>
+                {/* Progress bar */}
+                <div className="w-full bg-gray-200/80 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-primary h-1.5 rounded-full transition-all duration-500"
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
               </div>
-              <span className="font-bold text-gray-900">
-                ৳{formatCurrency(breakdownData.registration)}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                <span className="font-semibold text-gray-700">Task Bonus</span>
-              </div>
-              <span className="font-bold text-gray-900">
-                ৳{formatCurrency(breakdownData.task)}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-pink-500" />
-                <span className="font-semibold text-gray-700">Withdrawal Bonus</span>
-              </div>
-              <span className="font-bold text-gray-900">
-                ৳{formatCurrency(breakdownData.withdrawal)}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <span className="font-semibold text-gray-700">Other Bonus</span>
-              </div>
-              <span className="font-bold text-gray-900">
-                ৳{formatCurrency(breakdownData.other)}
-              </span>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
 
@@ -682,7 +605,7 @@ const Refer = () => {
         </div>
       </div>
 
-      {/* 👥 Recent Referrals */}
+      {/* 👥 Real Recent Referrals */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">
@@ -690,39 +613,51 @@ const Refer = () => {
           </h3>
           <Link
             to="/user/refer-info"
-            className="text-xs font-bold text-purple-600 hover:underline"
+            className="text-xs font-bold text-primary hover:underline"
           >
             View All
           </Link>
         </div>
 
-        <div className="space-y-3">
-          {displayRecentReferrals.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between p-2 rounded-2xl hover:bg-gray-50/80 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <img
-                  src={item.avatar}
-                  alt={item.name}
-                  className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                />
-                <div>
-                  <h4 className="text-xs font-bold text-gray-900">{item.name}</h4>
-                  <p className="text-[11px] text-gray-400">Joined: {item.joined}</p>
+        {recentReferrals.length === 0 ? (
+          <div className="py-6 text-center text-gray-400 space-y-1">
+            <UserGroupIcon className="w-8 h-8 text-gray-300 mx-auto" />
+            <p className="text-xs font-semibold text-gray-600">এখনো কোনো রেফারেল হয়নি</p>
+            <p className="text-[11px] text-gray-400">
+              রেফারেল লিংক শেয়ার করে নতুন মেম্বার যুক্ত করুন।
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {recentReferrals.slice(0, 5).map((item, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-gray-50/80 transition-colors border border-gray-50"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center font-bold text-xs uppercase">
+                    {(item.user?.name || item.user?.username || "U")[0]}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900">
+                      {item.user?.name || item.user?.username || "Member"}
+                    </h4>
+                    <p className="text-[11px] text-gray-400">
+                      {item.createdAt ? dayjs(item.createdAt).format("DD MMM, YYYY") : "Recently"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-bold text-xs">
+                    +৳{formatCurrency(item.commition || 0)}
+                  </span>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Gen {item.gen || 1}</p>
                 </div>
               </div>
-
-              <div className="text-right">
-                <p className="text-[11px] text-gray-500 font-medium">Tasks: {item.tasks}</p>
-                <p className="text-xs font-bold text-emerald-600">
-                  Earned: ৳{formatCurrency(item.earned)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -755,7 +690,7 @@ const Refer = () => {
             className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition-all"
             title="রেফারেল নিয়মাবলি"
           >
-            <QuestionMarkCircleIcon className="w-5 h-5 text-purple-600 stroke-[2]" />
+            <QuestionMarkCircleIcon className="w-5 h-5 text-primary stroke-[2]" />
           </button>
         </div>
 
@@ -839,17 +774,12 @@ const Refer = () => {
           <div className="space-y-3 text-xs text-gray-600 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
             <div className="p-3 bg-primary-light/60 rounded-2xl border border-teal-100">
               <p className="font-bold text-teal-900 mb-1">১. কীভাবে রেফারেল বোনাস পাব?</p>
-              <p>আপনার ইউনিক রেফারেল লিংক বন্ধুদের শেয়ার করুন। তারা একাউন্ট খুলে কাজ শুরু করলেই আপনি ইনস্ট্যান্ট কমিশন পাবেন।</p>
+              <p>আপনার ইউনিক রেফারেল লিংক বন্ধুদের শেয়ার করুন। তারা একাউন্ট খুলে অ্যাক্টিভ হলেই আপনার ওয়ালেটে সরাসরি কমিশন যুক্ত হবে।</p>
             </div>
 
             <div className="p-3 bg-primary-light/60 rounded-2xl border border-teal-100">
-              <p className="font-bold text-teal-900 mb-1">২. কমিশন কি লাইফটাইম পাওয়া যাবে?</p>
-              <p>হ্যাঁ! আপনার রেফারেল মেম্বাররা ভবিষ্যতে যত কাজ সম্পন্ন করবে বা উইথড্র করবে, প্রতিবার আপনি কমিশন পেতে থাকবেন।</p>
-            </div>
-
-            <div className="p-3 bg-primary-light/60 rounded-2xl border border-teal-100">
-              <p className="font-bold text-teal-900 mb-1">৩. ৬-জেনারেশন কমিশন কীভাবে কাজ করে?</p>
-              <p>আপনার সরাসরি রেফারেল ১ম লেভেল। তাদের রেফারেল ২য় লেভেল—এভাবে ৬ষ্ঠ লেভেল পর্যন্ত আপনার টিমের প্রতিটি জয়েনিং থেকে আপনি কমিশন পাবেন।</p>
+              <p className="font-bold text-teal-900 mb-1">২. ৬-জেনারেশন কমিশন কীভাবে কাজ করে?</p>
+              <p>আপনার সরাসরি রেফারেল ১ম জেনারেশন। তাদের রেফারেল ২য় জেনারেশন—এভাবে ৬ষ্ঠ জেনারেশন পর্যন্ত আপনার নেটওয়ার্কের প্রতিটি জয়েনিং থেকে আপনি কমিশন পাবেন।</p>
             </div>
           </div>
 

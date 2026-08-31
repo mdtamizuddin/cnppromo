@@ -103,7 +103,7 @@ export function TableWithStripedRows() {
                   {/* Name */}
                   <td className="py-3.5 px-4 font-bold text-[#0b0c2a]">
                     <span className="flex items-center gap-1.5">
-                      <span>{reffer?.name || referredUser?.name || "Member"}</span>
+                      <span>{referredUser?.name || referredUser?.username || "Member"}</span>
                       <CheckBadgeIcon className="w-3.5 h-3.5 text-primary" />
                     </span>
                   </td>
