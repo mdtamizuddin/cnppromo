@@ -3,22 +3,39 @@ import { lazy, Suspense } from "react";
 import App from "../App";
 import Loader from "../Components/Loader";
 import AuthChecker from "./AuthChecker";
+import RouteErrorBoundary from "../Components/RouteErrorBoundary";
 import { userRoutes } from "./userRoutes";
 import { adminRoutes } from "./adminRoutes";
 
-const Home = lazy(() => import("../Pages/Home/Home"));
-const About = lazy(() => import("../Pages/About/About"));
-const HowItWorks = lazy(() => import("../Pages/HowItWorks/HowItWorks"));
-const Register = lazy(() => import("../Pages/Auth/Register/Register"));
-const Login = lazy(() => import("../Pages/Auth/Login/Login"));
-const Reviews = lazy(() => import("../Pages/Reviews/Reviews"));
-const Reset = lazy(() => import("../Pages/Auth/Reset/Reset"));
-const Message = lazy(() => import("../Pages/Message/Message"));
-const AllMessages = lazy(() => import("../Pages/Message/AllMessages"));
-const LoginWithoutPass = lazy(() => import("../Pages/Auth/Login/WithOutPass"));
-const PaymentProof = lazy(() => import("../Pages/PaymentProof/PaymentProof"));
-const Features = lazy(() => import("../Pages/Features/Features"));
-const AdminLayout = lazy(() => import("../Components/AdminLayout/AdminLayout"));
+// Helper for dynamic imports with auto-reload retry if a chunk hash changed after deployment
+const lazyRetry = (componentImport) =>
+  lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      const hasReloaded = sessionStorage.getItem("chunk_reload_attempted");
+      if (!hasReloaded) {
+        sessionStorage.setItem("chunk_reload_attempted", "true");
+        window.location.reload();
+        return { default: () => null };
+      }
+      throw error;
+    }
+  });
+
+const Home = lazyRetry(() => import("../Pages/Home/Home"));
+const About = lazyRetry(() => import("../Pages/About/About"));
+const HowItWorks = lazyRetry(() => import("../Pages/HowItWorks/HowItWorks"));
+const Register = lazyRetry(() => import("../Pages/Auth/Register/Register"));
+const Login = lazyRetry(() => import("../Pages/Auth/Login/Login"));
+const Reviews = lazyRetry(() => import("../Pages/Reviews/Reviews"));
+const Reset = lazyRetry(() => import("../Pages/Auth/Reset/Reset"));
+const Message = lazyRetry(() => import("../Pages/Message/Message"));
+const AllMessages = lazyRetry(() => import("../Pages/Message/AllMessages"));
+const LoginWithoutPass = lazyRetry(() => import("../Pages/Auth/Login/WithOutPass"));
+const PaymentProof = lazyRetry(() => import("../Pages/PaymentProof/PaymentProof"));
+const Features = lazyRetry(() => import("../Pages/Features/Features"));
+const AdminLayout = lazyRetry(() => import("../Components/AdminLayout/AdminLayout"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
@@ -26,6 +43,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         index: true,
@@ -93,6 +111,11 @@ const router = createBrowserRouter([
         path: "admin",
         element: <Lazy><AdminLayout /></Lazy>,
         children: adminRoutes,
+      },
+      // --- 404 CATCH-ALL ---
+      {
+        path: "*",
+        element: <RouteErrorBoundary />,
       },
     ],
   },

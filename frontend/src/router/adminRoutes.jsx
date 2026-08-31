@@ -2,31 +2,46 @@ import { lazy, Suspense } from "react";
 import Loader from "../Components/Loader";
 import AdminChecker from "../util/UserChecker";
 
-const AdminDashboard = lazy(() => import("../Pages/Admin/Dashboard/AdminDashboard"));
-const Admins = lazy(() => import("../Pages/Admin/Admins/Users"));
-const AddWork = lazy(() => import("../Pages/SocialWork/AddWork"));
-const ReferHistory = lazy(() => import("../Pages/Admin/RefHistory/RefHistory"));
-const Check = lazy(() => import("../Pages/Admin/Check/Check"));
-const Users = lazy(() => import("../Pages/Admin/Users/Users"));
-const NonActiveUsers = lazy(() => import("../Pages/Admin/Users/NonActiveUsers"));
-const BannedUsers = lazy(() => import("../Pages/Admin/Users/BannedUsers"));
-const User = lazy(() => import("../Pages/Admin/Users/User"));
-const Topups = lazy(() => import("../Pages/Admin/TopUp/TopUp"));
-const Settings = lazy(() => import("../Pages/Settings/Settings"));
-const UserSettings = lazy(() => import("../Pages/Settings/UserSettings"));
-const Notifications = lazy(() => import("../Pages/Notifications/Notifications"));
-const Withdrawals = lazy(() => import("../Pages/Admin/Withdraw/Withdraw"));
-const ExternalWithdrawals = lazy(() => import("../Pages/Admin/ExternalWithdrawals/ExternalWithdrawals"));
-const AdminWorks = lazy(() => import("../Pages/Admin/ManageWorks/AdminWorks"));
-const AdminSocialWorks = lazy(() => import("../Pages/Admin/ManageSocialWorks/AdminSocialWorks"));
-const AdminTraining = lazy(() => import("../Pages/Admin/Training/AdminTraining"));
-const PaymentGateway = lazy(() => import("../Pages/Admin/PaymentGateway/PaymentGateway"));
-const Message = lazy(() => import("../Pages/Message/Message"));
-const LoginDevices = lazy(() => import("../Pages/Account/LoginDevices"));
-const AdminEarnings = lazy(() => import("../Pages/Admin/Earnings/AdminEarnings"));
-const AdminBroadcast = lazy(() => import("../Pages/Admin/Broadcast/AdminBroadcast"));
-const AdminReviews = lazy(() => import("../Pages/Admin/Reviews/AdminReviews"));
-const AdminPaymentProofs = lazy(() => import("../Pages/Admin/PaymentProofs/AdminPaymentProofs"));
+const lazyRetry = (componentImport) =>
+  lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      const hasReloaded = sessionStorage.getItem("chunk_reload_attempted");
+      if (!hasReloaded) {
+        sessionStorage.setItem("chunk_reload_attempted", "true");
+        window.location.reload();
+        return { default: () => null };
+      }
+      throw error;
+    }
+  });
+
+const AdminDashboard = lazyRetry(() => import("../Pages/Admin/Dashboard/AdminDashboard"));
+const Admins = lazyRetry(() => import("../Pages/Admin/Admins/Users"));
+const AddWork = lazyRetry(() => import("../Pages/SocialWork/AddWork"));
+const ReferHistory = lazyRetry(() => import("../Pages/Admin/RefHistory/RefHistory"));
+const Check = lazyRetry(() => import("../Pages/Admin/Check/Check"));
+const Users = lazyRetry(() => import("../Pages/Admin/Users/Users"));
+const NonActiveUsers = lazyRetry(() => import("../Pages/Admin/Users/NonActiveUsers"));
+const BannedUsers = lazyRetry(() => import("../Pages/Admin/Users/BannedUsers"));
+const User = lazyRetry(() => import("../Pages/Admin/Users/User"));
+const Topups = lazyRetry(() => import("../Pages/Admin/TopUp/TopUp"));
+const Settings = lazyRetry(() => import("../Pages/Settings/Settings"));
+const UserSettings = lazyRetry(() => import("../Pages/Settings/UserSettings"));
+const Notifications = lazyRetry(() => import("../Pages/Notifications/Notifications"));
+const Withdrawals = lazyRetry(() => import("../Pages/Admin/Withdraw/Withdraw"));
+const ExternalWithdrawals = lazyRetry(() => import("../Pages/Admin/ExternalWithdrawals/ExternalWithdrawals"));
+const AdminWorks = lazyRetry(() => import("../Pages/Admin/ManageWorks/AdminWorks"));
+const AdminSocialWorks = lazyRetry(() => import("../Pages/Admin/ManageSocialWorks/AdminSocialWorks"));
+const AdminTraining = lazyRetry(() => import("../Pages/Admin/Training/AdminTraining"));
+const PaymentGateway = lazyRetry(() => import("../Pages/Admin/PaymentGateway/PaymentGateway"));
+const Message = lazyRetry(() => import("../Pages/Message/Message"));
+const LoginDevices = lazyRetry(() => import("../Pages/Account/LoginDevices"));
+const AdminEarnings = lazyRetry(() => import("../Pages/Admin/Earnings/AdminEarnings"));
+const AdminBroadcast = lazyRetry(() => import("../Pages/Admin/Broadcast/AdminBroadcast"));
+const AdminReviews = lazyRetry(() => import("../Pages/Admin/Reviews/AdminReviews"));
+const AdminPaymentProofs = lazyRetry(() => import("../Pages/Admin/PaymentProofs/AdminPaymentProofs"));
 
 const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspense>;
 
