@@ -88,6 +88,7 @@ async function _fetchStats() {
         socialFacet,
         recentWithdrawals,
         recentTopups,
+        recentUsers,
     ] = await Promise.all([
 
         // 1. User stats — one $facet, six branches
@@ -152,11 +153,36 @@ async function _fetchStats() {
             }
         }]),
 
-        // 3. Topup stats — counts + total amount, ONE pipeline
+        // 3. Topup stats — counts + total amount + window sums + daily chart, ONE pipeline
         Topup.aggregate([{
             $facet: {
                 statusCounts: [{ $group: { _id: "$status", n: { $sum: 1 } } }],
-                totalAmount: [{ $match: { status: "completed" } }, { $group: { _id: null, v: { $sum: "$amount" } } }]
+                totalAmount: [{ $match: { status: "completed" } }, { $group: { _id: null, v: { $sum: "$amount" } } }],
+                windowAmounts: [
+                    { $match: { status: "completed", createdAt: { $gte: startOfThisMonth } } },
+                    {
+                        $group: {
+                            _id: null,
+                            today: { $sum: { $cond: [{ $gte: ["$createdAt", startOfToday] }, "$amount", 0] } },
+                            week: { $sum: { $cond: [{ $gte: ["$createdAt", startOfThisWeek] }, "$amount", 0] } },
+                            month: { $sum: "$amount" },
+                        }
+                    }
+                ],
+                dailyChart: [
+                    { $match: { status: "completed", createdAt: { $gte: chart15DaysAgo } } },
+                    {
+                        $group: {
+                            _id: {
+                                y: { $year: "$createdAt" },
+                                m: { $month: "$createdAt" },
+                                d: { $dayOfMonth: "$createdAt" }
+                            },
+                            amount: { $sum: "$amount" }
+                        }
+                    },
+                    { $sort: { "_id.y": 1, "_id.m": 1, "_id.d": 1 } }
+                ]
             }
         }]),
 
@@ -181,6 +207,13 @@ async function _fetchStats() {
             .sort({ createdAt: -1 })
             .limit(5)
             .populate("user", "name email avatar username")
+            .lean(),
+
+        // 8. Recent onboarded (newly signed-up) users
+        User.find({ role: "user" })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select("name email avatar username createdAt status")
             .lean(),
     ]);
 
@@ -222,6 +255,24 @@ async function _fetchStats() {
 
     const [tFacet] = topupFacet;
     const tStatusMap = Object.fromEntries((tFacet.statusCounts || []).map(s => [s._id, s.n]));
+    const tWin = tFacet.windowAmounts[0] || {};
+
+    // Daily topup (inflow) map, same dense 15-day shaping as withdrawals
+    const dailyTopupMap = new Map(
+        (tFacet.dailyChart || []).map(d => [
+            `${d._id.y}-${String(d._id.m).padStart(2, "0")}-${String(d._id.d).padStart(2, "0")}`,
+            d.amount
+        ])
+    );
+    // Combined series: { date, in: topup, out: withdraw } — drives the inflow/outflow chart
+    const dailyFlow = dailyEarnings.map(({ date, amount }) => ({
+        date,
+        in: dailyTopupMap.get(date) || 0,
+        out: amount,
+    }));
+
+    const totalTopupAmount = tFacet.totalAmount[0]?.v || 0;
+    const netBalance = totalTopupAmount - totalWithdrawAmount;
 
     return {
         users,
@@ -240,18 +291,28 @@ async function _fetchStats() {
         topups: {
             pending: tStatusMap.pending || 0,
             completed: tStatusMap.completed || 0,
-            totalAmount: tFacet.totalAmount[0]?.v || 0,
+            totalAmount: totalTopupAmount,
+            todayAmount: tWin.today || 0,
+            weekAmount: tWin.week || 0,
+            monthAmount: tWin.month || 0,
+        },
+        finance: {
+            totalInflow: totalTopupAmount,
+            totalOutflow: totalWithdrawAmount,
+            netBalance,
         },
         socialWorks: {
             active: socialFacet.active,
             pendingSubmissions: socialFacet.pendingSubmissions,
         },
         charts: {
-            dailyEarnings,  // [{date, amount}] — last 15 days, no gaps
+            dailyEarnings,  // [{date, amount}] — last 15 days, no gaps (withdrawals)
+            dailyFlow,      // [{date, in, out}] — inflow vs outflow for the same window
         },
         recent: {
             withdrawals: recentWithdrawals,
             topups: recentTopups,
+            onboarded: recentUsers,
         },
     };
 }
