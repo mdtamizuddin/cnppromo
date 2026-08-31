@@ -146,9 +146,9 @@ jobs:
               npm install -g pnpm@9 || true
             fi
 
-            # Install production dependencies cleanly with pnpm
+            # Install production dependencies cleanly with pnpm (hoisted flat structure for PM2)
             echo "📦 Installing production dependencies with pnpm..."
-            pnpm install --prod --no-frozen-lockfile --shamefully-hoist
+            pnpm install --prod --no-frozen-lockfile --config.node-linker=hoisted
 
             # Reload or start PM2 application
             echo "🚀 Reloading PM2 process..."
