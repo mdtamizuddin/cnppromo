@@ -85,7 +85,7 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
               className="text-xl font-black tracking-wider text-white flex items-center gap-1.5"
             >
               <span className="text-white">CNP</span>
-              <span className="text-[#5a32fa] bg-gradient-to-r from-purple-400 to-indigo-300 bg-clip-text text-transparent">
+              <span className="text-primary bg-gradient-to-r from-teal-400 to-cyan-300 bg-clip-text text-transparent">
                 PROMO
               </span>
             </Link>
@@ -109,7 +109,7 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
                   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
                 }
                 alt={user?.name}
-                className="w-12 h-12 rounded-full object-cover border-2 border-[#5a32fa] shadow-md"
+                className="w-12 h-12 rounded-full object-cover border-2 border-primary shadow-md"
               />
               <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-[#0e0f24] rounded-full"></span>
             </div>
@@ -161,7 +161,7 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
                 onClick={onClose}
                 className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
                   isActive
-                    ? "bg-[#5a32fa] text-white shadow-lg shadow-indigo-600/30"
+                    ? "bg-primary text-white shadow-lg shadow-teal-600/30"
                     : "text-gray-300 hover:text-white hover:bg-white/5"
                 }`}
               >

@@ -188,9 +188,9 @@ const Refer = () => {
   const renderOverviewTab = () => (
     <div className="space-y-5 animate-fadeIn">
       {/* 🌟 Top Hero Card (Matching Screen 1) */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#2c0852] via-[#521798] to-[#99156e] text-white p-6 sm:p-7 shadow-xl shadow-purple-900/20 border border-purple-400/20">
-        <div className="absolute -top-10 -right-10 w-44 h-44 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-indigo-500/30 rounded-full blur-2xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#042f2e] via-[#0f766e] to-[#0284c7] text-white p-6 sm:p-7 shadow-xl shadow-teal-900/20 border border-teal-400/20">
+        <div className="absolute -top-10 -right-10 w-44 h-44 bg-teal-300/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-sky-400/20 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex items-center justify-between">
           <div className="space-y-2 max-w-[62%]">
@@ -198,7 +198,7 @@ const Refer = () => {
               Refer Friends <br />
               <span className="text-amber-300">Earn More</span>
             </h2>
-            <p className="text-xs text-purple-200/90 leading-relaxed">
+            <p className="text-xs text-teal-100/90 leading-relaxed">
               Invite your friends and earn exciting rewards!
             </p>
           </div>
@@ -226,7 +226,7 @@ const Refer = () => {
             <button
               type="button"
               onClick={() => setShowBalance(!showBalance)}
-              className="hover:text-purple-600 transition-colors"
+              className="hover:text-primary transition-colors"
             >
               {showBalance ? (
                 <EyeIcon className="w-3.5 h-3.5 text-gray-400" />
@@ -235,7 +235,7 @@ const Refer = () => {
               )}
             </button>
           </div>
-          <p className="text-lg sm:text-xl font-black text-[#6035f8]">
+          <p className="text-lg sm:text-xl font-black text-primary">
             ৳{showBalance ? formatCurrency(calculatedTotalEarnings) : "••••••"}
           </p>
         </div>
@@ -243,11 +243,11 @@ const Refer = () => {
         {/* Right: Total Referrals */}
         <div className="pl-4 space-y-1">
           <div className="flex items-center gap-1.5 text-xs text-gray-500 font-semibold">
-            <UserGroupIcon className="w-3.5 h-3.5 text-purple-600" />
+            <UserGroupIcon className="w-3.5 h-3.5 text-primary" />
             <span>Total Referrals</span>
           </div>
           <p className="text-lg sm:text-xl font-black text-gray-900 flex items-center gap-1.5">
-            <UserIcon className="w-4 h-4 text-purple-600" />
+            <UserIcon className="w-4 h-4 text-primary" />
             <span>{totalReferrals}</span>
           </p>
         </div>
@@ -263,10 +263,10 @@ const Refer = () => {
           {/* Step 1: Share */}
           <div className="flex flex-col items-center text-center space-y-2 relative">
             <div className="relative">
-              <div className="w-12 h-12 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20">
+              <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-md shadow-teal-500/20">
                 <ShareIcon className="w-5 h-5 stroke-[2]" />
               </div>
-              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white border-2 border-purple-600 text-purple-700 text-[10px] font-black flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white border-2 border-primary text-primary text-[10px] font-black flex items-center justify-center">
                 1
               </span>
             </div>
@@ -322,14 +322,14 @@ const Refer = () => {
           Your Referral Link
         </h3>
 
-        <div className="flex items-center justify-between p-3 bg-purple-50/50 border border-purple-100 rounded-2xl">
+        <div className="flex items-center justify-between p-3 bg-primary-light/50 border border-teal-100 rounded-2xl">
           <span className="text-xs font-mono text-gray-700 truncate pr-2">
             {refLink || "Loading referral link..."}
           </span>
           <button
             type="button"
             onClick={handleCopy}
-            className="p-1.5 rounded-xl hover:bg-white text-purple-600 transition-colors shrink-0"
+            className="p-1.5 rounded-xl hover:bg-white text-primary transition-colors shrink-0"
             title="কপি করুন"
           >
             {copied ? (
@@ -343,7 +343,7 @@ const Refer = () => {
         <button
           type="button"
           onClick={handleNativeShare}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#6035f8] via-[#b81878] to-[#f97316] hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-pink-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-2xl bg-brand-gradient hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-teal-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
         >
           <ShareIcon className="w-4 h-4 stroke-[2.5]" />
           <span>Share Now</span>
@@ -360,7 +360,7 @@ const Refer = () => {
           {/* Row 1 */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-full bg-primary-light text-primary flex items-center justify-center shrink-0">
                 <UserIcon className="w-4 h-4" />
               </div>
               <span className="font-semibold text-gray-800">For Each Registered User</span>
@@ -401,13 +401,13 @@ const Refer = () => {
   const renderBreakdownTab = () => (
     <div className="space-y-5 animate-fadeIn">
       {/* 🌟 Top Balance Hero Card (Matching Screen 2) */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#2c0852] via-[#521798] to-[#99156e] text-white p-6 sm:p-7 shadow-xl shadow-purple-900/20 border border-purple-400/20">
-        <div className="absolute -top-10 -right-10 w-44 h-44 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-indigo-500/30 rounded-full blur-2xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#042f2e] via-[#0f766e] to-[#0284c7] text-white p-6 sm:p-7 shadow-xl shadow-teal-900/20 border border-teal-400/20">
+        <div className="absolute -top-10 -right-10 w-44 h-44 bg-teal-300/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-sky-400/20 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex items-start justify-between">
           <div className="space-y-1.5 max-w-[65%]">
-            <div className="flex items-center gap-2 text-purple-200 text-xs font-semibold">
+            <div className="flex items-center gap-2 text-teal-100 text-xs font-semibold">
               <span>Total Earnings</span>
               <button
                 type="button"
@@ -415,9 +415,9 @@ const Refer = () => {
                 className="hover:text-white transition-colors"
               >
                 {showBalance ? (
-                  <EyeIcon className="w-4 h-4 text-purple-200" />
+                  <EyeIcon className="w-4 h-4 text-teal-200" />
                 ) : (
-                  <EyeSlashIcon className="w-4 h-4 text-purple-300" />
+                  <EyeSlashIcon className="w-4 h-4 text-teal-300" />
                 )}
               </button>
             </div>
@@ -427,12 +427,12 @@ const Refer = () => {
               <span>{showBalance ? formatCurrency(calculatedTotalEarnings) : "••••••"}</span>
             </div>
 
-            <div className="text-[11px] font-medium text-purple-200/90 pt-0.5">
+            <div className="text-[11px] font-medium text-teal-100/90 pt-0.5">
               Last updated: Today, {dayjs().format("hh:mm A")}
             </div>
           </div>
 
-          {/* 3D Purple Wallet Visual */}
+          {/* 3D Wallet Visual */}
           <div className="relative shrink-0 -mt-2 -mr-1">
             <img
               src="/wallet_3d_illustration.png"
@@ -450,7 +450,7 @@ const Refer = () => {
       <div className="grid grid-cols-3 gap-3">
         {/* Card 1: Total Referrals */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm text-center space-y-1">
-          <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
+          <div className="w-8 h-8 rounded-full bg-primary-light text-primary flex items-center justify-center mx-auto">
             <UserGroupIcon className="w-4 h-4" />
           </div>
           <p className="text-[10px] text-gray-500 font-semibold">Total Referrals</p>
@@ -609,14 +609,14 @@ const Refer = () => {
           Your Referral Link
         </h3>
 
-        <div className="flex items-center justify-between p-3 bg-purple-50/50 border border-purple-100 rounded-2xl">
+        <div className="flex items-center justify-between p-3 bg-primary-light/50 border border-teal-100 rounded-2xl">
           <span className="text-xs font-mono text-gray-700 truncate pr-2">
             {refLink || "Loading referral link..."}
           </span>
           <button
             type="button"
             onClick={handleCopy}
-            className="p-1.5 rounded-xl hover:bg-white text-purple-600 transition-colors shrink-0"
+            className="p-1.5 rounded-xl hover:bg-white text-primary transition-colors shrink-0"
             title="কপি করুন"
           >
             {copied ? (
@@ -630,7 +630,7 @@ const Refer = () => {
         <button
           type="button"
           onClick={handleNativeShare}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#6035f8] via-[#b81878] to-[#f97316] hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-pink-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-2xl bg-brand-gradient hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-teal-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
         >
           <ShareIcon className="w-4 h-4 stroke-[2.5]" />
           <span>Share Now</span>
@@ -765,7 +765,7 @@ const Refer = () => {
             onClick={() => setActiveTab("overview")}
             className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
               activeTab === "overview"
-                ? "bg-[#6035f8] text-white shadow-md shadow-purple-500/20"
+                ? "bg-primary text-white shadow-md shadow-teal-500/20"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -775,7 +775,7 @@ const Refer = () => {
             onClick={() => setActiveTab("breakdown")}
             className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
               activeTab === "breakdown"
-                ? "bg-[#6035f8] text-white shadow-md shadow-purple-500/20"
+                ? "bg-primary text-white shadow-md shadow-teal-500/20"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -805,7 +805,7 @@ const Refer = () => {
           <Card className="p-5 sm:p-7 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-sm sm:text-base font-black text-gray-900 flex items-center gap-2">
-                <UserGroupIcon className="w-5 h-5 text-purple-600" />
+                <UserGroupIcon className="w-5 h-5 text-primary" />
                 <span>আপনার রেফারেল মেম্বার তালিকা</span>
               </h3>
               <span className="text-[11px] text-gray-400">সর্বশেষ জয়েনিং সমূহ</span>
@@ -824,7 +824,7 @@ const Refer = () => {
         >
           <div className="flex items-center justify-between border-b border-gray-100 pb-3">
             <div className="flex items-center gap-2 text-gray-900 font-black text-base">
-              <QuestionMarkCircleIcon className="w-5 h-5 text-purple-600" />
+              <QuestionMarkCircleIcon className="w-5 h-5 text-primary" />
               <span>রেফারেল প্রোগ্রামের নিয়মাবলি</span>
             </div>
             <button
@@ -837,18 +837,18 @@ const Refer = () => {
           </div>
 
           <div className="space-y-3 text-xs text-gray-600 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
-            <div className="p-3 bg-purple-50/60 rounded-2xl border border-purple-100">
-              <p className="font-bold text-purple-900 mb-1">১. কীভাবে রেফারেল বোনাস পাব?</p>
+            <div className="p-3 bg-primary-light/60 rounded-2xl border border-teal-100">
+              <p className="font-bold text-teal-900 mb-1">১. কীভাবে রেফারেল বোনাস পাব?</p>
               <p>আপনার ইউনিক রেফারেল লিংক বন্ধুদের শেয়ার করুন। তারা একাউন্ট খুলে কাজ শুরু করলেই আপনি ইনস্ট্যান্ট কমিশন পাবেন।</p>
             </div>
 
-            <div className="p-3 bg-purple-50/60 rounded-2xl border border-purple-100">
-              <p className="font-bold text-purple-900 mb-1">২. কমিশন কি লাইফটাইম পাওয়া যাবে?</p>
+            <div className="p-3 bg-primary-light/60 rounded-2xl border border-teal-100">
+              <p className="font-bold text-teal-900 mb-1">২. কমিশন কি লাইফটাইম পাওয়া যাবে?</p>
               <p>হ্যাঁ! আপনার রেফারেল মেম্বাররা ভবিষ্যতে যত কাজ সম্পন্ন করবে বা উইথড্র করবে, প্রতিবার আপনি কমিশন পেতে থাকবেন।</p>
             </div>
 
-            <div className="p-3 bg-purple-50/60 rounded-2xl border border-purple-100">
-              <p className="font-bold text-purple-900 mb-1">৩. ৬-জেনারেশন কমিশন কীভাবে কাজ করে?</p>
+            <div className="p-3 bg-primary-light/60 rounded-2xl border border-teal-100">
+              <p className="font-bold text-teal-900 mb-1">৩. ৬-জেনারেশন কমিশন কীভাবে কাজ করে?</p>
               <p>আপনার সরাসরি রেফারেল ১ম লেভেল। তাদের রেফারেল ২য় লেভেল—এভাবে ৬ষ্ঠ লেভেল পর্যন্ত আপনার টিমের প্রতিটি জয়েনিং থেকে আপনি কমিশন পাবেন।</p>
             </div>
           </div>
@@ -856,7 +856,7 @@ const Refer = () => {
           <button
             type="button"
             onClick={() => setIsHelpOpen(false)}
-            className="w-full py-3 rounded-2xl bg-[#6035f8] text-white font-bold text-xs hover:bg-[#5025e0] transition-all"
+            className="w-full py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white font-bold text-xs shadow-md shadow-teal-500/20 transition-all"
           >
             বুঝেছি
           </button>

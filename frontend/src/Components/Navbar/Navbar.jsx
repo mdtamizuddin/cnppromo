@@ -108,8 +108,8 @@ const Topbar = ({
           {/* Logo */}
           <Link className="flex items-center gap-3" to="/">
             <div className="relative w-11 h-11 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-[6px] border-[#5a32fa] border-r-transparent rotate-45"></div>
-              <div className="w-3.5 h-3.5 bg-[#5a32fa] rounded-full mr-1 mt-1"></div>
+              <div className="absolute inset-0 rounded-full border-[6px] border-primary border-r-transparent rotate-45"></div>
+              <div className="w-3.5 h-3.5 bg-primary rounded-full mr-1 mt-1"></div>
             </div>
             <div className="hidden sm:block">
               <h2 className="text-[#0b0c2a] text-xl font-bold tracking-wide">
@@ -128,8 +128,8 @@ const Topbar = ({
                 key={item.label}
                 to={item.to}
                 className={`transition-colors text-[15px] font-semibold tracking-wide ${pathname === item.to
-                  ? "text-[#5a32fa] font-bold"
-                  : "text-[#0b0c2a] hover:text-[#5a32fa]"
+                  ? "text-primary font-bold"
+                  : "text-[#0b0c2a] hover:text-primary"
                   }`}
               >
                 {item.label}
@@ -222,7 +222,7 @@ const Topbar = ({
               to={item.to}
               onClick={() => setMobileNavOpen(false)}
               className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${pathname === item.to
-                ? "bg-indigo-50 text-[#5a32fa]"
+                ? "bg-primary-light text-primary"
                 : "text-[#0b0c2a] hover:bg-gray-50"
                 }`}
             >

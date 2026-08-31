@@ -92,7 +92,7 @@ const RequierActive = () => {
                 <h1 className="text-2xl sm:text-3xl font-black text-[#0b0c2a] tracking-tight">
                   রেজিস্ট্রেশন সফল!
                 </h1>
-                <h2 className="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-[#5a32fa] via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                <h2 className="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-teal-600 via-teal-500 to-sky-500 bg-clip-text text-transparent">
                   অ্যাডমিন অ্যাক্টিভ অপেক্ষা...
                 </h2>
               </div>
@@ -110,9 +110,9 @@ const RequierActive = () => {
               </div>
 
               {/* Notification & Service Strips */}
-              <div className="bg-[#fbfcff] border border-indigo-50/80 rounded-2xl p-3 sm:p-4 divide-y divide-gray-100 text-left space-y-3">
+              <div className="bg-[#fbfcff] border border-teal-50/80 rounded-2xl p-3 sm:p-4 divide-y divide-gray-100 text-left space-y-3">
                 <div className="flex items-start gap-3 pt-1">
-                  <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#5a32fa] flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0">
                     <EnvelopeIcon className="w-4 h-4" />
                   </div>
                   <div>
@@ -126,7 +126,7 @@ const RequierActive = () => {
                 </div>
 
                 <div className="flex items-start gap-3 pt-3">
-                  <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#5a32fa] flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0">
                     <BellIcon className="w-4 h-4" />
                   </div>
                   <div>
@@ -150,7 +150,7 @@ const RequierActive = () => {
 
               {/* Return to Home CTA Button */}
               <Link to="/" className="block pt-1">
-                <Button className="w-full bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs sm:text-sm font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2">
+                <Button className="w-full bg-primary hover:bg-primary-hover text-white normal-case text-xs sm:text-sm font-bold py-3.5 rounded-2xl shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2">
                   <HomeIcon className="w-4 h-4" />
                   <span>হোমে ফিরে যান</span>
                 </Button>

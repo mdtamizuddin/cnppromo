@@ -35,13 +35,13 @@ const UserBottomBar = ({ onOpenMenu }) => {
         to="/user/home"
         className={`flex flex-col items-center justify-center py-1 px-2 rounded-2xl flex-1 transition-all ${
           isHome
-            ? "text-[#5a32fa] font-black scale-105"
+            ? "text-primary font-black scale-105"
             : "text-gray-400 hover:text-gray-600"
         }`}
       >
         <div
           className={`p-1 rounded-xl transition-all ${
-            isHome ? "bg-purple-50" : ""
+            isHome ? "bg-primary-light" : ""
           }`}
         >
           <HomeIcon className="w-5 h-5 stroke-[2]" />
@@ -54,13 +54,13 @@ const UserBottomBar = ({ onOpenMenu }) => {
         to="/user/works"
         className={`flex flex-col items-center justify-center py-1 px-2 rounded-2xl flex-1 transition-all ${
           isWorks
-            ? "text-[#5a32fa] font-black scale-105"
+            ? "text-primary font-black scale-105"
             : "text-gray-400 hover:text-gray-600"
         }`}
       >
         <div
           className={`p-1 rounded-xl transition-all ${
-            isWorks ? "bg-purple-50" : ""
+            isWorks ? "bg-primary-light" : ""
           }`}
         >
           <ClipboardDocumentListIcon className="w-5 h-5 stroke-[2]" />
@@ -72,7 +72,7 @@ const UserBottomBar = ({ onOpenMenu }) => {
       <div className="flex-1 flex justify-center -mt-6">
         <Link
           to="/user/social-works"
-          className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#5a32fa] via-[#7c3aed] to-[#d9176c] text-white flex items-center justify-center shadow-lg shadow-purple-500/40 hover:scale-110 active:scale-95 transition-all border-[3px] border-white"
+          className="w-12 h-12 rounded-full bg-brand-gradient text-white flex items-center justify-center shadow-lg shadow-teal-500/40 hover:scale-110 active:scale-95 transition-all border-[3px] border-white"
           title="Watch & Earn"
         >
           <PlusIcon className="w-6 h-6 stroke-[2.8]" />

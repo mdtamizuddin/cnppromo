@@ -208,7 +208,7 @@ const PaymentProof = () => {
                   setCurrentPage(1);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${filterMethod === m
-                    ? "bg-[#5a32fa] text-white shadow-md shadow-indigo-500/20"
+                    ? "bg-primary text-white shadow-md shadow-teal-500/20"
                     : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200/80"
                   }`}
               >
@@ -223,7 +223,7 @@ const PaymentProof = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-[#5a32fa]"
+              className="px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-primary"
             >
               <option value="newest">সর্বশেষ আগে</option>
               <option value="highest">সর্বোচ্চ টাকা</option>
@@ -235,7 +235,7 @@ const PaymentProof = () => {
         {/* 📸 Payment Proofs Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {currentItems.map((item) => {
-            const methodColor = methodColors[item.method] || "#5a32fa";
+            const methodColor = methodColors[item.method] || "#0D9488";
             return (
               <Card
                 key={item._id || item.id}

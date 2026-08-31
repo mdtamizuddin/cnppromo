@@ -211,13 +211,14 @@ const Welcome = () => {
       bg: "bg-emerald-50",
     },
     {
-      id: "watch",
-      title: "Watch & Earn",
-      subtitle: "Watch videos",
+      id: "social-works",
+      title: "Social Work",
+      subtitle: "Video & tasks",
       to: "/user/social-works",
       icon: PlayCircleIcon,
-      color: "#ec4899",
-      bg: "bg-pink-50",
+      color: "#0D9488",
+      bg: "bg-teal-50",
+      badge: "HOT",
     },
     {
       id: "training",
@@ -416,7 +417,7 @@ const Welcome = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base font-bold text-[#0b0c2a] flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#5a32fa] to-[#7928ca] text-white grid place-items-center shadow-md shadow-indigo-500/20">
+                <span className="w-8 h-8 rounded-xl bg-brand-gradient text-white grid place-items-center shadow-md shadow-teal-500/20">
                   <ChartPieIcon className="w-4 h-4" />
                 </span>
                 <span>Earnings Trend</span>
@@ -433,8 +434,8 @@ const Welcome = () => {
               <AreaChart data={chart} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="uEarn" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#5a32fa" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#5a32fa" stopOpacity={0.02} />
+                    <stop offset="0%" stopColor="#0D9488" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#0D9488" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
@@ -452,7 +453,7 @@ const Welcome = () => {
                   labelFormatter={(d) => moment(d).format("MMM D, YYYY")}
                   contentStyle={{ borderRadius: 12, border: "1px solid #f1f5f9", fontSize: 12 }}
                 />
-                <Area type="monotone" dataKey="amount" stroke="#5a32fa" strokeWidth={2.5} fill="url(#uEarn)" dot={false} />
+                <Area type="monotone" dataKey="amount" stroke="#0D9488" strokeWidth={2.5} fill="url(#uEarn)" dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -462,7 +463,7 @@ const Welcome = () => {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-[#0b0c2a]">Quick Actions</h2>
-            <Link to="/user/works" className="text-xs font-semibold text-[#5a32fa] hover:underline">
+            <Link to="/user/works" className="text-xs font-semibold text-primary hover:underline">
               View All
             </Link>
           </div>
@@ -475,12 +476,12 @@ const Welcome = () => {
                   <Card
                     className={`p-5 bg-white rounded-2xl border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center relative group h-full justify-between ${
                       action.activeBorder
-                        ? "border-[#5a32fa] ring-2 ring-[#5a32fa]/10 shadow-purple-500/10"
+                        ? "border-primary ring-2 ring-teal-500/10 shadow-teal-500/10"
                         : "border-gray-100"
                     }`}
                   >
                     {action.badge && (
-                      <span className="absolute top-2.5 right-2.5 text-[9px] font-extrabold px-1.5 py-0.5 bg-[#5a32fa] text-white rounded-md shadow-sm">
+                      <span className="absolute top-2.5 right-2.5 text-[9px] font-extrabold px-1.5 py-0.5 bg-primary text-white rounded-md shadow-sm">
                         {action.badge}
                       </span>
                     )}
@@ -512,7 +513,7 @@ const Welcome = () => {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-[#5a32fa] text-[11px] font-bold tracking-wide mb-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-light text-primary text-[11px] font-bold tracking-wide mb-1">
                 <SparklesIcon className="w-3.5 h-3.5" />
                 সাজেস্টেড কাজসমূহ
               </div>
@@ -520,7 +521,7 @@ const Welcome = () => {
                 বেশি আয়ের সেরা কাজগুলো নির্বাচন করুন
               </h2>
             </div>
-            <Link to="/user/works" className="text-xs font-semibold text-[#5a32fa] hover:underline">
+            <Link to="/user/works" className="text-xs font-semibold text-primary hover:underline">
               সকল কাজ দেখুন →
             </Link>
           </div>
@@ -542,7 +543,7 @@ const Welcome = () => {
                       {item.icon}
                     </div>
 
-                    <h3 className="font-bold text-sm text-[#0b0c2a] group-hover:text-[#5a32fa] transition-colors leading-snug">
+                    <h3 className="font-bold text-sm text-[#0b0c2a] group-hover:text-primary transition-colors leading-snug">
                       {item.title}
                     </h3>
                     <p className="text-xs text-gray-500 mt-1 line-clamp-2">
@@ -550,7 +551,7 @@ const Welcome = () => {
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-gray-100/60 flex items-center justify-between text-xs font-bold text-[#5a32fa]">
+                  <div className="mt-4 pt-3 border-t border-gray-100/60 flex items-center justify-between text-xs font-bold text-primary">
                     <span>কাজ শুরু করুন</span>
                     <ArrowRightIcon className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                   </div>
@@ -656,7 +657,7 @@ const Welcome = () => {
             <Link to="/user/social-works" className="mt-4">
               <Button
                 variant="outlined"
-                className="w-full rounded-xl normal-case text-xs font-bold border-[#5a32fa]/30 text-[#5a32fa] hover:bg-[#5a32fa]/5 py-3"
+                className="w-full rounded-xl normal-case text-xs font-bold border-primary/30 text-primary hover:bg-primary-light py-3"
               >
                 Go to My Tasks
               </Button>
@@ -667,7 +668,7 @@ const Welcome = () => {
           <Card className="lg:col-span-7 p-6 bg-white rounded-3xl border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-[#0b0c2a]">Recent Activity</h3>
-              <Link to="/user/account/withdraw" className="text-xs font-semibold text-[#5a32fa] hover:underline">
+              <Link to="/user/account/withdraw" className="text-xs font-semibold text-primary hover:underline">
                 View All
               </Link>
             </div>
@@ -713,7 +714,7 @@ const Welcome = () => {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-bold text-[#0b0c2a]">Payment Methods</h3>
-                <Link to="/user/account/withdraw" className="text-xs font-semibold text-[#5a32fa] hover:underline">
+                <Link to="/user/account/withdraw" className="text-xs font-semibold text-primary hover:underline">
                   View All
                 </Link>
               </div>
@@ -729,7 +730,7 @@ const Welcome = () => {
                 </div>
 
                 {/* Add New */}
-                <Link to="/user/account/withdraw" className="p-3 rounded-2xl border-2 border-dashed border-gray-200 hover:border-[#5a32fa] flex flex-col items-center justify-center text-center transition-colors">
+                <Link to="/user/account/withdraw" className="p-3 rounded-2xl border-2 border-dashed border-gray-200 hover:border-primary flex flex-col items-center justify-center text-center transition-colors">
                   <PlusIcon className="w-5 h-5 text-gray-400 mb-1" />
                   <p className="text-[11px] font-bold text-gray-600">+ Add New</p>
                 </Link>
@@ -738,7 +739,7 @@ const Welcome = () => {
           </Card>
 
           {/* Right Column: Daily Bonus Banner */}
-          <Card className="lg:col-span-6 p-6 rounded-3xl bg-gradient-to-r from-[#0b0c2a] via-[#1a1b41] to-[#0b0c2a] text-white border border-indigo-900/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+          <Card className="lg:col-span-6 p-6 rounded-3xl bg-gradient-to-r from-[#0b0c2a] via-[#1a1b41] to-[#0b0c2a] text-white border border-teal-900/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
             <div className="space-y-2 text-center sm:text-left z-10">
               <h3 className="text-lg font-black text-white">Daily Bonus</h3>
               <p className="text-xs text-gray-300">Login daily & claim your bonus</p>
@@ -765,7 +766,7 @@ const Welcome = () => {
           
           <Link to="/how-it-works">
             <Card className="p-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-purple-50 text-[#5a32fa] flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0">
                 <BookOpenIcon className="w-5 h-5" />
               </div>
               <div className="truncate">

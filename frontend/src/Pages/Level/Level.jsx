@@ -189,14 +189,14 @@ const Level = () => {
               </div>
 
               <div className="space-y-1 text-center sm:text-left">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5a32fa] text-white text-xs font-black shadow-md shadow-indigo-500/20">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary text-white text-xs font-black shadow-md shadow-teal-500/20">
                   <SparklesIcon className="w-3.5 h-3.5" />
                   <span>বর্তমান লেভেল: Level {currentLevel}</span>
                 </div>
 
                 <h2 className="text-lg sm:text-xl font-bold text-[#0b0c2a] flex items-center gap-1.5 pt-1">
                   <span>{user?.name || "Member"}</span>
-                  <CheckBadgeIcon className="w-4 h-4 text-[#5a32fa]" />
+                  <CheckBadgeIcon className="w-4 h-4 text-primary" />
                 </h2>
 
                 <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
@@ -206,7 +206,7 @@ const Level = () => {
                     ইউজার আইডি: <strong className="text-gray-800 font-mono">{user?.username}</strong>
                     <button
                       onClick={handleCopyUsername}
-                      className="text-gray-400 hover:text-[#5a32fa] ml-0.5"
+                      className="text-gray-400 hover:text-primary ml-0.5"
                       title="কপি করুন"
                     >
                       {copied ? (
@@ -222,9 +222,9 @@ const Level = () => {
 
             {/* Right: Quick Stats */}
             <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
-              <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-100 text-center min-w-[120px]">
+              <div className="p-4 rounded-2xl bg-primary-light border border-teal-100 text-center min-w-[120px]">
                 <p className="text-[11px] text-gray-500 font-medium">১ম লেভেল রেফারেল</p>
-                <p className="text-xl font-black text-[#5a32fa] mt-0.5">{directRefers} জন</p>
+                <p className="text-xl font-black text-primary mt-0.5">{directRefers} জন</p>
               </div>
 
               <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-center min-w-[120px]">
@@ -241,7 +241,7 @@ const Level = () => {
           {currentLevel < 3 && (
             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-gray-700">
-                <span className="flex items-center gap-1.5 text-[#5a32fa]">
+                <span className="flex items-center gap-1.5 text-primary">
                   <TrophyIcon className="w-4 h-4" />
                   <span>লেভেল {currentLevel + 1} আনলক করার অগ্রগতি:</span>
                 </span>
@@ -287,12 +287,12 @@ const Level = () => {
                   key={tier.level}
                   className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between space-y-6 relative overflow-hidden ${
                     isUserCurrentTier
-                      ? "border-[#5a32fa] ring-2 ring-[#5a32fa]/30 shadow-xl bg-white scale-[1.02]"
+                      ? "border-primary ring-2 ring-teal-500/30 shadow-xl bg-white scale-[1.02]"
                       : "border-gray-100 bg-white shadow-sm hover:shadow-md"
                   }`}
                 >
                   {isUserCurrentTier && (
-                    <div className="absolute top-0 right-0 bg-[#5a32fa] text-white text-[10px] font-black uppercase px-4 py-1 rounded-bl-2xl shadow-sm">
+                    <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-black uppercase px-4 py-1 rounded-bl-2xl shadow-sm">
                       ✓ বর্তমান লেভেল
                     </div>
                   )}
@@ -314,9 +314,9 @@ const Level = () => {
                     </div>
 
                     {/* Commission Rate Callout */}
-                    <div className="p-3 rounded-2xl bg-purple-50/60 border border-purple-100 text-center">
+                    <div className="p-3 rounded-2xl bg-primary-light border border-teal-100 text-center">
                       <span className="text-[11px] text-gray-500">প্রতি রেফারে কমিশন:</span>
-                      <p className="text-2xl font-black text-[#5a32fa]">{tier.commission}</p>
+                      <p className="text-2xl font-black text-primary">{tier.commission}</p>
                       <span className="text-[10px] font-bold text-emerald-600">{tier.extraBonus}</span>
                     </div>
 
@@ -339,7 +339,7 @@ const Level = () => {
                       </div>
                     ) : tier.level > currentLevel ? (
                       <Link to="/user/refer">
-                        <Button className="w-full bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold py-2.5 rounded-xl shadow-md shadow-indigo-500/20 flex items-center justify-center gap-1.5">
+                        <Button className="w-full bg-primary hover:bg-primary-hover text-white normal-case text-xs font-bold py-2.5 rounded-xl shadow-md shadow-teal-500/20 flex items-center justify-center gap-1.5">
                           <span>রেফার করে আনলক করুন</span>
                           <ArrowRightIcon className="w-3.5 h-3.5" />
                         </Button>
@@ -407,9 +407,9 @@ const Level = () => {
         </section>
 
         {/* 💡 How to Level Up Guide Strip */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-purple-50 via-indigo-50/70 to-blue-50/60 border border-purple-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-teal-50 via-cyan-50/70 to-sky-50/60 border border-teal-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#5a32fa] text-white flex items-center justify-center text-2xl shadow-lg shadow-purple-500/25 shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-primary text-white flex items-center justify-center text-2xl shadow-lg shadow-teal-500/25 shrink-0">
               💡
             </div>
             <div className="space-y-1">
@@ -423,7 +423,7 @@ const Level = () => {
           </div>
 
           <Link to="/user/refer" className="w-full md:w-auto shrink-0">
-            <Button className="w-full md:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-6 py-3 rounded-xl shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2">
+            <Button className="w-full md:w-auto bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md shadow-teal-500/20 flex items-center justify-center gap-2">
               <span>রেফারেল শুরু করুন</span>
               <ArrowRightIcon className="w-4 h-4" />
             </Button>

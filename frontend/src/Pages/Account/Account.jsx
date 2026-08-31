@@ -20,7 +20,7 @@ const Account = () => {
               to="/user/account/withdraw"
               className={`flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 isWithdraw
-                  ? "bg-[#5a32fa] text-white shadow-md shadow-indigo-500/25"
+                  ? "bg-primary text-white shadow-md shadow-teal-500/25"
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
@@ -32,7 +32,7 @@ const Account = () => {
               to="/user/account"
               className={`flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 !isWithdraw
-                  ? "bg-[#5a32fa] text-white shadow-md shadow-indigo-500/25"
+                  ? "bg-primary text-white shadow-md shadow-teal-500/25"
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
