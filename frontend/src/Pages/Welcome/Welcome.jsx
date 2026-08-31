@@ -301,8 +301,26 @@ const Welcome = () => {
                     </button>
                   </div>
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mt-1">
-                    {showBalance ? `৳ ${(user?.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "৳ ••••••••"}
+                    {showBalance
+                      ? `৳ ${(((user?.balance || 0) + (data?.bonus?.effective || 0))).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+                      : "৳ ••••••••"}
                   </div>
+                  {showBalance && data?.bonus?.effective > 0 && (
+                    <div className="mt-2">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-indigo-100/90">
+                        <span className="font-semibold text-amber-300">Main ৳{(user?.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                        <span className="text-gray-400">+</span>
+                        <span className="font-semibold text-amber-300">Bonus ৳{data.bonus.effective.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                        {(data.bonus.startDate || data.bonus.endDate) && (
+                          <span className="text-gray-400">
+                            · {data.bonus.startDate && `From ${new Date(data.bonus.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+                            {data.bonus.startDate && data.bonus.endDate && " to "}
+                            {data.bonus.endDate && `${new Date(data.bonus.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <p className="text-gray-400 text-[11px] mt-1">
                     Minimum Withdraw: ৳300.00
                   </p>

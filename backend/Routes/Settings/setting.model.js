@@ -103,6 +103,24 @@ const settingSchema = new mongoose.Schema({
     notice: {
         type: String
     },
+    bonus: {
+        amount: {
+            type: Number,
+            default: 0
+        },
+        startDate: {
+            type: Date,
+            default: null
+        },
+        endDate: {
+            type: Date,
+            default: null
+        },
+        active: {
+            type: Boolean,
+            default: false
+        }
+    },
 }, {
     timestamps: true
 });

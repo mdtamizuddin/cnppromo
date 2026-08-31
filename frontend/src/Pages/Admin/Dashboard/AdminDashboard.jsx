@@ -46,7 +46,7 @@ const Skeleton = ({ className = "" }) => (
 );
 
 /* ─────────────── Premium metric card (purple-3xl dialect) ─────────────── */
-const MoneyCard = ({ title, value, sub, icon: Icon, gradient, loading, subTone = "text-gray-400" }) => (
+const MoneyCard = ({ title, value, sub, icon: Icon, gradient, shadow = "shadow-md shadow-gray-200", loading, subTone = "text-gray-400" }) => (
   <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 flex items-start justify-between hover:shadow-md transition-all duration-300">
     <div>
       <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-400">{title}</p>
@@ -58,7 +58,7 @@ const MoneyCard = ({ title, value, sub, icon: Icon, gradient, loading, subTone =
       {sub && <p className={`text-[11px] font-semibold mt-1 ${subTone}`}>{sub}</p>}
     </div>
     {Icon && (
-      <div className={`shrink-0 grid place-items-center w-11 h-11 rounded-2xl bg-gradient-to-br ${gradient} shadow-lg`}>
+      <div className={`shrink-0 grid place-items-center w-11 h-11 rounded-2xl bg-gradient-to-br ${gradient} ${shadow}`}>
         <Icon className="w-5 h-5 text-white" strokeWidth={2} />
       </div>
     )}
@@ -331,6 +331,7 @@ const AdminDashboard = () => {
             sub="Approved user deposits & activation fees"
             icon={InboxArrowDownIcon}
             gradient="from-emerald-500 to-teal-600"
+            shadow="shadow-md shadow-emerald-500/25"
             loading={isLoading}
           />
           <MoneyCard
@@ -344,6 +345,7 @@ const AdminDashboard = () => {
             )}
             icon={ArrowDownTrayIcon}
             gradient="from-indigo-500 to-purple-600"
+            shadow="shadow-md shadow-indigo-500/25"
             loading={isLoading}
           />
           <MoneyCard
@@ -351,7 +353,8 @@ const AdminDashboard = () => {
             value={finance.netBalance}
             sub={`${netPositive ? "+" : ""} net of all-time inflow minus outflow`}
             icon={WalletIcon}
-            gradient={netPositive ? "from-[#5a32fa] to-[#7928ca]" : "from-rose-500 to-red-600"}
+            gradient={netPositive ? "from-violet-600 to-purple-700" : "from-rose-500 to-red-600"}
+            shadow={netPositive ? "shadow-md shadow-violet-500/25" : "shadow-md shadow-rose-500/25"}
             subTone={netPositive ? "text-emerald-600" : "text-rose-600"}
             loading={isLoading}
           />

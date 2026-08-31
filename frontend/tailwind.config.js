@@ -1,5 +1,7 @@
 import withMT from "@material-tailwind/react/utils/withMT";
 import daisyui from "daisyui";
+import colors from "tailwindcss/colors";
+
 export default withMT({
   content: [
     "./index.html",
@@ -10,6 +12,12 @@ export default withMT({
   theme: {
     extend: {
       colors: {
+        emerald: colors.emerald,
+        rose: colors.rose,
+        sky: colors.sky,
+        slate: colors.slate,
+        zinc: colors.zinc,
+        violet: colors.violet,
         'primary': '#050C9C',
         "secondary": "#3ABEF9",
         "T2": "#E52548",
@@ -25,4 +33,4 @@ export default withMT({
     themes: ["light", "dark", "cupcake"],
   },
   plugins: [daisyui],
-});
+});

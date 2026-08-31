@@ -57,6 +57,32 @@ const sanitize = (input = {}) => {
         }
     }
 
+    // Bonus: mixed-type nested object (amount: Number, startDate/endDate: Date, active: Boolean)
+    if (input.bonus && typeof input.bonus === "object") {
+        const bonus = {};
+        if (input.bonus.amount !== undefined) {
+            const n = Number(input.bonus.amount);
+            bonus.amount = Number.isFinite(n) ? n : 0;
+        }
+        const parseDate = (v) => {
+            if (v === null || v === "" || v === undefined) return null;
+            const d = new Date(v);
+            return isNaN(d.getTime()) ? null : d;
+        };
+        if (input.bonus.startDate !== undefined) {
+            bonus.startDate = parseDate(input.bonus.startDate);
+        }
+        if (input.bonus.endDate !== undefined) {
+            bonus.endDate = parseDate(input.bonus.endDate);
+        }
+        if (input.bonus.active !== undefined) {
+            bonus.active = Boolean(input.bonus.active);
+        }
+        if (Object.keys(bonus).length) {
+            clean.bonus = bonus;
+        }
+    }
+
     return clean;
 };
 

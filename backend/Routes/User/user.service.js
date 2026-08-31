@@ -886,6 +886,14 @@ const getMemberDashboard = async (req, res) => {
             rejected: taskMap.rejected || 0,
         };
 
+        // ── Bonus (global from Settings) ──────────────────────────────────────
+        const setting = await getOrCreateSetting();
+        const b = setting.bonus || {};
+        const startOk = !b.startDate || new Date(b.startDate) <= now;
+        const endOk = !b.endDate || new Date(b.endDate) >= now;
+        const bonusActive = b.active && startOk && endOk;
+        const effectiveBonus = bonusActive ? (b.amount || 0) : 0;
+
         // ── Build recent activity feed from the four source types ────────────
         const activity = [
             ...recentWithdraws.map(w => ({
@@ -927,6 +935,13 @@ const getMemberDashboard = async (req, res) => {
                 method: req.user.paymentMethod || "Bkash",
                 account: req.user.account || "",
             }],
+            bonus: {
+                amount: b.amount || 0,
+                startDate: b.startDate || null,
+                endDate: b.endDate || null,
+                active: !!b.active,
+                effective: effectiveBonus,
+            },
         });
     } catch (error) {
         res.status(500).send({ message: error.message });

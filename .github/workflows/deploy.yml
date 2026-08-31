@@ -1,0 +1,155 @@
+name: CI/CD Deploy
+
+on:
+  # Manual trigger only with selection options
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Select component to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'frontend'
+          - 'backend'
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy (${{ github.event.inputs.target }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Frontend Application
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+        run: pnpm --filter client build
+
+      - name: Package Frontend Release
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
+        run: tar -czf frontend-release.tar.gz -C frontend/dist .
+
+      - name: Package Backend Release
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'backend' }}
+        run: tar -czf backend-release.tar.gz -C backend . --exclude=node_modules --exclude=.git --exclude=.env
+
+      - name: Ensure Target Directories Exist on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            mkdir -p /home/cnppromo/htdocs/cnppromo.com
+            mkdir -p /home/cnppromo-server/htdocs/server.cnppromo.com
+
+      - name: Copy Frontend Archive to VPS
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: "frontend-release.tar.gz"
+          target: "/home/cnppromo/htdocs/cnppromo.com"
+
+      - name: Deploy Frontend on VPS
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 5m
+          script: |
+            echo "📦 Deploying Frontend to /home/cnppromo/htdocs/cnppromo.com..."
+            cd /home/cnppromo/htdocs/cnppromo.com
+            tar -xzf frontend-release.tar.gz
+            rm -f frontend-release.tar.gz
+            echo "✅ Frontend deployed successfully."
+
+      - name: Copy Backend Archive to VPS
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'backend' }}
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: "backend-release.tar.gz"
+          target: "/home/cnppromo-server/htdocs/server.cnppromo.com"
+
+      - name: Deploy Backend on VPS & Reload PM2
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'backend' }}
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          BACKEND_ENV_CONTENT: ${{ secrets.BACKEND_ENV_CONTENT }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 10m
+          envs: BACKEND_ENV_CONTENT
+          script: |
+            echo "📦 Deploying Backend to /home/cnppromo-server/htdocs/server.cnppromo.com..."
+            cd /home/cnppromo-server/htdocs/server.cnppromo.com
+            tar -xzf backend-release.tar.gz
+            rm -f backend-release.tar.gz
+
+            # Load user profile & NVM if available
+            source ~/.profile || true
+            source ~/.bashrc || true
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            # Ensure pnpm or npm is available
+            if command -v corepack &> /dev/null; then
+              corepack enable && corepack prepare pnpm@9 --activate || true
+            fi
+
+            # Install production dependencies
+            if command -v pnpm &> /dev/null; then
+              pnpm install --prod
+            else
+              npm install --omit=dev
+            fi
+
+            # Create or update .env if secret is provided
+            if [ -n "$BACKEND_ENV_CONTENT" ]; then
+              printf '%s\n' "$BACKEND_ENV_CONTENT" > .env
+              echo "✅ .env created from GitHub Secret."
+            fi
+
+            # Reload PM2 application with zero downtime or start if not already running
+            pm2 reload ecosystem.config.cjs --env production || pm2 start ecosystem.config.cjs --env production
+            pm2 save
+            echo "✅ Backend deployed and PM2 reloaded."
