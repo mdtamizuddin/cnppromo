@@ -4,7 +4,7 @@ import Cookie from 'js-cookie';
 const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
 // Must match PORT in backend/.env. Override per-machine with VITE_API_PORT.
-const localPort = import.meta.env.VITE_API_PORT || 4400;
+const localPort = import.meta.env.VITE_API_PORT || 44300;
 
 export const serverUrl = 'https://server.cnppromo.com/api/v1';
 export const localUrl = `http://localhost:${localPort}/api/v1`;

@@ -12,6 +12,7 @@ import AdminDropdown from "./AdminDropdown";
 import UserSidebarDrawer from "./UserSidebarDrawer";
 import UserBottomBar from "./UserBottomBar";
 import { useUnreadNotifications } from "../../util/useUnreadNotifications";
+import { Typewriter } from "react-simple-typewriter";
 
 const publicNavItems = [
   { label: "হোম", to: "/" },
@@ -75,6 +76,25 @@ const Topbar = ({
   // ----------------------------------------------------
   return (
     <>
+      <div className="bg-[#0b0c2a] text-white py-2.5 px-6">
+        <div className="max-w-[1140px] mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2.5 text-[13px] md:text-sm">
+            <span className="text-lg">📢</span>
+            <span className="font-light tracking-wide text-gray-200">
+              <Typewriter
+                words={[settings?.notice || "2026 CNP Promo - অনলাইনে ইনকাম করুন, স্বপ্ন পূরণ করুন! 🚀"]}
+                loop={true}
+                cursor
+                cursorStyle="|"
+                typeSpeed={45}
+                deleteSpeed={30}
+                delaySpeed={5000}
+              />
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm px-6 py-4">
         <div className="max-w-[1140px] mx-auto flex items-center justify-between">
           {/* Logo */}
@@ -99,11 +119,10 @@ const Topbar = ({
               <Link
                 key={item.label}
                 to={item.to}
-                className={`transition-colors text-[15px] font-semibold tracking-wide ${
-                  pathname === item.to
-                    ? "text-[#5a32fa] font-bold"
-                    : "text-[#0b0c2a] hover:text-[#5a32fa]"
-                }`}
+                className={`transition-colors text-[15px] font-semibold tracking-wide ${pathname === item.to
+                  ? "text-[#5a32fa] font-bold"
+                  : "text-[#0b0c2a] hover:text-[#5a32fa]"
+                  }`}
               >
                 {item.label}
               </Link>
@@ -155,9 +174,8 @@ const Topbar = ({
       )}
 
       <div
-        className={`fixed top-0 left-0 z-50 h-full w-72 bg-white transform transition-transform duration-300 ease-in-out lg:hidden overflow-y-auto shadow-2xl ${
-          mobileNavOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 z-50 h-full w-72 bg-white transform transition-transform duration-300 ease-in-out lg:hidden overflow-y-auto shadow-2xl ${mobileNavOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex items-center justify-between px-5 py-5 border-b border-gray-100">
           <span className="text-[#0b0c2a] font-bold text-lg">
@@ -178,11 +196,10 @@ const Topbar = ({
               key={item.label}
               to={item.to}
               onClick={() => setMobileNavOpen(false)}
-              className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                pathname === item.to
-                  ? "bg-indigo-50 text-[#5a32fa]"
-                  : "text-[#0b0c2a] hover:bg-gray-50"
-              }`}
+              className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${pathname === item.to
+                ? "bg-indigo-50 text-[#5a32fa]"
+                : "text-[#0b0c2a] hover:bg-gray-50"
+                }`}
             >
               {item.label}
             </Link>
