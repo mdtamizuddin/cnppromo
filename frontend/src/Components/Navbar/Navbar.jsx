@@ -60,10 +60,12 @@ const Topbar = ({
     user.role !== "moderator" &&
     user.status !== "active";
 
+  const isStaff = user && (user.role === "admin" || user.role === "moderator");
+
   // ----------------------------------------------------
-  // LOGGED-IN ACTIVE USER: KEEP DESKTOP SIDEBAR & MOBILE BOTTOM BAR
+  // LOGGED-IN ACTIVE REGULAR USER: KEEP DESKTOP SIDEBAR & MOBILE BOTTOM BAR
   // ----------------------------------------------------
-  if (user && !isInactiveUser) {
+  if (user && !isInactiveUser && !isStaff) {
     return (
       <>
         {/* User Sidebar: Permanent on Desktop, Drawer on Mobile */}
@@ -137,18 +139,30 @@ const Topbar = ({
 
             <div className="flex items-center gap-3 ml-4">
               {user ? (
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    Cookie.remove("token-you");
-                    Cookie.remove("accessToken");
-                    localStorage.clear();
-                    window.location.href = "/login";
-                  }}
-                  className="bg-rose-500 hover:bg-rose-600 text-white normal-case font-bold text-xs px-4 py-2 rounded-xl shadow-sm"
-                >
-                  লগআউট ({user.username || user.name})
-                </Button>
+                <>
+                  {isStaff && (
+                    <Link to="/admin">
+                      <Button
+                        size="sm"
+                        className="bg-primary hover:bg-primary-hover text-white normal-case font-bold text-xs px-4 py-2 rounded-xl shadow-md shadow-teal-500/20"
+                      >
+                        অ্যাডমিন প্যানেল
+                      </Button>
+                    </Link>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      Cookie.remove("token-you");
+                      Cookie.remove("accessToken");
+                      localStorage.clear();
+                      window.location.href = "/login";
+                    }}
+                    className="bg-rose-500 hover:bg-rose-600 text-white normal-case font-bold text-xs px-4 py-2 rounded-xl shadow-sm"
+                  >
+                    লগআউট ({user.username || user.name})
+                  </Button>
+                </>
               ) : (
                 <>
                   <Link to="/login">
@@ -231,17 +245,26 @@ const Topbar = ({
 
           <div className="pt-4 border-t border-gray-100 flex flex-col gap-2">
             {user ? (
-              <Button
-                onClick={() => {
-                  Cookie.remove("token-you");
-                  Cookie.remove("accessToken");
-                  localStorage.clear();
-                  window.location.href = "/login";
-                }}
-                className="w-full bg-rose-500 hover:bg-rose-600 text-white normal-case text-xs"
-              >
-                লগআউট ({user.username || user.name})
-              </Button>
+              <>
+                {isStaff && (
+                  <Link to="/admin" onClick={() => setMobileNavOpen(false)}>
+                    <Button className="w-full bg-primary hover:bg-primary-hover text-white normal-case text-xs shadow-md shadow-teal-500/20">
+                      অ্যাডমিন প্যানেল
+                    </Button>
+                  </Link>
+                )}
+                <Button
+                  onClick={() => {
+                    Cookie.remove("token-you");
+                    Cookie.remove("accessToken");
+                    localStorage.clear();
+                    window.location.href = "/login";
+                  }}
+                  className="w-full bg-rose-500 hover:bg-rose-600 text-white normal-case text-xs"
+                >
+                  লগআউট ({user.username || user.name})
+                </Button>
+              </>
             ) : (
               <>
                 <Link to="/login" onClick={() => setMobileNavOpen(false)}>

@@ -32,11 +32,13 @@ const AuthChecker = ({ children, requireActive = true }) => {
         return <RequierActive />;
     }
 
-    // 4. Redirect admins away from the main user dashboards
-    if ((user.role === "admin" || user.role === "moderator") && 
-        (location.pathname === "/user/home" || location.pathname === "/user/welcome")) {
-        window.location.href = "/admin";
-        return null;
+    // 4. Redirect admins & moderators away from any user panel route (/user/*) to the admin panel
+    if (user.role === "admin" || user.role === "moderator") {
+        if (location.pathname.startsWith("/user") || location.pathname === "/user" || location.pathname === "/message" || location.pathname === "/all-message") {
+            const destination = user.role === "admin" ? "/admin/dashboard" : "/admin/users";
+            window.location.href = destination;
+            return null;
+        }
     }
 
     // 5. Authenticated & Authorized user

@@ -48,6 +48,8 @@ const MainLayout = () => {
     user.role !== "moderator" &&
     user.status !== "active";
 
+  const isStaff = user && (user.role === "admin" || user.role === "moderator");
+
   return (
     <>
       <ScrollRestoration />
@@ -60,7 +62,7 @@ const MainLayout = () => {
       />
       <div
         className={
-          !user || isInactiveUser
+          !user || isInactiveUser || isStaff
             ? "w-full min-h-screen"
             : isMessageRoute
             ? "w-full lg:pl-72 transition-all"

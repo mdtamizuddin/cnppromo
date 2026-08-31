@@ -13,6 +13,7 @@ const bcrypt = require("bcrypt");
 const mailerService = require("../mailer/mailer");
 const sessionService = require("../Session/session.service");
 const { notifyUser } = require("../Notification/notification.service");
+const validateUsername = require("../../util/validateUsername");
 // Fields a self-registering user is never allowed to set on themselves.
 // `new User(req.body)` would otherwise happily accept role:"admin" or balance:1e9.
 const REGISTRATION_BLOCKED_FIELDS = [
@@ -26,6 +27,16 @@ const createUser = async (req, res) => {
             delete req.body[field];
         }
         req.body.email = req.body.email.toLowerCase();
+        
+        // Validate username against standard rules
+        const userCheck = validateUsername(req.body.username);
+        if (!userCheck.valid) {
+            return res.status(400).send({
+                message: userCheck.message
+            });
+        }
+        req.body.username = userCheck.username;
+
         // $or, not an implicit AND: either a taken email or a taken username is a conflict.
         const isExist = await User.findOne({
             $or: [
@@ -642,10 +653,18 @@ const updateDeviceLimit = async (req, res) => {
 
 const checkUser = async (req, res) => {
     try {
+        const userCheck = validateUsername(req.params.id);
+        if (!userCheck.valid) {
+            return res.send({
+                message: userCheck.message,
+                status: false
+            });
+        }
+        const username = userCheck.username;
 
         // Opt out of the soft-delete hook: a deleted user still reserves
         // their username/email, so availability must reflect that.
-        const user = await User.findOne({ username: req.params.id }).setOptions({ withDeleted: true });
+        const user = await User.findOne({ username }).setOptions({ withDeleted: true });
         if (!user) {
             res.send({
                 message: "Username Available",

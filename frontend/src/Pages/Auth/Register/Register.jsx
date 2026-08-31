@@ -221,12 +221,51 @@ const Register = () => {
         return missing;
     };
 
+    const validateUsernameClient = (raw) => {
+        if (!raw) return { valid: false, message: "" };
+        const uname = raw.trim().toLowerCase();
+        if (uname.length < 4 || uname.length > 20) {
+            return { valid: false, message: "ইউজারনেম ৪ থেকে ২০ অক্ষরের মধ্যে হতে হবে" };
+        }
+        if (uname.includes(" ")) {
+            return { valid: false, message: "ইউজারনেমে কোনো স্পেস থাকা যাবে না" };
+        }
+        if (uname.includes("@")) {
+            return { valid: false, message: "ইউজারনেমে '@' বা ইমেইল দেওয়া যাবে না" };
+        }
+        if (!/^[a-z0-9]/.test(uname)) {
+            return { valid: false, message: "ইউজারনেম অক্ষর বা সংখ্যা দিয়ে শুরু হতে হবে" };
+        }
+        if (!/[a-z0-9]$/.test(uname)) {
+            return { valid: false, message: "ইউজারনেম অক্ষর বা সংখ্যা দিয়ে শেষ হতে হবে" };
+        }
+        if (uname.includes("__") || uname.includes("--") || uname.includes("-_") || uname.includes("_-")) {
+            return { valid: false, message: "একসাথে একাধিক স্পেশাল ক্যারেক্টার দেওয়া যাবে না" };
+        }
+        if (!/^[a-z0-9_-]+$/.test(uname)) {
+            return { valid: false, message: "শুধুমাত্র অক্ষর, সংখ্যা, _ এবং - ব্যবহার করা যাবে" };
+        }
+        return { valid: true, username: uname };
+    };
+
     const checkUser = async (e) => {
         e.preventDefault();
-        if(!data.username) return;
+        const clientVal = validateUsernameClient(data.username);
+        if (!clientVal.valid) {
+            if (data.username) {
+                setMessage(false);
+                setError(clientVal.message);
+            }
+            return;
+        }
         try {
-            const res = await api.get(`/user/check/${data.username.toLowerCase()}`);
+            const res = await api.get(`/user/check/${clientVal.username}`);
             setMessage(res.data.status);
+            if (!res.data.status) {
+                setError(res.data.message || "Username Not Available");
+            } else {
+                setError("");
+            }
         } catch (error) {
             setError(error?.response?.data?.message || error?.message || "Something went wrong");
         }
@@ -244,8 +283,12 @@ const Register = () => {
         if (!referer && data.reffer) {
             return toast.error("Please enter a valid reference ID");
         }
+        const clientVal = validateUsernameClient(data.username);
+        if (!clientVal.valid) {
+            return toast.error(clientVal.message || "একটি সঠিক ইউজারনেম দিন");
+        }
         if (!message) {
-            return toast.error("Enter a unique username");
+            return toast.error("Enter a valid unique username");
         }
 
         try {
@@ -309,17 +352,23 @@ const Register = () => {
                         />
 
                         <FormInput
-                            label="ইউজার নেম লিখুন"
+                            label="ইউজার নেম (৪-২০ অক্ষর, ইমেইল নয়)"
                             icon={faUser}
                             type="text"
                             name="username"
-                            placeholder="ইউজার নেম লিখুন"
+                            placeholder="যেমন: shuvo_123"
                             value={data.username}
-                            onChange={updateState}
+                            onChange={(e) => {
+                                updateState(e);
+                                const check = validateUsernameClient(e.target.value);
+                                if (!check.valid && e.target.value.length > 0) {
+                                    setMessage(false);
+                                }
+                            }}
                             onBlur={checkUser}
                             required
-                            error={!message && data.username.length > 0}
-                            availability={data.username ? message : undefined}
+                            error={!validateUsernameClient(data.username).valid && data.username.length > 0}
+                            availability={data.username ? (validateUsernameClient(data.username).valid ? message : false) : undefined}
                         />
 
                         <FormInput

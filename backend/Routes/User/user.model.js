@@ -4,8 +4,19 @@ const userSchema = new mongoose.Schema({
     username: {
         type: String,
         unique: true,
-        minlength: 5,
-        required: [true, "Username is required (minimum 5 characters)"],
+        minlength: [4, "Username must be at least 4 characters"],
+        maxlength: [20, "Username cannot exceed 20 characters"],
+        required: [true, "Username is required"],
+        validate: {
+            validator: function (v) {
+                if (!v) return false;
+                const clean = v.trim().toLowerCase();
+                if (clean.length < 4 || clean.length > 20) return false;
+                if (clean.includes("@") || clean.includes(" ") || clean.includes("__") || clean.includes("--")) return false;
+                return /^[a-z0-9][a-z0-9_-]{2,18}[a-z0-9]$/.test(clean);
+            },
+            message: "Username must be 4-20 characters long, start and end with a letter or number, and only contain letters, numbers, underscores, and hyphens (no email addresses or spaces allowed)."
+        }
     },
     
     email: {
