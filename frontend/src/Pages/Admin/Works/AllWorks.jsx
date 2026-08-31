@@ -130,7 +130,7 @@ const AllWorks = () => {
         </div>
 
         <Link
-          to="/social-works"
+          to="/user/social-works"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-bold transition-all border border-teal-200"
         >
           <PlayCircleIcon className="w-4 h-4 text-teal-600" />
@@ -143,7 +143,7 @@ const AllWorks = () => {
         {category.map((item) => (
           <Link
             key={item.id}
-            to={`/works/category/${encodeURIComponent(item.path)}`}
+            to={`/user/works/category/${encodeURIComponent(item.path)}`}
             className="group"
           >
             <Card

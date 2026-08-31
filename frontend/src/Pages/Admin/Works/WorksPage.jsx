@@ -95,7 +95,7 @@ const WorksPage = () => {
               </Button>
             </Link>
 
-            <Link to="/social-works">
+            <Link to="/user/social-works">
               <Button
                 size="sm"
                 className="bg-gradient-to-r from-[#5a32fa] to-[#7c3aed] hover:from-[#4b26e0] hover:to-[#6d28d9] normal-case text-xs font-bold flex items-center gap-1.5 rounded-xl shadow-md shadow-indigo-500/25 text-white"
@@ -114,7 +114,7 @@ const WorksPage = () => {
             return (
               <Link
                 key={cat.id}
-                to={`/works/category/${encodeURIComponent(cat.path)}`}
+                to={`/user/works/category/${encodeURIComponent(cat.path)}`}
                 className={`px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
                   isSelected
                     ? "bg-[#5a32fa] text-white shadow-md shadow-indigo-500/25 scale-105"
@@ -209,7 +209,7 @@ const WorksPage = () => {
                   অন্যান্য ক্যাটাগরি দেখুন
                 </Button>
               </Link>
-              <Link to="/social-works">
+              <Link to="/user/social-works">
                 <Button variant="outlined" className="border-gray-200 text-gray-700 normal-case text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-gray-50">
                   Watch to Earn দেখুন
                 </Button>
@@ -258,7 +258,7 @@ const WorksPage = () => {
               </div>
             </div>
 
-            <Link to={`/works/category/${encodeURIComponent(nextCategory.path)}`}>
+              <Link to={`/user/works/category/${encodeURIComponent(nextCategory.path)}`}>
               <Button
                 size="sm"
                 className="bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-5 py-2.5 rounded-xl shadow-md shadow-indigo-500/20 flex items-center gap-1.5"

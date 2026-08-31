@@ -39,6 +39,15 @@ export const ACCENTS = {
     row: "hover:bg-blue-50/40",
     gradient: "from-blue-600 to-indigo-600",
   },
+  purple: {
+    text: "text-violet-600",
+    bg: "bg-violet-50",
+    ring: "ring-violet-100",
+    solid: "bg-[#5a32fa] hover:bg-[#4b26e0]",
+    shadow: "shadow-violet-500/25",
+    row: "hover:bg-violet-50/40",
+    gradient: "from-violet-600 to-indigo-600",
+  },
 };
 
 /** Page title block with an accent icon badge and an optional action slot. */
@@ -132,6 +141,7 @@ export const IconAction = ({ icon: Icon, label, onClick, tone = "gray", disabled
     blue: "text-gray-400 hover:text-blue-600 hover:bg-blue-50",
     red: "text-gray-400 hover:text-red-600 hover:bg-red-50",
     teal: "text-gray-400 hover:text-teal-600 hover:bg-teal-50",
+    purple: "text-gray-400 hover:text-violet-600 hover:bg-violet-50",
   };
   return (
     <button

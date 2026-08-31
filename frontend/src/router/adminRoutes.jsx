@@ -19,6 +19,7 @@ const Withdrawals = lazy(() => import("../Pages/Admin/Withdraw/Withdraw"));
 const ExternalWithdrawals = lazy(() => import("../Pages/Admin/ExternalWithdrawals/ExternalWithdrawals"));
 const AdminWorks = lazy(() => import("../Pages/Admin/ManageWorks/AdminWorks"));
 const AdminSocialWorks = lazy(() => import("../Pages/Admin/ManageSocialWorks/AdminSocialWorks"));
+const AdminTraining = lazy(() => import("../Pages/Admin/Training/AdminTraining"));
 const PaymentGateway = lazy(() => import("../Pages/Admin/PaymentGateway/PaymentGateway"));
 const Message = lazy(() => import("../Pages/Message/Message"));
 const LoginDevices = lazy(() => import("../Pages/Account/LoginDevices"));
@@ -125,6 +126,10 @@ export const adminRoutes = [
   {
     path: "social-works",
     element: <AdminChecker><Lazy><AdminSocialWorks /></Lazy></AdminChecker>,
+  },
+  {
+    path: "training",
+    element: <AdminChecker><Lazy><AdminTraining /></Lazy></AdminChecker>,
   },
   {
     path: "payment-gateway",

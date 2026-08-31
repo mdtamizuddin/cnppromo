@@ -367,7 +367,7 @@ const SocialWork = () => {
                   </div>
 
                   {task.status !== 'inactive' ? (
-                    <Link to={`/social-works/${task._id}`}>
+                    <Link to={`/user/social-works/${task._id}`}>
                       <Button
                         className={`${getBtnGradient(task)} text-white normal-case font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 transition-all hover:scale-105`}
                       >

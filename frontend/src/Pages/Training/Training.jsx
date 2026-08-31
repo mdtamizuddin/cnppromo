@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { useQuery } from "react-query";
+import { api } from "../../util/axios";
 import {
   Card,
   Typography,
@@ -101,13 +102,13 @@ const trainingCourses = [
   },
 ];
 
-const quickActions = [
+const TRAINING_QUICK_ACTIONS = [
   {
     id: 1,
     title: "ভিডিও লেসন",
     subtitle: "দেখুন ও শিখুন",
     icon: PlayIcon,
-    to: "/social-works",
+    to: "/user/social-works",
     color: "#5a32fa",
     bg: "bg-purple-50",
   },
@@ -149,7 +150,7 @@ const quickActions = [
   },
 ];
 
-const trainers = [
+const TRAINING_TRAINERS = [
   {
     name: "Promity Remeen",
     title: "CNP Promo Trainer & Admin",
@@ -173,10 +174,32 @@ const trainers = [
   },
 ];
 
+const QUICK_ICONS = {
+  play: PlayIcon,
+  document: DocumentTextIcon,
+  lightbulb: LightBulbIcon,
+  chat: ChatBubbleLeftRightIcon,
+  shield: ShieldCheckIcon,
+  sparkles: SparklesIcon,
+  video: VideoCameraIcon,
+  phone: PhoneIcon,
+  clock: ClockIcon,
+  book: BookOpenIcon,
+};
+
 const Training = () => {
-  const { settings } = useSelector((state) => state.user);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [showTrainerList, setShowTrainerList] = useState(false);
+
+  const { data } = useQuery(
+    ["user-training"],
+    async () => (await api.get("training/payload")).data,
+    { staleTime: 30000, retry: 1 }
+  );
+
+  const courses = data?.courses?.length ? data.courses : trainingCourses;
+  const quickActions = data?.quickActions?.length ? data.quickActions : TRAINING_QUICK_ACTIONS;
+  const trainers = data?.trainers?.length ? data.trainers : TRAINING_TRAINERS;
 
   return (
     <div className="bg-[#f8faff] min-h-screen pb-20 pt-6">
@@ -283,7 +306,7 @@ const Training = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
             {quickActions.map((action) => {
-              const ActionIcon = action.icon;
+              const ActionIcon = QUICK_ICONS[action.icon] || action.icon || PlayIcon;
               return (
                 <Link key={action.id} to={action.to}>
                   <Card className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center h-full justify-between group">
@@ -317,7 +340,7 @@ const Training = () => {
               জনপ্রিয় ট্রেনিং
             </h2>
             <button
-              onClick={() => setSelectedCourse(trainingCourses[0])}
+              onClick={() => setSelectedCourse(courses[0])}
               className="text-xs font-semibold text-[#5a32fa] hover:underline flex items-center gap-1"
             >
               <span>সবগুলো দেখুন</span>
@@ -326,7 +349,7 @@ const Training = () => {
           </div>
 
           <div className="space-y-3.5">
-            {trainingCourses.map((course) => (
+            {courses.map((course) => (
               <Card
                 key={course.id}
                 className="p-4 sm:p-5 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
@@ -430,11 +453,17 @@ const Training = () => {
                   key={idx}
                   className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 flex flex-col items-center text-center space-y-2"
                 >
-                  <img
-                    src={trainer.image}
-                    alt={trainer.name}
-                    className="w-16 h-16 rounded-full object-cover shadow-sm border-2 border-[#5a32fa]"
-                  />
+                  {trainer.image ? (
+                    <img
+                      src={trainer.image}
+                      alt={trainer.name}
+                      className="w-16 h-16 rounded-full object-cover shadow-sm border-2 border-[#5a32fa]"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full object-cover shadow-sm border-2 border-[#5a32fa] bg-gradient-to-br from-[#5a32fa] to-[#7c3aed] flex items-center justify-center text-white font-black text-xl">
+                      {(trainer.name || "T").charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div>
                     <p className="font-bold text-sm text-[#0b0c2a]">{trainer.name}</p>
                     <p className="text-[11px] text-gray-500">{trainer.title}</p>

@@ -40,7 +40,7 @@ const AddWork = () => {
         await api.post("social-works/create", payload);
         toast.success("Work Created Successfully");
       }
-      navigate(`/social-works`);
+      navigate(`/admin/social-works`);
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
@@ -52,7 +52,7 @@ const AddWork = () => {
     try {
       await api.delete(`social-works/${id}`);
       toast.success("Work Deleted Successfully");
-      navigate(`/social-works`);
+      navigate(`/admin/social-works`);
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
     }

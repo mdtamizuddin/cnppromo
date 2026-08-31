@@ -26,6 +26,7 @@ import {
   Squares2X2Icon,
   StarIcon,
   PhotoIcon,
+  AcademicCapIcon,
 } from "@heroicons/react/24/outline";
 import { IconButton } from "@material-tailwind/react";
 
@@ -63,6 +64,7 @@ const sidebarData = [
     items: [
       { label: "Works", icon: BriefcaseIcon, to: "/admin/works", color: "text-amber-500" },
       { label: "Social Works", icon: ClipboardDocumentCheckIcon, to: "/admin/social-works", color: "text-teal-500" },
+      { label: "Training", icon: AcademicCapIcon, to: "/admin/training", color: "text-violet-500" },
     ]
   },
   {

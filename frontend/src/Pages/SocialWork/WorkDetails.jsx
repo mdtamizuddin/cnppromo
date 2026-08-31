@@ -157,7 +157,7 @@ const WorkDetails = () => {
         duration: playTime,
       });
       message.success("Submitted Successfully");
-      navigate("/social-works");
+      navigate("/user/social-works");
     } catch (error) {
       message.error(error.response?.data?.message || "Something went wrong");
     }
