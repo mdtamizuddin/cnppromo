@@ -205,8 +205,8 @@ app.get("/api/v1/statistic", async (req, res) => {
     ]);
     const totalAmmount = withdrawSum?.total || 0;
     res.send({
-      total: 32000 + total,
-      active: 30001 + active,
+      total: 72000 + total,
+      active: 72000 + active,
       pending,
       blocked,
       total_withdraw: totalAmmount,

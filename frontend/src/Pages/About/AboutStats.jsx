@@ -32,7 +32,7 @@ const AboutStats = () => {
         },
         {
             icon: faCrown,
-            value: 10,
+            value: "20 +",
             label: "Trainer & Admin",
             color: "text-indigo-500",
             bg: "bg-indigo-100"
@@ -57,7 +57,7 @@ const AboutStats = () => {
         <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 -mt-16 relative z-20 py-8 px-6 mb-16 border border-gray-100">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
                 {stats.map((stat, idx) => (
-                    <motion.div 
+                    <motion.div
                         key={idx}
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -70,10 +70,10 @@ const AboutStats = () => {
                         </div>
                         <h4 className="text-[#0b0c2a] text-2xl font-black mb-1">{stat.value.toLocaleString()}</h4>
                         <p className="text-gray-500 text-sm font-medium">{stat.label}</p>
-                        
+
                         {/* Custom divider except for last item on desktop */}
                         {idx !== stats.length - 1 && (
-                            <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 w-px h-16 bg-gray-100 transform translate-x-[-50%]" style={{right: `calc(${100 - ((idx+1)*20)}% - 15px)`}}></div>
+                            <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 w-px h-16 bg-gray-100 transform translate-x-[-50%]" style={{ right: `calc(${100 - ((idx + 1) * 20)}% - 15px)` }}></div>
                         )}
                     </motion.div>
                 ))}

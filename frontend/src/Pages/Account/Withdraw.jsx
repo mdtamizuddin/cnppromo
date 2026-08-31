@@ -411,12 +411,12 @@ const Withdraw = () => {
       {/* 🚀 RESPONSIVE 2-COLUMN GRID (Desktop: Left Form + Right Sticky Balance/Summary) */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
+
         {/* ======================================================================= */}
         {/* LEFT COLUMN: Steps (Request -> Confirm -> Complete) */}
         {/* ======================================================================= */}
         <div className="lg:col-span-7 xl:col-span-7 space-y-5">
-          
+
           {/* STEP 1: REQUEST FORM */}
           {step === 1 && (
             isGatewayLoading ? (
@@ -439,7 +439,7 @@ const Withdraw = () => {
                 </div>
                 <div className="pt-2 flex justify-center">
                   <a
-                    href="https://wa.me/+8801731686679"
+                    href="https://m.me/1151649641374328"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20 hover:scale-[1.02] transition-transform"
@@ -450,193 +450,189 @@ const Withdraw = () => {
                 </div>
               </div>
             ) : (
-            <div className="space-y-5 animate-fadeIn">
-              {/* 1. Select Payment Method Card */}
-              <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xs sm:text-sm font-bold text-gray-800 tracking-tight">
-                    1. Select Payment Method
-                  </h2>
-                  <span className="text-[11px] font-semibold text-purple-600">
-                    মেথড নির্বাচন করুন
-                  </span>
-                </div>
+              <div className="space-y-5 animate-fadeIn">
+                {/* 1. Select Payment Method Card */}
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xs sm:text-sm font-bold text-gray-800 tracking-tight">
+                      1. Select Payment Method
+                    </h2>
+                    <span className="text-[11px] font-semibold text-purple-600">
+                      মেথড নির্বাচন করুন
+                    </span>
+                  </div>
 
-                {/* Responsive Grid: 1 col on mobile, 2 cols on sm/desktop */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {paymentMethods.map((m) => {
-                    const isSelected = selectedMethod === m.id;
-                    return (
-                      <div
-                        key={m.id}
-                        onClick={() => setSelectedMethod(m.id)}
-                        className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                          isSelected
-                            ? m.bgActive
-                            : "border-gray-200/90 bg-white hover:bg-gray-50/80"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center p-1.5 shrink-0 overflow-hidden">
-                            <img
-                              src={m.logo}
-                              alt={m.name}
-                              className="w-full h-full object-contain"
-                              onError={(e) => {
-                                e.currentTarget.src = "/logo/bank.png";
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <div className="text-sm font-bold text-gray-900">{m.name}</div>
-                            <div className="text-[11px] text-gray-400 font-mono">
-                              {account && isSelected ? maskAccount(account) : m.subtitle}
+                  {/* Responsive Grid: 1 col on mobile, 2 cols on sm/desktop */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {paymentMethods.map((m) => {
+                      const isSelected = selectedMethod === m.id;
+                      return (
+                        <div
+                          key={m.id}
+                          onClick={() => setSelectedMethod(m.id)}
+                          className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${isSelected
+                              ? m.bgActive
+                              : "border-gray-200/90 bg-white hover:bg-gray-50/80"
+                            }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center p-1.5 shrink-0 overflow-hidden">
+                              <img
+                                src={m.logo}
+                                alt={m.name}
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                  e.currentTarget.src = "/logo/bank.png";
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <div className="text-sm font-bold text-gray-900">{m.name}</div>
+                              <div className="text-[11px] text-gray-400 font-mono">
+                                {account && isSelected ? maskAccount(account) : m.subtitle}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Radio circle */}
-                        <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                            isSelected
-                              ? "bg-[#e81c78] text-white shadow-sm ring-4 ring-pink-100"
-                              : "border-2 border-gray-300 bg-white"
-                          }`}
-                        >
-                          {isSelected && <CheckIcon className="w-3.5 h-3.5 stroke-[3]" />}
+                          {/* Radio circle */}
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isSelected
+                                ? "bg-[#e81c78] text-white shadow-sm ring-4 ring-pink-100"
+                                : "border-2 border-gray-300 bg-white"
+                              }`}
+                          >
+                            {isSelected && <CheckIcon className="w-3.5 h-3.5 stroke-[3]" />}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+
+                  {/* Account Number Input */}
+                  <div className="pt-2 space-y-2">
+                    <label className="block text-xs font-bold text-gray-700">
+                      আপনার {currentMethod.name} অ্যাকাউন্ট নম্বর লিখুন:
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        value={account}
+                        onChange={(e) => setAccount(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="01XXXXXXXXX"
+                        maxLength={11}
+                        className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-mono font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                      />
+                      {account.length === 11 && (
+                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500 flex items-center gap-1">
+                          <span className="text-[11px] font-bold hidden sm:inline text-emerald-600">
+                            সঠিক নম্বর
+                          </span>
+                          <CheckCircleIcon className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Info note */}
+                  <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-100 flex items-center gap-2 text-xs text-purple-900 font-medium">
+                    <InformationCircleIcon className="w-4 h-4 text-purple-600 shrink-0" />
+                    <span>Withdraw only to your own account number.</span>
+                  </div>
                 </div>
 
-                {/* Account Number Input */}
-                <div className="pt-2 space-y-2">
-                  <label className="block text-xs font-bold text-gray-700">
-                    আপনার {currentMethod.name} অ্যাকাউন্ট নম্বর লিখুন:
-                  </label>
-                  <div className="relative">
+                {/* 2. Enter Withdraw Amount Card */}
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xs sm:text-sm font-bold text-gray-800 tracking-tight">
+                      2. Enter Withdraw Amount
+                    </h2>
+                    <span className="text-[11px] font-semibold text-gray-400">
+                      সীমা: ৳{currentMethod.minAmount} — ৳{currentMethod.maxAmount}
+                    </span>
+                  </div>
+
+                  {/* Amount input with Currency Symbol and "All" button */}
+                  <div className="relative flex items-center">
+                    <span className="absolute left-4 text-gray-700 font-bold text-base select-none">
+                      ৳
+                    </span>
                     <input
-                      type="tel"
-                      value={account}
-                      onChange={(e) => setAccount(e.target.value.replace(/[^0-9]/g, ""))}
-                      placeholder="01XXXXXXXXX"
-                      maxLength={11}
-                      className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-mono font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="Enter amount"
+                      className="w-full pl-9 pr-16 py-3.5 bg-gray-50/70 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                     />
-                    {account.length === 11 && (
-                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500 flex items-center gap-1">
-                        <span className="text-[11px] font-bold hidden sm:inline text-emerald-600">
-                          সঠিক নম্বর
-                        </span>
-                        <CheckCircleIcon className="w-5 h-5" />
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setAmount(userBalance > 0 ? userBalance.toString() : "")}
+                      className="absolute right-2.5 px-3 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-black active:scale-95 transition-all"
+                    >
+                      All
+                    </button>
+                  </div>
+
+                  {/* Quick Amount Pills */}
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 pt-1">
+                    {quickAmounts.map((qa) => {
+                      const isSelected = Number(amount) === qa;
+                      return (
+                        <button
+                          key={qa}
+                          type="button"
+                          onClick={() => setAmount(qa.toString())}
+                          className={`py-2.5 rounded-xl text-xs font-bold transition-all ${isSelected
+                              ? "bg-purple-600 text-white shadow-sm shadow-purple-500/20 scale-[1.02]"
+                              : "bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-100/80"
+                            }`}
+                        >
+                          ৳{qa.toLocaleString()}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Validation Alerts */}
+                  {isBelowMin && (
+                    <p className="text-xs text-red-500 font-medium flex items-center gap-1.5 pt-1">
+                      <ExclamationTriangleIcon className="w-4 h-4 shrink-0" />
+                      <span>সর্বনিম্ন উত্তোলনের পরিমাণ ৳{currentMethod.minAmount}.00</span>
+                    </p>
+                  )}
+                  {isInsufficient && (
+                    <p className="text-xs text-red-500 font-medium flex items-center gap-1.5 pt-1">
+                      <ExclamationTriangleIcon className="w-4 h-4 shrink-0" />
+                      <span>আপনার পর্যাপ্ত ব্যালেন্স নেই (বর্তমান ব্যালেন্স: ৳{userBalance})</span>
+                    </p>
+                  )}
+
+                  {/* Minimum withdraw note */}
+                  <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-100 flex items-start gap-2 text-xs text-purple-900 font-medium">
+                    <InformationCircleIcon className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p>Minimum withdraw amount is ৳{formatCurrency(currentMethod.minAmount)}.</p>
+                      <p className="text-purple-600/80 text-[11px]">Withdraw charges may apply.</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Info note */}
-                <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-100 flex items-center gap-2 text-xs text-purple-900 font-medium">
-                  <InformationCircleIcon className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span>Withdraw only to your own account number.</span>
-                </div>
+                {/* 3. Withdraw Summary (Rendered on mobile directly inside form flow) */}
+                <div className="block lg:hidden">{renderSummaryCard()}</div>
+
+                {/* Continue Button */}
+                <button
+                  type="button"
+                  onClick={handleContinueToConfirm}
+                  disabled={!canProceedToConfirm}
+                  className={`w-full py-4 rounded-2xl font-black text-sm tracking-wide shadow-lg transition-all flex items-center justify-center gap-2 ${canProceedToConfirm
+                      ? "bg-gradient-to-r from-[#d9176c] via-[#b81da8] to-[#6d25d9] hover:from-[#c41360] hover:to-[#5e1ec2] text-white shadow-pink-500/25 active:scale-[0.99]"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                    }`}
+                >
+                  <span>Continue</span>
+                  <ArrowRightIcon className="w-4 h-4 stroke-[2.5]" />
+                </button>
               </div>
-
-              {/* 2. Enter Withdraw Amount Card */}
-              <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xs sm:text-sm font-bold text-gray-800 tracking-tight">
-                    2. Enter Withdraw Amount
-                  </h2>
-                  <span className="text-[11px] font-semibold text-gray-400">
-                    সীমা: ৳{currentMethod.minAmount} — ৳{currentMethod.maxAmount}
-                  </span>
-                </div>
-
-                {/* Amount input with Currency Symbol and "All" button */}
-                <div className="relative flex items-center">
-                  <span className="absolute left-4 text-gray-700 font-bold text-base select-none">
-                    ৳
-                  </span>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Enter amount"
-                    className="w-full pl-9 pr-16 py-3.5 bg-gray-50/70 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setAmount(userBalance > 0 ? userBalance.toString() : "")}
-                    className="absolute right-2.5 px-3 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-black active:scale-95 transition-all"
-                  >
-                    All
-                  </button>
-                </div>
-
-                {/* Quick Amount Pills */}
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 pt-1">
-                  {quickAmounts.map((qa) => {
-                    const isSelected = Number(amount) === qa;
-                    return (
-                      <button
-                        key={qa}
-                        type="button"
-                        onClick={() => setAmount(qa.toString())}
-                        className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
-                          isSelected
-                            ? "bg-purple-600 text-white shadow-sm shadow-purple-500/20 scale-[1.02]"
-                            : "bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-100/80"
-                        }`}
-                      >
-                        ৳{qa.toLocaleString()}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Validation Alerts */}
-                {isBelowMin && (
-                  <p className="text-xs text-red-500 font-medium flex items-center gap-1.5 pt-1">
-                    <ExclamationTriangleIcon className="w-4 h-4 shrink-0" />
-                    <span>সর্বনিম্ন উত্তোলনের পরিমাণ ৳{currentMethod.minAmount}.00</span>
-                  </p>
-                )}
-                {isInsufficient && (
-                  <p className="text-xs text-red-500 font-medium flex items-center gap-1.5 pt-1">
-                    <ExclamationTriangleIcon className="w-4 h-4 shrink-0" />
-                    <span>আপনার পর্যাপ্ত ব্যালেন্স নেই (বর্তমান ব্যালেন্স: ৳{userBalance})</span>
-                  </p>
-                )}
-
-                {/* Minimum withdraw note */}
-                <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-100 flex items-start gap-2 text-xs text-purple-900 font-medium">
-                  <InformationCircleIcon className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p>Minimum withdraw amount is ৳{formatCurrency(currentMethod.minAmount)}.</p>
-                    <p className="text-purple-600/80 text-[11px]">Withdraw charges may apply.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. Withdraw Summary (Rendered on mobile directly inside form flow) */}
-              <div className="block lg:hidden">{renderSummaryCard()}</div>
-
-              {/* Continue Button */}
-              <button
-                type="button"
-                onClick={handleContinueToConfirm}
-                disabled={!canProceedToConfirm}
-                className={`w-full py-4 rounded-2xl font-black text-sm tracking-wide shadow-lg transition-all flex items-center justify-center gap-2 ${
-                  canProceedToConfirm
-                    ? "bg-gradient-to-r from-[#d9176c] via-[#b81da8] to-[#6d25d9] hover:from-[#c41360] hover:to-[#5e1ec2] text-white shadow-pink-500/25 active:scale-[0.99]"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
-                }`}
-              >
-                <span>Continue</span>
-                <ArrowRightIcon className="w-4 h-4 stroke-[2.5]" />
-              </button>
-            </div>
             )
           )}
 

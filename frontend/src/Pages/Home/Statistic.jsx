@@ -34,7 +34,7 @@ const Statistic = () => {
         {
             id: 3,
             title: 'Trainer & Admin',
-            value: '10',
+            value: '20 +',
             icon: faCrown,
             color: 'indigo'
         },
@@ -48,7 +48,7 @@ const Statistic = () => {
     ];
 
     const getColorClasses = (color) => {
-        switch(color) {
+        switch (color) {
             case 'purple': return 'bg-purple-100 text-purple-600';
             case 'blue': return 'bg-blue-100 text-blue-600';
             case 'indigo': return 'bg-indigo-100 text-indigo-600';
@@ -61,8 +61,8 @@ const Statistic = () => {
         <div className="relative -mt-10 max-w-[1140px] mx-auto px-6 z-20">
             <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
                 {items.map((item, index) => (
-                    <motion.div 
-                        key={item.id} 
+                    <motion.div
+                        key={item.id}
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, margin: "-50px" }}

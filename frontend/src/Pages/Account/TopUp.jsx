@@ -416,12 +416,12 @@ const TopUp = () => {
       {/* 🚀 RESPONSIVE 2-COLUMN GRID (Desktop: Left Form + Right Sticky Sidebar) */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
+
         {/* ======================================================================= */}
         {/* LEFT COLUMN: Steps (Request -> Confirm -> Complete) */}
         {/* ======================================================================= */}
         <div className="lg:col-span-7 xl:col-span-7 space-y-5">
-          
+
           {/* STEP 1: REQUEST & TRANSFER FORM */}
           {step === 1 && (
             isGatewayLoading ? (
@@ -444,7 +444,7 @@ const TopUp = () => {
                 </div>
                 <div className="pt-2 flex justify-center">
                   <a
-                    href="https://wa.me/+8801731686679"
+                    href="https://m.me/1151649641374328"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20 hover:scale-[1.02] transition-transform"
@@ -455,264 +455,258 @@ const TopUp = () => {
                 </div>
               </div>
             ) : (
-            <div className="space-y-5 animate-fadeIn">
-              {/* 1. Select Payment Method Card */}
-              <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xs sm:text-sm font-bold text-gray-800 tracking-tight">
-                    1. Select Payment Method
-                  </h2>
-                  <span className="text-[11px] font-semibold text-purple-600">
-                    মেথড নির্বাচন করুন
-                  </span>
-                </div>
+              <div className="space-y-5 animate-fadeIn">
+                {/* 1. Select Payment Method Card */}
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xs sm:text-sm font-bold text-gray-800 tracking-tight">
+                      1. Select Payment Method
+                    </h2>
+                    <span className="text-[11px] font-semibold text-purple-600">
+                      মেথড নির্বাচন করুন
+                    </span>
+                  </div>
 
-                {/* Grid for payment methods */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {paymentMethods.map((m) => {
-                    const isSelected = selectedMethod === m.id;
-                    return (
-                      <div
-                        key={m.id}
-                        onClick={() => setSelectedMethod(m.id)}
-                        className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                          isSelected
-                            ? m.bgActive
-                            : "border-gray-200/90 bg-white hover:bg-gray-50/80"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center p-1.5 shrink-0 overflow-hidden">
-                            <img
-                              src={m.logo}
-                              alt={m.name}
-                              className="w-full h-full object-contain"
-                              onError={(e) => {
-                                e.currentTarget.src = "/logo/bank.png";
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <div className="text-sm font-bold text-gray-900">{m.name}</div>
-                            <div className="text-[11px] text-gray-400 font-mono">
-                              {m.subtitle}
+                  {/* Grid for payment methods */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {paymentMethods.map((m) => {
+                      const isSelected = selectedMethod === m.id;
+                      return (
+                        <div
+                          key={m.id}
+                          onClick={() => setSelectedMethod(m.id)}
+                          className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${isSelected
+                              ? m.bgActive
+                              : "border-gray-200/90 bg-white hover:bg-gray-50/80"
+                            }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center p-1.5 shrink-0 overflow-hidden">
+                              <img
+                                src={m.logo}
+                                alt={m.name}
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                  e.currentTarget.src = "/logo/bank.png";
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <div className="text-sm font-bold text-gray-900">{m.name}</div>
+                              <div className="text-[11px] text-gray-400 font-mono">
+                                {m.subtitle}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Radio circle */}
-                        <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                            isSelected
-                              ? "bg-[#e81c78] text-white shadow-sm ring-4 ring-pink-100"
-                              : "border-2 border-gray-300 bg-white"
+                          {/* Radio circle */}
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isSelected
+                                ? "bg-[#e81c78] text-white shadow-sm ring-4 ring-pink-100"
+                                : "border-2 border-gray-300 bg-white"
+                              }`}
+                          >
+                            {isSelected && <CheckIcon className="w-3.5 h-3.5 stroke-[3]" />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* 📌 Official Send Money Number Box */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-purple-50/80 via-indigo-50/60 to-pink-50/40 border border-purple-100 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                        <SparklesIcon className="w-4 h-4 text-purple-600" />
+                        <span>অফিশিয়াল {currentMethod.name} নম্বর (Send Money):</span>
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-200/60 text-purple-800">
+                        Personal
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-2.5">
+                      <div className="w-full sm:flex-1 p-3 bg-white rounded-xl border border-purple-200/80 font-mono font-black text-sm text-gray-900 tracking-wider select-all shadow-sm">
+                        {adminNumber}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleCopy}
+                        disabled={!adminNumber || adminNumber === "N/A"}
+                        className={`w-full sm:w-auto px-4 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm ${copied
+                            ? "bg-emerald-500 text-white"
+                            : "bg-purple-600 hover:bg-purple-700 text-white active:scale-95"
                           }`}
-                        >
-                          {isSelected && <CheckIcon className="w-3.5 h-3.5 stroke-[3]" />}
+                      >
+                        {copied ? (
+                          <>
+                            <CheckIcon className="w-4 h-4 stroke-[3]" />
+                            <span>কপি হয়েছে</span>
+                          </>
+                        ) : (
+                          <>
+                            <DocumentDuplicateIcon className="w-4 h-4" />
+                            <span>কপি করুন</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {selectedMethod === "Payeer" && (
+                      <div className="flex items-center gap-2 pt-1.5">
+                        <span className="text-xs font-bold text-gray-700">কারেন্সি:</span>
+                        <div className="flex gap-1.5">
+                          {["bdt", "usd", "rub"].map((curr) => (
+                            <button
+                              key={curr}
+                              type="button"
+                              onClick={() => setCurrency(curr)}
+                              className={`px-3 py-1 rounded-xl text-xs font-bold uppercase transition-all ${currency === curr
+                                  ? "bg-purple-600 text-white shadow-sm"
+                                  : "bg-white text-gray-600 border border-gray-200"
+                                }`}
+                            >
+                              {curr}
+                            </button>
+                          ))}
                         </div>
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
+
+                  {/* Important notice */}
+                  <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/60 flex items-start gap-2.5 text-xs text-amber-900">
+                    <InformationCircleIcon className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold">সতর্কতা: </span>
+                      টাকা পাঠানোর সময় অবশ্যই <span className="font-bold">Send Money</span> অপশন
+                      ব্যবহার করবেন। ভুল নম্বরে টাকা পাঠালে এডমিন দায়ী থাকবে না।
+                    </div>
+                  </div>
                 </div>
 
-                {/* 📌 Official Send Money Number Box */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-purple-50/80 via-indigo-50/60 to-pink-50/40 border border-purple-100 space-y-2.5">
+                {/* 2. Amount & Trx Details Card */}
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
-                      <SparklesIcon className="w-4 h-4 text-purple-600" />
-                      <span>অফিশিয়াল {currentMethod.name} নম্বর (Send Money):</span>
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-200/60 text-purple-800">
-                      Personal
+                    <h2 className="text-xs sm:text-sm font-bold text-gray-800 tracking-tight">
+                      2. Payment Details
+                    </h2>
+                    <span className="text-[11px] font-semibold text-gray-400">
+                      সীমা: ৳{currentMethod.minAmount} — ৳{currentMethod.maxAmount}
                     </span>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-center gap-2.5">
-                    <div className="w-full sm:flex-1 p-3 bg-white rounded-xl border border-purple-200/80 font-mono font-black text-sm text-gray-900 tracking-wider select-all shadow-sm">
-                      {adminNumber}
+                  {/* Amount input */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-gray-700">
+                      টাকার পরিমাণ (Amount):
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700 font-bold text-base select-none">
+                        ৳
+                      </span>
+                      <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="টাকার পরিমাণ লিখুন"
+                        className="w-full pl-9 pr-4 py-3.5 bg-gray-50/70 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                      />
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={handleCopy}
-                      disabled={!adminNumber || adminNumber === "N/A"}
-                      className={`w-full sm:w-auto px-4 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm ${
-                        copied
-                          ? "bg-emerald-500 text-white"
-                          : "bg-purple-600 hover:bg-purple-700 text-white active:scale-95"
-                      }`}
-                    >
-                      {copied ? (
-                        <>
-                          <CheckIcon className="w-4 h-4 stroke-[3]" />
-                          <span>কপি হয়েছে</span>
-                        </>
-                      ) : (
-                        <>
-                          <DocumentDuplicateIcon className="w-4 h-4" />
-                          <span>কপি করুন</span>
-                        </>
-                      )}
-                    </button>
                   </div>
 
-                  {selectedMethod === "Payeer" && (
-                    <div className="flex items-center gap-2 pt-1.5">
-                      <span className="text-xs font-bold text-gray-700">কারেন্সি:</span>
-                      <div className="flex gap-1.5">
-                        {["bdt", "usd", "rub"].map((curr) => (
-                          <button
-                            key={curr}
-                            type="button"
-                            onClick={() => setCurrency(curr)}
-                            className={`px-3 py-1 rounded-xl text-xs font-bold uppercase transition-all ${
-                              currency === curr
-                                ? "bg-purple-600 text-white shadow-sm"
-                                : "bg-white text-gray-600 border border-gray-200"
+                  {/* Quick Amount Pills */}
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-1">
+                    {quickAmounts.map((qa) => {
+                      const isSelected = Number(amount) === qa;
+                      return (
+                        <button
+                          key={qa}
+                          type="button"
+                          onClick={() => setAmount(qa.toString())}
+                          className={`py-2 rounded-xl text-xs font-black transition-all ${isSelected
+                              ? "bg-[#0b0c2a] text-white shadow-md shadow-indigo-950/20 scale-[1.02]"
+                              : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                             }`}
-                          >
-                            {curr}
-                          </button>
-                        ))}
-                      </div>
+                        >
+                          ৳{qa}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Transaction ID Input */}
+                  <div className="space-y-1.5 pt-2">
+                    <label className="block text-xs font-bold text-gray-700">
+                      Transaction ID (TrxID):
+                    </label>
+                    <div className="relative">
+                      <KeyIcon className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={trx}
+                        onChange={(e) => setTrx(e.target.value.toUpperCase())}
+                        placeholder="যেমন: BKA872X99"
+                        className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-mono uppercase font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                      />
+                      {isTrxValid && (
+                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500">
+                          <CheckCircleIcon className="w-5 h-5" />
+                        </div>
+                      )}
                     </div>
+                  </div>
+
+                  {/* Sender Phone Number Input */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-gray-700">
+                      যে নম্বর থেকে টাকা পাঠিয়েছেন (Sender Account):
+                    </label>
+                    <div className="relative">
+                      <PhoneIcon className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={account}
+                        onChange={(e) => setAccount(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="01XXXXXXXXX"
+                        maxLength={11}
+                        className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-mono font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                      />
+                      {account.length === 11 && (
+                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500">
+                          <CheckCircleIcon className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Validation Warnings */}
+                  {isBelowMin && (
+                    <p className="text-xs text-red-500 font-medium flex items-center gap-1.5 pt-1">
+                      <ExclamationTriangleIcon className="w-4 h-4 shrink-0" />
+                      <span>সর্বনিম্ন টপ-আপের পরিমাণ ৳{currentMethod.minAmount}.00</span>
+                    </p>
                   )}
                 </div>
 
-                {/* Important notice */}
-                <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/60 flex items-start gap-2.5 text-xs text-amber-900">
-                  <InformationCircleIcon className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold">সতর্কতা: </span>
-                    টাকা পাঠানোর সময় অবশ্যই <span className="font-bold">Send Money</span> অপশন
-                    ব্যবহার করবেন। ভুল নম্বরে টাকা পাঠালে এডমিন দায়ী থাকবে না।
-                  </div>
-                </div>
+                {/* 3. Summary (Visible on mobile directly) */}
+                <div className="block lg:hidden">{renderSummaryCard()}</div>
+
+                {/* Continue Action Button */}
+                <button
+                  type="button"
+                  onClick={handleContinueToConfirm}
+                  disabled={!canProceedToConfirm}
+                  className={`w-full py-4 rounded-2xl font-black text-sm tracking-wide shadow-lg transition-all flex items-center justify-center gap-2 ${canProceedToConfirm
+                      ? "bg-gradient-to-r from-[#d9176c] via-[#b81da8] to-[#6d25d9] hover:from-[#c41360] hover:to-[#5e1ec2] text-white shadow-pink-500/25 active:scale-[0.99]"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                    }`}
+                >
+                  <span>Continue</span>
+                  <ArrowRightIcon className="w-4 h-4 stroke-[2.5]" />
+                </button>
               </div>
-
-              {/* 2. Amount & Trx Details Card */}
-              <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xs sm:text-sm font-bold text-gray-800 tracking-tight">
-                    2. Payment Details
-                  </h2>
-                  <span className="text-[11px] font-semibold text-gray-400">
-                    সীমা: ৳{currentMethod.minAmount} — ৳{currentMethod.maxAmount}
-                  </span>
-                </div>
-
-                {/* Amount input */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-gray-700">
-                    টাকার পরিমাণ (Amount):
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700 font-bold text-base select-none">
-                      ৳
-                    </span>
-                    <input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="টাকার পরিমাণ লিখুন"
-                      className="w-full pl-9 pr-4 py-3.5 bg-gray-50/70 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Quick Amount Pills */}
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-1">
-                  {quickAmounts.map((qa) => {
-                    const isSelected = Number(amount) === qa;
-                    return (
-                      <button
-                        key={qa}
-                        type="button"
-                        onClick={() => setAmount(qa.toString())}
-                        className={`py-2 rounded-xl text-xs font-black transition-all ${
-                          isSelected
-                            ? "bg-[#0b0c2a] text-white shadow-md shadow-indigo-950/20 scale-[1.02]"
-                            : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                        }`}
-                      >
-                        ৳{qa}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Transaction ID Input */}
-                <div className="space-y-1.5 pt-2">
-                  <label className="block text-xs font-bold text-gray-700">
-                    Transaction ID (TrxID):
-                  </label>
-                  <div className="relative">
-                    <KeyIcon className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={trx}
-                      onChange={(e) => setTrx(e.target.value.toUpperCase())}
-                      placeholder="যেমন: BKA872X99"
-                      className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-mono uppercase font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
-                    />
-                    {isTrxValid && (
-                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500">
-                        <CheckCircleIcon className="w-5 h-5" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Sender Phone Number Input */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-gray-700">
-                    যে নম্বর থেকে টাকা পাঠিয়েছেন (Sender Account):
-                  </label>
-                  <div className="relative">
-                    <PhoneIcon className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={account}
-                      onChange={(e) => setAccount(e.target.value.replace(/[^0-9]/g, ""))}
-                      placeholder="01XXXXXXXXX"
-                      maxLength={11}
-                      className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-mono font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
-                    />
-                    {account.length === 11 && (
-                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500">
-                        <CheckCircleIcon className="w-5 h-5" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Validation Warnings */}
-                {isBelowMin && (
-                  <p className="text-xs text-red-500 font-medium flex items-center gap-1.5 pt-1">
-                    <ExclamationTriangleIcon className="w-4 h-4 shrink-0" />
-                    <span>সর্বনিম্ন টপ-আপের পরিমাণ ৳{currentMethod.minAmount}.00</span>
-                  </p>
-                )}
-              </div>
-
-              {/* 3. Summary (Visible on mobile directly) */}
-              <div className="block lg:hidden">{renderSummaryCard()}</div>
-
-              {/* Continue Action Button */}
-              <button
-                type="button"
-                onClick={handleContinueToConfirm}
-                disabled={!canProceedToConfirm}
-                className={`w-full py-4 rounded-2xl font-black text-sm tracking-wide shadow-lg transition-all flex items-center justify-center gap-2 ${
-                  canProceedToConfirm
-                    ? "bg-gradient-to-r from-[#d9176c] via-[#b81da8] to-[#6d25d9] hover:from-[#c41360] hover:to-[#5e1ec2] text-white shadow-pink-500/25 active:scale-[0.99]"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
-                }`}
-              >
-                <span>Continue</span>
-                <ArrowRightIcon className="w-4 h-4 stroke-[2.5]" />
-              </button>
-            </div>
             )
           )}
 

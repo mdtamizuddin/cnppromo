@@ -254,7 +254,7 @@ const Welcome = () => {
   return (
     <div className="bg-[#f8faff] min-h-screen pb-20 pt-6">
       <div className="container mx-auto px-4 max-w-6xl space-y-8">
-        
+
         {/* 🌟 Top Dark Hero Banner */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b0c2a] via-[#151954] to-[#0b0c2a] p-6 sm:p-8 lg:p-10 text-white shadow-xl border border-indigo-900/30">
           {/* Ambient Glows */}
@@ -262,7 +262,7 @@ const Welcome = () => {
           <div className="absolute left-1/3 bottom-0 w-60 h-60 bg-blue-600/15 rounded-full blur-2xl pointer-events-none"></div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-            
+
             {/* Left Content */}
             <div className="lg:col-span-8 space-y-6">
               <div>
@@ -343,7 +343,7 @@ const Welcome = () => {
 
         {/* 📊 5 Key Metric Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          
+
           {/* 1. Today's Earnings */}
           <Card className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2">
@@ -474,11 +474,10 @@ const Welcome = () => {
               return (
                 <Link key={action.id} to={action.to}>
                   <Card
-                    className={`p-5 bg-white rounded-2xl border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center relative group h-full justify-between ${
-                      action.activeBorder
-                        ? "border-primary ring-2 ring-teal-500/10 shadow-teal-500/10"
-                        : "border-gray-100"
-                    }`}
+                    className={`p-5 bg-white rounded-2xl border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center relative group h-full justify-between ${action.activeBorder
+                      ? "border-primary ring-2 ring-teal-500/10 shadow-teal-500/10"
+                      : "border-gray-100"
+                      }`}
                   >
                     {action.badge && (
                       <span className="absolute top-2.5 right-2.5 text-[9px] font-extrabold px-1.5 py-0.5 bg-primary text-white rounded-md shadow-sm">
@@ -566,7 +565,7 @@ const Welcome = () => {
               <LightBulbIcon className="w-5 h-5 text-amber-600 shrink-0" />
               <span>বিশেষ কাজের পরামর্শ ও নির্দেশিকা:</span>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-700">
               <div className="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-amber-100 flex items-start gap-2">
                 <span className="text-amber-500 font-black">১.</span>
@@ -586,7 +585,7 @@ const Welcome = () => {
 
         {/* 📊 Two-Column Middle Section: My Tasks & Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Left Column: My Tasks */}
           <Card className="lg:col-span-5 p-6 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
             <div>
@@ -708,7 +707,7 @@ const Welcome = () => {
 
         {/* 💳 Bottom Section: Payment Methods & Daily Bonus */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Left Column: Payment Methods */}
           <Card className="lg:col-span-6 p-6 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
             <div>
@@ -743,13 +742,13 @@ const Welcome = () => {
             <div className="space-y-2 text-center sm:text-left z-10">
               <h3 className="text-lg font-black text-white">Daily Bonus</h3>
               <p className="text-xs text-gray-300">Login daily & claim your bonus</p>
-              <p className="text-2xl font-black text-amber-400">৳10</p>
-              
+              <p className="text-2xl font-black text-amber-400">৳0</p>
+
               <Button
-                onClick={handleClaimBonus}
-                className="bg-gradient-to-r from-[#ff6b6b] to-[#ff8e53] hover:from-[#fa5252] hover:to-[#f76707] normal-case text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-md transition-all hover:scale-105"
+                disabled={true}
+                className="bg-gray-700/60 text-gray-400 normal-case font-bold text-xs px-6 py-2.5 rounded-xl shadow-none cursor-not-allowed border border-gray-600/40 opacity-70"
               >
-                {claimedBonus ? "Claimed ✓" : "Claim Now"}
+                Claim Now
               </Button>
             </div>
 
@@ -763,7 +762,7 @@ const Welcome = () => {
 
         {/* 📚 Help & Rules Strip (4 Info Cards) */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-          
+
           <Link to="/how-it-works">
             <Card className="p-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0">
@@ -800,7 +799,8 @@ const Welcome = () => {
             </Card>
           </Link>
 
-          <Link to="/user/message">
+          <a href="https://m.me/1151649641374328" target="_blank"
+            rel="noopener noreferrer">
             <Card className="p-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center shrink-0">
                 <QuestionMarkCircleIcon className="w-5 h-5" />
@@ -810,7 +810,7 @@ const Welcome = () => {
                 <p className="text-[10px] text-gray-400 truncate">We are here to help</p>
               </div>
             </Card>
-          </Link>
+          </a>
 
         </div>
 
