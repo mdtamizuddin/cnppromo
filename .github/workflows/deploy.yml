@@ -148,7 +148,7 @@ jobs:
 
             # Install production dependencies cleanly with pnpm (hoisted flat structure for PM2)
             echo "📦 Installing production dependencies with pnpm..."
-            pnpm install --prod --no-frozen-lockfile --config.node-linker=hoisted
+            pnpm install
 
             # Reload or start PM2 application
             echo "🚀 Reloading PM2 process..."
