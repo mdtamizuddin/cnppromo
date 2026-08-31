@@ -1,3 +1,46 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* =========================================================================
+   🎨 CENTRALIZED APP THEME DESIGN TOKENS
+   To change the entire app's primary theme in the future, simply update
+   these CSS variables below in one single place.
+   ========================================================================= */
+:root {
+  /* 🌟 Primary Theme (Fresh Mint / Teal / Sky Brand from Banner) */
+  --color-primary: #0D9488;          /* Primary Accent (Vibrant Teal) */
+  --color-primary-hover: #0F766E;    /* Darker Teal on Hover */
+  --color-primary-light: #E6F8F5;    /* Soft Pastel Mint for Badges/Pills */
+  --color-primary-gradient-from: #0EA5E9; /* Sky Cyan for Gradient Buttons & Banners */
+  --color-primary-gradient-to: #0D9488;   /* Deep Teal */
+
+  /* 🔷 Secondary Accent (Sky Blue) */
+  --color-secondary: #0284C7;
+  --color-secondary-light: #E0F2FE;
+
+  /* 🎁 Reward & Action Accent (Golden Amber) */
+  --color-accent: #F59E0B;
+  --color-accent-light: #FEF3C7;
+
+  /* 🖼️ Canvas, Card & Layout Surfaces */
+  --color-canvas: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-heading: #0F172A;
+  --color-body: #475569;
+}
+
+/* Global utility classes for centralized gradients and brand buttons */
+@layer utilities {
+  .bg-brand-gradient {
+    background: linear-gradient(135deg, var(--color-primary-gradient-from) 0%, var(--color-primary-gradient-to) 100%);
+  }
+  .bg-banner-gradient {
+    background: linear-gradient(135deg, #d8f5ee 0%, #cbf2f0 50%, #fff3e5 100%);
+  }
+  .text-brand-gradient {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}

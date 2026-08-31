@@ -54,7 +54,7 @@ export const userRoutes = [
   },
   {
     path: "all-message",
-    element: <Lazy><AllMessages /></Lazy>,
+    element: <AuthChecker><Lazy><AllMessages /></Lazy></AuthChecker>,
   },
   {
     path: "leaderboard",

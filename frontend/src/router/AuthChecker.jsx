@@ -7,7 +7,7 @@ import RequierActive from './RequierActive';
 
 const Login = lazy(() => import('../Pages/Auth/Login/Login'));
 
-const AuthChecker = ({ children, requireActive = false }) => {
+const AuthChecker = ({ children, requireActive = true }) => {
     const location = useLocation();
     const { user } = useSelector((state) => state.user);
     const token = Cookie.get("token-you");
@@ -26,8 +26,9 @@ const AuthChecker = ({ children, requireActive = false }) => {
         );
     }
 
-    // 3. If active status is required (e.g. for /message) and user is not active (non-admins)
-    if (requireActive && user.role !== "admin" && user.role !== "moderator" && user.status !== "active") {
+    // 3. If user is not active (non-admins) -> show the RequierActive waiting screen
+    const isActive = user.status === "active" || user.active === true;
+    if (requireActive && user.role !== "admin" && user.role !== "moderator" && !isActive) {
         return <RequierActive />;
     }
 

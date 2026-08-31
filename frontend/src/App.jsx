@@ -42,6 +42,13 @@ const MainLayout = () => {
 
   const toggleSidebar = () => setDrawerOpen((prev) => !prev);
 
+  const isInactiveUser =
+    user &&
+    user.role !== "admin" &&
+    user.role !== "moderator" &&
+    user.status !== "active" &&
+    !user.active;
+
   return (
     <>
       <ScrollRestoration />
@@ -54,7 +61,7 @@ const MainLayout = () => {
       />
       <div
         className={
-          !user
+          !user || isInactiveUser
             ? "w-full min-h-screen"
             : isMessageRoute
             ? "w-full lg:pl-72 transition-all"

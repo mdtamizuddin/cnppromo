@@ -11,6 +11,7 @@ import ProfileMenu from "./ProfileMenu";
 import AdminDropdown from "./AdminDropdown";
 import UserSidebarDrawer from "./UserSidebarDrawer";
 import UserBottomBar from "./UserBottomBar";
+import Cookie from "js-cookie";
 import { useUnreadNotifications } from "../../util/useUnreadNotifications";
 import { Typewriter } from "react-simple-typewriter";
 
@@ -53,10 +54,17 @@ const Topbar = ({
     setMobileNavOpen(false);
   }, [pathname]);
 
+  const isInactiveUser =
+    user &&
+    user.role !== "admin" &&
+    user.role !== "moderator" &&
+    user.status !== "active" &&
+    !user.active;
+
   // ----------------------------------------------------
-  // LOGGED-IN USER: NO TOPBAR, KEEP DESKTOP SIDEBAR & MOBILE BOTTOM BAR
+  // LOGGED-IN ACTIVE USER: KEEP DESKTOP SIDEBAR & MOBILE BOTTOM BAR
   // ----------------------------------------------------
-  if (user) {
+  if (user && !isInactiveUser) {
     return (
       <>
         {/* User Sidebar: Permanent on Desktop, Drawer on Mobile */}
@@ -129,23 +137,40 @@ const Topbar = ({
             ))}
 
             <div className="flex items-center gap-3 ml-4">
-              <Link to="/login">
-                <Button
-                  variant="outlined"
-                  size="sm"
-                  className="border-[#5a32fa] text-[#5a32fa] normal-case font-bold text-xs px-4 py-2 rounded-xl"
-                >
-                  লগইন করুন
-                </Button>
-              </Link>
-              <Link to="/register">
+              {user ? (
                 <Button
                   size="sm"
-                  className="bg-[#5a32fa] hover:bg-[#4b26e0] text-white normal-case font-bold text-xs px-4 py-2 rounded-xl shadow-md shadow-indigo-500/20"
+                  onClick={() => {
+                    Cookie.remove("token-you");
+                    Cookie.remove("accessToken");
+                    localStorage.clear();
+                    window.location.href = "/login";
+                  }}
+                  className="bg-rose-500 hover:bg-rose-600 text-white normal-case font-bold text-xs px-4 py-2 rounded-xl shadow-sm"
                 >
-                  রেজিস্টার করুন
+                  লগআউট ({user.username || user.name})
                 </Button>
-              </Link>
+              ) : (
+                <>
+                  <Link to="/login">
+                    <Button
+                      variant="outlined"
+                      size="sm"
+                      className="border-primary text-primary hover:bg-primary-light normal-case font-bold text-xs px-4 py-2 rounded-xl"
+                    >
+                      লগইন করুন
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button
+                      size="sm"
+                      className="bg-primary hover:bg-primary-hover text-white normal-case font-bold text-xs px-4 py-2 rounded-xl shadow-md shadow-teal-500/20"
+                    >
+                      রেজিস্টার করুন
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -206,19 +231,35 @@ const Topbar = ({
           ))}
 
           <div className="pt-4 border-t border-gray-100 flex flex-col gap-2">
-            <Link to="/login" onClick={() => setMobileNavOpen(false)}>
+            {user ? (
               <Button
-                variant="outlined"
-                className="w-full border-[#5a32fa] text-[#5a32fa] normal-case text-xs"
+                onClick={() => {
+                  Cookie.remove("token-you");
+                  Cookie.remove("accessToken");
+                  localStorage.clear();
+                  window.location.href = "/login";
+                }}
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white normal-case text-xs"
               >
-                লগইন করুন
+                লগআউট ({user.username || user.name})
               </Button>
-            </Link>
-            <Link to="/register" onClick={() => setMobileNavOpen(false)}>
-              <Button className="w-full bg-[#5a32fa] text-white normal-case text-xs">
-                রেজিস্টার করুন
-              </Button>
-            </Link>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setMobileNavOpen(false)}>
+                  <Button
+                    variant="outlined"
+                    className="w-full border-primary text-primary hover:bg-primary-light normal-case text-xs"
+                  >
+                    লগইন করুন
+                  </Button>
+                </Link>
+                <Link to="/register" onClick={() => setMobileNavOpen(false)}>
+                  <Button className="w-full bg-primary hover:bg-primary-hover text-white normal-case text-xs shadow-md shadow-teal-500/20">
+                    রেজিস্টার করুন
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

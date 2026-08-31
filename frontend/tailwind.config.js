@@ -18,14 +18,34 @@ export default withMT({
         slate: colors.slate,
         zinc: colors.zinc,
         violet: colors.violet,
-        'primary': '#050C9C',
-        "secondary": "#3ABEF9",
-        "T2": "#E52548",
-        // Messaging surface tokens. `brand` is the interactive accent the
-        // newest screens already use; `canvas` is the app-wide page ground.
-        "brand": "#5a32fa",
-        "brand-soft": "#efeaff",
-        "canvas": "#f8faff"
+        teal: colors.teal,
+        cyan: colors.cyan,
+        amber: colors.amber,
+
+        // 🎨 Centralized App Brand Theme Tokens (Controlled via :root in index.css)
+        primary: {
+          DEFAULT: "var(--color-primary, #0D9488)",
+          hover: "var(--color-primary-hover, #0F766E)",
+          light: "var(--color-primary-light, #E6F8F5)",
+          from: "var(--color-primary-gradient-from, #0EA5E9)",
+          to: "var(--color-primary-gradient-to, #0D9488)",
+        },
+        brand: {
+          DEFAULT: "var(--color-primary, #0D9488)",
+          hover: "var(--color-primary-hover, #0F766E)",
+          soft: "var(--color-primary-light, #E6F8F5)",
+        },
+        secondary: {
+          DEFAULT: "var(--color-secondary, #0284C7)",
+          light: "var(--color-secondary-light, #E0F2FE)",
+        },
+        accent: {
+          DEFAULT: "var(--color-accent, #F59E0B)",
+          light: "var(--color-accent-light, #FEF3C7)",
+        },
+        canvas: "var(--color-canvas, #F8FAFC)",
+        heading: "var(--color-heading, #0F172A)",
+        bodyText: "var(--color-body, #475569)",
       }
     },
   },

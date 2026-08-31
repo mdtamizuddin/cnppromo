@@ -70,7 +70,8 @@ const createUser = async (req, res) => {
             message: "আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে। অ্যাডমিনের অনুমোদনের পর কাজ করে ইনকাম শুরু করুন।",
             link: "/works",
         });
-        const token = tokenGenerator(user);
+        const { session } = await sessionService.startSession(req, user._id, "register");
+        const token = tokenGenerator(user, session._id);
         res.send({
             message: "User created successfully",
             token
