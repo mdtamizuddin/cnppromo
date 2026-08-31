@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import { api } from "../../../../util/axios";
 import SocialWorkFormModal from "./SocialWorkFormModal";
 import SubmissionReviewModal from "./SubmissionReviewModal";
+import DeleteConfirmModal from "../../../../Components/DeleteConfirmModal";
 import { youtubeThumb } from "./youtube";
 import {
   PageHeader, StatCard, StatGrid, TableCard, TableHead, EmptyState,
@@ -56,6 +57,7 @@ const PremiumAdminSocialWorksTable = () => {
   const [formWork, setFormWork] = useState(null);
   const [reviewSubmit, setReviewSubmit] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const queryClient = useQueryClient();
   const { ref: subsDesktopRef, inView: subsDesktopInView } = useInView();
   const { ref: subsMobileRef, inView: subsMobileInView } = useInView();
@@ -125,7 +127,6 @@ const PremiumAdminSocialWorksTable = () => {
   };
 
   const handleDeleteWork = async (work) => {
-    if (!window.confirm(`Delete "${work.title}"? This cannot be undone.`)) return;
     try {
       setDeletingId(work._id);
       await api.delete(`social-works/${work._id}`);
@@ -135,6 +136,7 @@ const PremiumAdminSocialWorksTable = () => {
       toast.error(err?.response?.data?.message || "Failed to delete");
     } finally {
       setDeletingId(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -308,7 +310,7 @@ const PremiumAdminSocialWorksTable = () => {
                             label="Delete task"
                             tone="red"
                             disabled={deletingId === work._id}
-                            onClick={() => handleDeleteWork(work)}
+                            onClick={() => setDeleteTarget(work)}
                           />
                         </div>
                       </td>
@@ -349,7 +351,7 @@ const PremiumAdminSocialWorksTable = () => {
                         label="Delete task"
                         tone="red"
                         disabled={deletingId === work._id}
-                        onClick={() => handleDeleteWork(work)}
+                        onClick={() => setDeleteTarget(work)}
                       />
                     </div>
                   </div>
@@ -571,6 +573,17 @@ const PremiumAdminSocialWorksTable = () => {
           onSuccess={refreshAll}
         />
       )}
+
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && handleDeleteWork(deleteTarget)}
+        title={`Delete "${deleteTarget?.title}"?`}
+        message="আপনি কি নিশ্চিত যে এই টাস্কটি স্থায়ীভাবে মুছে ফেলতে চান? এই অ্যাকশনটি পুনরায় ফিরিয়ে আনা সম্ভব নয়।"
+        itemName={deleteTarget?.title}
+        confirmText="Delete Task"
+        loading={deletingId === deleteTarget?._id}
+      />
     </div>
   );
 };

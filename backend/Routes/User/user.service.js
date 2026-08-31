@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = require("../../util/jwtSecret");
 const tokenGenerator = require("../../util/tokenGenerator");
 const { createRefer } = require("../Refer/refer.service");
-const Setting = require("../Settings/setting.model");
+const { getOrCreateSetting } = require("../Settings/settingStore");
 const Withdraw = require("../WithDraw/withdraw.model");
 const User = require("./user.model");
 const bcrypt = require("bcrypt");
@@ -665,7 +665,7 @@ const REFERRAL_GENERATIONS = 6;
 
 const activeAnUser = async (req, res) => {
     try {
-        const setting = await Setting.findById('66a4a094c8d1fd11daac6c28');
+        const setting = await getOrCreateSetting();
         if (!setting) {
             return res.status(500).send({
                 message: "Site settings are not configured"

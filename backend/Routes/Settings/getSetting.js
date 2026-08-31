@@ -1,20 +1,17 @@
-const Setting = require("./setting.model");
+const { getOrCreateSetting } = require("./settingStore");
 
 const getSetting = async () => {
     try {
-        const setting = await Setting.findById('66a4a094c8d1fd11daac6c28');
-        if (!setting) {
-            return {
-                success: false,
-                message: "Setting not found"
-            }
-        }
+        const setting = await getOrCreateSetting();
         return {
             success: true,
             setting
         }
     } catch (error) {
-        res.status(400).send(error.message);
+        return {
+            success: false,
+            message: error.message
+        }
     }
 }
 module.exports = getSetting

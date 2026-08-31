@@ -166,27 +166,44 @@ const handleDeviceLimitSubmit = async (e) => {
       <div className="container mx-auto px-4 max-w-3xl space-y-4">
         
         {/* 📱 Top Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-gray-200/70">
-          <div className="flex items-center gap-2.5">
-            <Link
-              to="/user/home"
-              className="w-8 h-8 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:text-[#5a32fa] transition-colors"
-            >
-              <ChevronLeftIcon className="w-4 h-4 stroke-[2.5]" />
-            </Link>
-            <div>
-              <h1 className="text-base sm:text-lg font-bold text-[#0b0c2a]">
-                অ্যাকাউন্ট সেটিংস
-              </h1>
-              <p className="text-[11px] text-gray-400">
-                ব্যক্তিগত তথ্য ও সিকিউরিটি কনফিগারেশন
-              </p>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1c4b] via-[#2c2f73] to-[#5a32fa] text-white p-5 shadow-lg shadow-indigo-500/20">
+          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute bottom-0 right-10 w-24 h-24 rounded-full bg-purple-400/20 blur-xl" />
+          <div className="relative flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Link
+                to="/user/home"
+                className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 backdrop-blur flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+              >
+                <ChevronLeftIcon className="w-4 h-4 stroke-[2.5]" />
+              </Link>
+              <div>
+                <h1 className="text-base sm:text-lg font-bold">
+                  অ্যাকাউন্ট সেটিংস
+                </h1>
+                <p className="text-[11px] text-white/70">
+                  ব্যক্তিগত তথ্য ও সিকিউরিটি কনফিগারেশন
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-100 text-[11px] font-bold border border-emerald-300/30 backdrop-blur">
+              <ShieldCheckIcon className="w-4 h-4 text-emerald-300" />
+              <span>ভেরিফাইড মেম্বার</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-100">
-            <ShieldCheckIcon className="w-4 h-4 text-emerald-500" />
-            <span>ভেরিফাইড মেম্বার</span>
+          <div className="relative mt-4 flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center font-black text-base">
+              {user?.name?.[0]?.toUpperCase() || "U"}
+            </div>
+            <div>
+              <p className="text-sm font-bold flex items-center gap-1">
+                <span>{user?.name}</span>
+                <CheckBadgeIcon className="w-4 h-4 text-sky-300" />
+              </p>
+              <p className="text-[11px] text-white/70 font-mono">@{user?.username} • Level {user?.level || 1}</p>
+            </div>
           </div>
         </div>
 
@@ -217,15 +234,16 @@ const handleDeviceLimitSubmit = async (e) => {
         {activeTab === "profile" && (
           <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#5a32fa] flex items-center justify-center font-black text-sm">
-                {user?.name?.[0]?.toUpperCase() || "U"}
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5a32fa] to-[#7928ca] text-white flex items-center justify-center font-black text-sm shadow-md shadow-indigo-500/20">
+                <UserIcon className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-1">
-                  <span>{user?.name}</span>
-                  <CheckBadgeIcon className="w-4 h-4 text-[#5a32fa]" />
+                <h3 className="text-sm font-bold text-[#0b0c2a]">
+                  প্রোফাইল তথ্য
                 </h3>
-                <p className="text-[11px] text-gray-400 font-mono">@{user?.username} • Level {user?.level || 1}</p>
+                <p className="text-[11px] text-gray-400">
+                  আপনার ব্যক্তিগত তথ্য সম্পাদনা করুন
+                </p>
               </div>
             </div>
 
@@ -322,7 +340,7 @@ const handleDeviceLimitSubmit = async (e) => {
               <div className="pt-2">
                 <Button
                   type="submit"
-                  className="w-full sm:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
+                  className="w-full sm:w-auto bg-gradient-to-r from-[#5a32fa] to-[#7928ca] hover:from-[#4b26e0] hover:to-[#6820ae] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
                 >
                   প্রোফাইল সেভ করুন
                 </Button>
@@ -336,11 +354,13 @@ const handleDeviceLimitSubmit = async (e) => {
           <>
           <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-1.5">
-                <LockClosedIcon className="w-4 h-4 text-[#5a32fa]" />
+              <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-2">
+                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#5a32fa] to-[#7928ca] text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+                  <LockClosedIcon className="w-4 h-4" />
+                </span>
                 <span>পাসওয়ার্ড পরিবর্তন করুন</span>
               </h3>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-gray-400 mt-1.5">
                 অ্যাকাউন্টের সুরক্ষার জন্য শক্তিশালী পাসওয়ার্ড ব্যবহার করুন
               </p>
             </div>
@@ -405,7 +425,7 @@ const handleDeviceLimitSubmit = async (e) => {
               <div className="pt-2">
                 <Button
                   type="submit"
-                  className="w-full sm:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
+                  className="w-full sm:w-auto bg-gradient-to-r from-[#5a32fa] to-[#7928ca] hover:from-[#4b26e0] hover:to-[#6820ae] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
                 >
                   পাসওয়ার্ড আপডেট করুন
                 </Button>
@@ -416,11 +436,13 @@ const handleDeviceLimitSubmit = async (e) => {
           {/* 📱 Tab 2b: Active Device Limit */}
           <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-1.5">
-                <DevicePhoneMobileIcon className="w-4 h-4 text-[#5a32fa]" />
+              <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-2">
+                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20">
+                  <DevicePhoneMobileIcon className="w-4 h-4" />
+                </span>
                 <span>সক্রিয় ডিভাইস সীমা</span>
               </h3>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-gray-400 mt-1.5">
                 একই সাথে কয়টি ডিভাইসে লগইন থাকতে পারবেন তা নির্ধারণ করুন (১-২০)। ডিফল্ট ৫।
               </p>
             </div>
@@ -446,7 +468,7 @@ const handleDeviceLimitSubmit = async (e) => {
                 <Button
                   type="submit"
                   disabled={deviceLimitSaving}
-                  className="w-full sm:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
+                  className="w-full sm:w-auto bg-gradient-to-r from-[#5a32fa] to-[#7928ca] hover:from-[#4b26e0] hover:to-[#6820ae] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
                 >
                   {deviceLimitSaving ? "সেভ হচ্ছে..." : "ডিভাইস লিমিট সেভ করুন"}
                 </Button>
@@ -460,12 +482,14 @@ const handleDeviceLimitSubmit = async (e) => {
         {activeTab === "payment" && (
           <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-1.5">
-                <CreditCardIcon className="w-4 h-4 text-[#5a32fa]" />
+              <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-2">
+                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-rose-500/20">
+                  <CreditCardIcon className="w-4 h-4" />
+                </span>
                 <span>উইথড্রয়াল অ্যাকাউন্ট ডিফল্ট সেটিংস</span>
               </h3>
-              <p className="text-[11px] text-gray-400">
-                টাকা উত্তোলনের সময় যে নম্বর ও মেথড স্বয়ংক্রিয়ভাবে ব্যবহৃত হবে
+              <p className="text-[11px] text-gray-400 mt-1.5">
+                টাকা উত্তোলনের সময় যে নম্বর ও মেথড স্বয়ংক্রিয়ভাবে ব্যবহৃত হবে
               </p>
             </div>
 
@@ -498,7 +522,7 @@ const handleDeviceLimitSubmit = async (e) => {
               <div className="pt-2">
                 <Button
                   type="submit"
-                  className="w-full sm:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
+                  className="w-full sm:w-auto bg-gradient-to-r from-[#5a32fa] to-[#7928ca] hover:from-[#4b26e0] hover:to-[#6820ae] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
                 >
                   পেমেন্ট ইনফো সেভ করুন
                 </Button>
@@ -511,8 +535,10 @@ const handleDeviceLimitSubmit = async (e) => {
         {activeTab === "preferences" && (
           <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-1.5">
-                <BellIcon className="w-4 h-4 text-[#5a32fa]" />
+              <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-2">
+                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                  <BellIcon className="w-4 h-4" />
+                </span>
                 <span>অ্যাপ নোটিফিকেশন & ভাষা সেটিংস</span>
               </h3>
             </div>
@@ -561,11 +587,11 @@ const handleDeviceLimitSubmit = async (e) => {
         )}
 
         {/* 🚪 Log Out & Account Security Footer */}
-        <div className="p-4 bg-white rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-between">
+        <div className="p-4 bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span>ভার্সন: <strong>1.0.0</strong></span>
             <span>•</span>
-            <span>CNP-PROMO Secure</span>
+            <span className="inline-flex items-center gap-1"><ShieldCheckIcon className="w-3.5 h-3.5 text-emerald-500" /> CNP-PROMO Secure</span>
           </div>
 
           <button

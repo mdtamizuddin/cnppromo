@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { api } from "../../../../util/axios";
 import { Modal, DetailTile, StatusPill } from "../../../../Components/AdminLayout/_Ui/AdminUI";
 import { youtubeThumb } from "./youtube";
+import DeleteConfirmModal from "../../../../Components/DeleteConfirmModal";
 
 const formatDuration = (sec) => {
   if (!sec && sec !== 0) return "—";
@@ -22,6 +23,7 @@ const formatDuration = (sec) => {
 
 const SubmissionReviewModal = ({ submit, onClose, onSuccess }) => {
   const [busy, setBusy] = useState(null); // "approve" | "reject"
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const work = submit.workId;
   const user = submit.userId;
@@ -54,14 +56,12 @@ const SubmissionReviewModal = ({ submit, onClose, onSuccess }) => {
       `Approved — ৳${work?.price ?? 0} credited`
     );
 
-  const reject = () => {
-    if (!window.confirm("Reject this submission? The user will not be paid.")) return;
-    return run(
+  const reject = () =>
+    run(
       "reject",
       () => api.put(`social-works/submit/${submit._id}`, { status: "rejected" }),
       "Submission rejected"
     );
-  };
 
   return (
     <Modal
@@ -83,7 +83,7 @@ const SubmissionReviewModal = ({ submit, onClose, onSuccess }) => {
               color="red"
               fullWidth
               className="normal-case rounded-xl flex items-center justify-center gap-1.5"
-              onClick={reject}
+              onClick={() => setDeleteOpen(true)}
               disabled={Boolean(busy)}
             >
               <XCircleIcon className="w-4 h-4" />
@@ -184,6 +184,21 @@ const SubmissionReviewModal = ({ submit, onClose, onSuccess }) => {
           </div>
         </div>
       )}
+
+      <DeleteConfirmModal
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={() => {
+          setDeleteOpen(false);
+          reject();
+        }}
+        title="Reject Submission?"
+        message="আপনি কি নিশ্চিত যে এই সাবমিশনটি প্রত্যাখ্যান করতে চান? ইউজার এই কাজের জন্য পেমেন্ট পাবেন না।"
+        itemName={work?.title}
+        confirmText="Reject"
+        cancelText="Cancel"
+        loading={busy === "reject"}
+      />
     </Modal>
   );
 };

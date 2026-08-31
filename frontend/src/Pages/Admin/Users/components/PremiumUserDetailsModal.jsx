@@ -5,6 +5,7 @@ import moment from "moment";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { api } from "../../../../util/axios";
+import DeleteConfirmModal from "../../../../Components/DeleteConfirmModal";
 
 const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
   if (!user) return null;
@@ -13,6 +14,7 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [value, setValue] = useState({
     name: "",
@@ -61,7 +63,6 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
     try {
       setLoading(true);
       const res = await api.delete(`/user/${user._id}`);
@@ -72,6 +73,7 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
       toast.error(error?.response?.data?.message || "Failed to delete user");
     } finally {
       setLoading(false);
+      setDeleteOpen(false);
     }
   };
 
@@ -249,7 +251,7 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
           <div className="flex flex-row gap-3 mt-6 pt-6 border-t border-gray-100 w-full">
             {isPending ? (
               <>
-                <Button variant="outlined" color="red" className="flex-1 flex justify-center items-center border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 normal-case px-4 py-2.5 rounded-xl transition-colors focus:ring-0" onClick={handleDelete}>
+                <Button variant="outlined" color="red" className="flex-1 flex justify-center items-center border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 normal-case px-4 py-2.5 rounded-xl transition-colors focus:ring-0" onClick={() => setDeleteOpen(true)}>
                   Reject
                 </Button>
                 <Button 
@@ -266,7 +268,7 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
                </div>
             ) : (
               <div className="flex-1 flex justify-between items-center gap-2">
-                <Button variant="text" color="red" className="normal-case hover:bg-red-50" onClick={handleDelete}>
+                <Button variant="text" color="red" className="normal-case hover:bg-red-50" onClick={() => setDeleteOpen(true)}>
                   Delete User
                 </Button>
                 {user.lock ? (
@@ -283,6 +285,18 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
           </div>
         </div>
       </div>
+
+      <DeleteConfirmModal
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleDelete}
+        title={`Delete "${user.name}"?`}
+        message="আপনি কি নিশ্চিত যে এই ইউজারকে স্থায়ীভাবে মুছে ফেলতে চান? এই অ্যাকশনটি পুনরায় ফিরিয়ে আনা সম্ভব নয়।"
+        itemName={`#${user.username}`}
+        confirmText="Delete User"
+        cancelText="Cancel"
+        loading={loading}
+      />
     </>
   );
 };

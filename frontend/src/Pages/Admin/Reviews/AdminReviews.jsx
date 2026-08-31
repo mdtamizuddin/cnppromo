@@ -14,6 +14,7 @@ import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
 import { api } from "../../../util/axios";
 import Loader from "../../../Components/Loader";
+import DeleteConfirmModal from "../../../Components/DeleteConfirmModal";
 
 const avatarPresets = [
   "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
@@ -38,6 +39,7 @@ const AdminReviews = () => {
   const [comment, setComment] = useState("");
   const [avatar, setAvatar] = useState(avatarPresets[0]);
   const [featured, setFeatured] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // 1. Fetch real reviews from DB
   const { data: reviews = [], isLoading } = useQuery({
@@ -276,11 +278,7 @@ const AdminReviews = () => {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    if (window.confirm("Are you sure you want to delete this review?")) {
-                      deleteMutation.mutate(r._id);
-                    }
-                  }}
+                  onClick={() => setDeleteTarget(r)}
                   className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                   title="Delete Review"
                 >
@@ -433,6 +431,21 @@ const AdminReviews = () => {
           </Button>
         </form>
       </Dialog>
+
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget?._id) deleteMutation.mutate(deleteTarget._id);
+          setDeleteTarget(null);
+        }}
+        title={`Delete "${deleteTarget?.name}"?`}
+        message="আপনি কি নিশ্চিত যে এই রিভিউটি স্থায়ীভাবে মুছে ফেলতে চান? এই অ্যাকশনটি পুনরায় ফিরিয়ে আনা সম্ভব নয়।"
+        itemName={deleteTarget?.username}
+        confirmText="Delete Review"
+        cancelText="Cancel"
+        loading={deleteMutation.isLoading}
+      />
     </div>
   );
 };

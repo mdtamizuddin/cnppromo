@@ -21,6 +21,7 @@ import {
 import toast from "react-hot-toast";
 import { api } from "../../../util/axios";
 import Loader from "../../../Components/Loader";
+import DeleteConfirmModal from "../../../Components/DeleteConfirmModal";
 
 const methodColors = {
   bKash: { bg: "bg-pink-50", text: "text-pink-600", border: "border-pink-200" },
@@ -37,6 +38,7 @@ const AdminPaymentProofs = () => {
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Form states
   const [method, setMethod] = useState("bKash");
@@ -325,11 +327,7 @@ const AdminPaymentProofs = () => {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      if (window.confirm("Delete this payment proof?")) {
-                        deleteMutation.mutate(p._id);
-                      }
-                    }}
+                    onClick={() => setDeleteTarget(p)}
                     className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                   >
                     <TrashIcon className="w-3.5 h-3.5" />
@@ -524,6 +522,21 @@ const AdminPaymentProofs = () => {
           </div>
         )}
       </Dialog>
+
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget?._id) deleteMutation.mutate(deleteTarget._id);
+          setDeleteTarget(null);
+        }}
+        title="Delete Payment Proof?"
+        message="আপনি কি নিশ্চিত যে এই পেমেন্ট প্রুফটি স্থায়ীভাবে মুছে ফেলতে চান? এই অ্যাকশনটি পুনরায় ফিরিয়ে আনা সম্ভব নয়।"
+        itemName={deleteTarget?.method}
+        confirmText="Delete Proof"
+        cancelText="Cancel"
+        loading={deleteMutation.isLoading}
+      />
     </div>
   );
 };

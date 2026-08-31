@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import { api } from "../../../../util/axios";
 import { category } from "../../Works/AllWorks";
 import WorkFormModal from "./WorkFormModal";
+import DeleteConfirmModal from "../../../../Components/DeleteConfirmModal";
 import {
   PageHeader, StatCard, StatGrid, TableCard, TableHead, EmptyState,
   SkeletonRows, IconAction, SegmentedTabs, InfiniteFooter, ACCENTS,
@@ -48,6 +49,7 @@ const PremiumAdminWorksTable = () => {
   const [search, setSearch] = useState("");
   const [formWork, setFormWork] = useState(null); // { } for create, work for edit
   const [deletingId, setDeletingId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const { ref: desktopRef, inView: desktopInView } = useInView();
   const { ref: mobileRef, inView: mobileInView } = useInView();
 
@@ -96,7 +98,6 @@ const PremiumAdminWorksTable = () => {
   };
 
   const handleDelete = async (work) => {
-    if (!window.confirm(`Delete "${work.name}"? This cannot be undone.`)) return;
     try {
       setDeletingId(work._id);
       await api.delete(`/work/${work._id}`);
@@ -106,6 +107,7 @@ const PremiumAdminWorksTable = () => {
       toast.error(error?.response?.data?.message || "Failed to delete work");
     } finally {
       setDeletingId(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -248,7 +250,7 @@ const PremiumAdminWorksTable = () => {
                             label="Delete work"
                             tone="red"
                             disabled={deletingId === work._id}
-                            onClick={() => handleDelete(work)}
+                            onClick={() => setDeleteTarget(work)}
                           />
                         </div>
                       </td>
@@ -298,7 +300,7 @@ const PremiumAdminWorksTable = () => {
                         label="Delete work"
                         tone="red"
                         disabled={deletingId === work._id}
-                        onClick={() => handleDelete(work)}
+                        onClick={() => setDeleteTarget(work)}
                       />
                     </div>
                   </div>
@@ -375,6 +377,17 @@ const PremiumAdminWorksTable = () => {
           onSuccess={refetch}
         />
       )}
+
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        title={`Delete "${deleteTarget?.name}"?`}
+        message="আপনি কি নিশ্চিত যে এই কাজটি স্থায়ীভাবে মুছে ফেলতে চান? এই অ্যাকশনটি পুনরায় ফিরিয়ে আনা সম্ভব নয়।"
+        itemName={deleteTarget?.name}
+        confirmText="Delete Work"
+        loading={deletingId === deleteTarget?._id}
+      />
     </div>
   );
 };
