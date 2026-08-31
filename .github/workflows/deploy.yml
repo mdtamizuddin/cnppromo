@@ -54,7 +54,7 @@ jobs:
 
       - name: Package Backend Release
         if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'backend' }}
-        run: tar -czf backend-release.tar.gz -C backend . --exclude=node_modules --exclude=.git --exclude=.env
+        run: tar --exclude=node_modules --exclude=.git --exclude=.env -czf backend-release.tar.gz -C backend .
 
       - name: Ensure Target Directories Exist on VPS
         uses: appleboy/ssh-action@v1.0.3
