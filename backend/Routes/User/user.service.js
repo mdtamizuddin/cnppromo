@@ -6,6 +6,9 @@ const { createRefer } = require("../Refer/refer.service");
 const { getOrCreateSetting } = require("../Settings/settingStore");
 const Withdraw = require("../WithDraw/withdraw.model");
 const User = require("./user.model");
+const Topup = require("../TopUp/topup.model");
+const Refer = require("../Refer/refer.model");
+const { WorkSubmit } = require("../social-works/work.model");
 const bcrypt = require("bcrypt");
 const mailerService = require("../mailer/mailer");
 const sessionService = require("../Session/session.service");
@@ -763,6 +766,173 @@ const getStatistic = async (req, res) => {
         });
     }
 }
+
+/**
+ * GET /user/dashboard — member-scoped overview.
+ * Returns a single JSON payload with the stats needed by the member home page.
+ */
+const getMemberDashboard = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const chartStart = new Date(startOfToday);
+        chartStart.setDate(startOfToday.getDate() - 13); // 14-day window incl. today
+
+        // ── Earnings (task rewards + referral commissions) ─────────────────────
+        // Task rewards: completed WorkSubmit → join SocialWork.price
+        const [taskToday, taskMonth, taskChart, referToday, referMonth, referChart] = await Promise.all([
+            WorkSubmit.aggregate([
+                { $match: { userId, status: "completed", createdAt: { $gte: startOfToday } } },
+                { $lookup: { from: "socialworks", localField: "workId", foreignField: "_id", as: "w" } },
+                { $unwind: { path: "$w", preserveNullAndEmptyArrays: true } },
+                { $group: { _id: null, v: { $sum: { $ifNull: ["$w.price", 0] } } } }
+            ]),
+            WorkSubmit.aggregate([
+                { $match: { userId, status: "completed", createdAt: { $gte: startOfThisMonth } } },
+                { $lookup: { from: "socialworks", localField: "workId", foreignField: "_id", as: "w" } },
+                { $unwind: { path: "$w", preserveNullAndEmptyArrays: true } },
+                { $group: { _id: null, v: { $sum: { $ifNull: ["$w.price", 0] } } } }
+            ]),
+            WorkSubmit.aggregate([
+                { $match: { userId, status: "completed", createdAt: { $gte: chartStart } } },
+                { $lookup: { from: "socialworks", localField: "workId", foreignField: "_id", as: "w" } },
+                { $unwind: { path: "$w", preserveNullAndEmptyArrays: true } },
+                {
+                    $group: {
+                        _id: { y: { $year: "$createdAt" }, m: { $month: "$createdAt" }, d: { $dayOfMonth: "$createdAt" } },
+                        v: { $sum: { $ifNull: ["$w.price", 0] } }
+                    }
+                },
+                { $sort: { "_id.y": 1, "_id.m": 1, "_id.d": 1 } }
+            ]),
+            Refer.aggregate([
+                { $match: { reffer: userId, createdAt: { $gte: startOfToday } } },
+                { $group: { _id: null, v: { $sum: "$commition" } } }
+            ]),
+            Refer.aggregate([
+                { $match: { reffer: userId, createdAt: { $gte: startOfThisMonth } } },
+                { $group: { _id: null, v: { $sum: "$commition" } } }
+            ]),
+            Refer.aggregate([
+                { $match: { reffer: userId, createdAt: { $gte: chartStart } } },
+                {
+                    $group: {
+                        _id: { y: { $year: "$createdAt" }, m: { $month: "$createdAt" }, d: { $dayOfMonth: "$createdAt" } },
+                        v: { $sum: "$commition" }
+                    }
+                },
+                { $sort: { "_id.y": 1, "_id.m": 1, "_id.d": 1 } }
+            ]),
+        ]);
+
+        const todayEarnings = (taskToday[0]?.v || 0) + (referToday[0]?.v || 0);
+        const monthEarnings = (taskMonth[0]?.v || 0) + (referMonth[0]?.v || 0);
+
+        // Dense 14-day chart (task rewards + referral commissions per day)
+        const dailyMap = new Map();
+        [...(taskChart || []), ...(referChart || [])].forEach(d => {
+            const key = `${d._id.y}-${String(d._id.m).padStart(2, "0")}-${String(d._id.d).padStart(2, "0")}`;
+            dailyMap.set(key, (dailyMap.get(key) || 0) + d.v);
+        });
+        const chart = Array.from({ length: 14 }, (_, i) => {
+            const d = new Date(chartStart);
+            d.setDate(chartStart.getDate() + i);
+            const key = d.toISOString().split("T")[0];
+            return { date: key, amount: dailyMap.get(key) || 0 };
+        });
+
+        // ── Withdrawals / task / activity ─────────────────────────────────────
+        const [withdrawFacet, taskCounts, recentWithdraws, recentTopups, recentRefers] = await Promise.all([
+            Withdraw.aggregate([
+                { $match: { user: userId } },
+                {
+                    $facet: {
+                        completedTotal: [{ $match: { status: "completed" } }, { $group: { _id: null, v: { $sum: "$amount" } } }],
+                        pendingTotal:   [{ $match: { status: "pending" } },   { $group: { _id: null, v: { $sum: "$amount" } } }],
+                        counts: [{
+                            $group: {
+                                _id: "$status",
+                                n: { $sum: 1 },
+                                amt: { $sum: "$amount" }
+                            }
+                        }]
+                    }
+                }
+            ]),
+            WorkSubmit.aggregate([
+                { $match: { userId } },
+                { $group: { _id: "$status", n: { $sum: 1 } } }
+            ]),
+            Withdraw.find({ user: userId }).sort({ createdAt: -1 }).limit(4).lean(),
+            Topup.find({ user: userId }).sort({ createdAt: -1 }).limit(4).lean(),
+            Refer.find({ reffer: userId }).sort({ createdAt: -1 }).limit(4).lean(),
+        ]);
+
+        const wFacet = withdrawFacet[0] || {};
+        const statusMap = Object.fromEntries((wFacet.counts || []).map(c => [c._id, { n: c.n, amt: c.amt }]));
+        const done = statusMap.completed?.n || 0;
+        const rejected = statusMap.rejected?.n || 0;
+        const successRate = (done + rejected) > 0
+            ? Math.round((done / (done + rejected)) * 100)
+            : 100;
+
+        const taskMap = Object.fromEntries(taskCounts.map(c => [c._id, c.n]));
+        const tasks = {
+            total: (taskMap.pending || 0) + (taskMap.completed || 0) + (taskMap.rejected || 0),
+            completed: taskMap.completed || 0,
+            pending: taskMap.pending || 0,
+            rejected: taskMap.rejected || 0,
+        };
+
+        // ── Build recent activity feed from the four source types ────────────
+        const activity = [
+            ...recentWithdraws.map(w => ({
+                type: "withdrawal",
+                title: "Withdrawal",
+                amount: -w.amount,
+                status: w.status,
+                time: w.createdAt,
+            })),
+            ...recentTopups.map(t => ({
+                type: "topup",
+                title: "Top-Up",
+                amount: t.amount,
+                status: t.status,
+                time: t.createdAt,
+            })),
+            ...recentRefers.map(r => ({
+                type: "refer",
+                title: `Referral (G${r.gen})`,
+                amount: r.commition,
+                status: "completed",
+                time: r.createdAt,
+            })),
+        ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8);
+
+        res.send({
+            summary: {
+                todayEarnings,
+                monthEarnings,
+                totalWithdrawn: wFacet.completedTotal[0]?.v || 0,
+                pendingWithdraw: wFacet.pendingTotal[0]?.v || 0,
+                successRate,
+                activeSubmissions: taskMap.pending || 0,
+            },
+            tasks,
+            chart,
+            recentActivity: activity,
+            paymentMethods: [{
+                method: req.user.paymentMethod || "Bkash",
+                account: req.user.account || "",
+            }],
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+}
+
 const resetPassword = async (req, res) => {
     try {
         const text = req.params.id;
@@ -833,6 +1003,7 @@ module.exports = {
     activeAnUser,
     searchUser,
     getStatistic,
+    getMemberDashboard,
     withoutPass,
     password,
     resetPassword,

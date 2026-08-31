@@ -45,6 +45,9 @@ router.put('/device-limit', authChecker, userService.updateDeviceLimit)
 // Platform statistics
 router.get('/statistic', userService.getStatistic)
 
+// Member-scoped dashboard overview (latest signed-in user)
+router.get('/dashboard', authChecker, userService.getMemberDashboard)
+
 // Get All Data (paginated search)
 router.get('/', authChecker, roleChecker(['admin', 'moderator']), userService.getAllData)
 

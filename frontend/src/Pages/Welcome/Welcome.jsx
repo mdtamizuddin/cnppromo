@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { Card, Typography, Button } from "@material-tailwind/react";
+import { useQuery } from "react-query";
+import moment from "moment";
+import { Card, Button } from "@material-tailwind/react";
 import {
   EyeIcon,
   EyeSlashIcon,
@@ -21,24 +23,36 @@ import {
   TrophyIcon,
   LightBulbIcon,
   ChatBubbleLeftRightIcon,
-  CheckCircleIcon,
-  PaperAirplaneIcon,
   BookOpenIcon,
   ShieldCheckIcon,
   DocumentTextIcon,
   QuestionMarkCircleIcon,
   PlusIcon,
   SparklesIcon,
-  FireIcon,
+  InboxArrowDownIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import toast from "react-hot-toast";
+import { api } from "../../util/axios";
 
 const recommendedCategories = [
   {
     id: 1,
-    title: "Tiktop free site",
+    title: "TikTok free site",
     desc: "সহজ লাইক ও ফলো করে ইনস্ট্যান্ট আয় করুন",
-    to: "/works/category/tiktop",
+    to: "/user/works/category/tiktop",
     tag: "🔥 সর্বাধিক ইনকাম",
     color: "#ff0050",
     bg: "from-pink-500/10 to-rose-500/5",
@@ -49,7 +63,7 @@ const recommendedCategories = [
     id: 2,
     title: "ইউটিউব ভিডিও ভিউস (Workercash)",
     desc: "ভিডিও দেখে সহজে প্রতি মিনিটে ইনকাম করুন",
-    to: "/works/category/youtube",
+    to: "/user/works/category/youtube",
     tag: "🔥 সর্বাধিক ইনকাম",
     color: "#ff0000",
     bg: "from-red-500/10 to-rose-500/5",
@@ -60,7 +74,7 @@ const recommendedCategories = [
     id: 3,
     title: "ফেসবুক পোস্ট (অটো জেনারেশন)",
     desc: "অটো জেনারেশন পোস্ট করে ঘরে বসে আয়",
-    to: "/works/category/facebook",
+    to: "/user/works/category/facebook",
     tag: "🔥 সর্বাধিক ইনকাম",
     color: "#1877f2",
     bg: "from-blue-500/10 to-indigo-500/5",
@@ -71,7 +85,7 @@ const recommendedCategories = [
     id: 4,
     title: "Like follow (Getlike)",
     desc: "সোশ্যাল ফলো ও রিঅ্যাকশন টাস্ক",
-    to: "/works/category/likefollow",
+    to: "/user/works/category/likefollow",
     color: "#10b981",
     bg: "from-emerald-500/10 to-teal-500/5",
     icon: "👍",
@@ -80,7 +94,7 @@ const recommendedCategories = [
     id: 5,
     title: "Payup video views",
     desc: "ভিডিও ভিউস ওয়াচ অ্যান্ড আর্ন টাস্ক",
-    to: "/works/category/Payup-video-views",
+    to: "/user/works/category/Payup-video-views",
     color: "#8b5cf6",
     bg: "from-purple-500/10 to-indigo-500/5",
     icon: "🎬",
@@ -89,7 +103,7 @@ const recommendedCategories = [
     id: 6,
     title: "Bux money",
     desc: "বিজ্ঞাপন ক্লিক ও মাইক্রো ব্রাউজিং টাস্ক",
-    to: "/works/category/Bux-money",
+    to: "/user/works/category/Bux-money",
     color: "#f59e0b",
     bg: "from-amber-500/10 to-yellow-500/5",
     icon: "💵",
@@ -98,7 +112,7 @@ const recommendedCategories = [
     id: 7,
     title: "Vk surfing",
     desc: "ভিকে সোশ্যাল সার্ফিং ও কমিউনিটি টাস্ক",
-    to: "/works/category/Vk%20surfing",
+    to: "/user/works/category/Vk%20surfing",
     color: "#0077ff",
     bg: "from-sky-500/10 to-blue-500/5",
     icon: "🌐",
@@ -107,7 +121,7 @@ const recommendedCategories = [
     id: 8,
     title: "IP web / Aviso",
     desc: "সার্ভে ও ওয়েব অ্যাক্টিভিটি মাইক্রো-টাস্ক",
-    to: "/works/category/IP%20web%2FAviso",
+    to: "/user/works/category/IP%20web%2FAviso",
     color: "#059669",
     bg: "from-teal-500/10 to-emerald-500/5",
     icon: "💻",
@@ -118,6 +132,28 @@ const Welcome = () => {
   const { user } = useSelector((state) => state.user);
   const [showBalance, setShowBalance] = useState(true);
   const [claimedBonus, setClaimedBonus] = useState(false);
+
+  const { data, isLoading } = useQuery(
+    ["member-dashboard"],
+    () => api.get("/user/dashboard").then((r) => r.data),
+    { staleTime: 60_000, refetchOnWindowFocus: true }
+  );
+
+  const summary = data?.summary || {};
+  const tasks = data?.tasks || { total: 0, completed: 0, pending: 0, rejected: 0 };
+  const chart = data?.chart || [];
+  const recentActivity = data?.recentActivity || [];
+  const payment = (data?.paymentMethods && data.paymentMethods[0]) || { method: "Bkash", account: "" };
+  const maskAccount = (acc = "") => (acc.length > 4 ? `${acc.slice(0, 3)}******${acc.slice(-2)}` : acc);
+
+  const formatTaka = (v) => `৳ ${(Number(v) || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+  const fmtTime = (t) => (t ? moment(t).fromNow() : "");
+
+  const activityTone = {
+    withdrawal: { bg: "bg-rose-50", color: "text-rose-600", icon: <ArrowDownTrayIcon className="w-5 h-5" /> },
+    topup: { bg: "bg-emerald-50", color: "text-emerald-600", icon: <InboxArrowDownIcon className="w-5 h-5" /> },
+    refer: { bg: "bg-indigo-50", color: "text-indigo-600", icon: <UserGroupIcon className="w-5 h-5" /> },
+  };
 
   const handleClaimBonus = () => {
     if (claimedBonus) {
@@ -133,7 +169,7 @@ const Welcome = () => {
       id: "dashboard",
       title: "Dashboard",
       subtitle: "Overview",
-      to: "/home",
+      to: "/user/home",
       icon: HomeIcon,
       color: "#5a32fa",
       bg: "bg-purple-50",
@@ -142,7 +178,7 @@ const Welcome = () => {
       id: "tasks",
       title: "Available Tasks",
       subtitle: "Find work",
-      to: "/works",
+      to: "/user/works",
       icon: ClipboardDocumentListIcon,
       color: "#0284c7",
       bg: "bg-sky-50",
@@ -151,7 +187,7 @@ const Welcome = () => {
       id: "earnings",
       title: "My Earnings",
       subtitle: "Earnings",
-      to: "/account/withdraw",
+      to: "/user/earnings",
       icon: CurrencyDollarIcon,
       color: "#f59e0b",
       bg: "bg-amber-50",
@@ -160,7 +196,7 @@ const Welcome = () => {
       id: "withdraw",
       title: "Withdraw",
       subtitle: "Withdraw balance",
-      to: "/account/withdraw",
+      to: "/user/account/withdraw",
       icon: CreditCardIcon,
       color: "#e11d48",
       bg: "bg-rose-50",
@@ -169,7 +205,7 @@ const Welcome = () => {
       id: "refer",
       title: "Refer & Earn",
       subtitle: "Invite & earn",
-      to: "/refer",
+      to: "/user/refer",
       icon: UserGroupIcon,
       color: "#10b981",
       bg: "bg-emerald-50",
@@ -178,7 +214,7 @@ const Welcome = () => {
       id: "watch",
       title: "Watch & Earn",
       subtitle: "Watch videos",
-      to: "/social-works",
+      to: "/user/social-works",
       icon: PlayCircleIcon,
       color: "#ec4899",
       bg: "bg-pink-50",
@@ -187,7 +223,7 @@ const Welcome = () => {
       id: "training",
       title: "Training & Support",
       subtitle: "Learn & Get Support",
-      to: "/training",
+      to: "/user/training",
       icon: AcademicCapIcon,
       color: "#6366f1",
       bg: "bg-indigo-50",
@@ -197,7 +233,7 @@ const Welcome = () => {
       id: "leaderboard",
       title: "Leaderboard",
       subtitle: "Top earners",
-      to: "/leaderboard",
+      to: "/user/leaderboard",
       icon: TrophyIcon,
       color: "#a855f7",
       bg: "bg-purple-50",
@@ -206,7 +242,7 @@ const Welcome = () => {
       id: "tips",
       title: "Work Tips",
       subtitle: "Tips & tricks",
-      to: "/tips",
+      to: "/user/tips",
       icon: LightBulbIcon,
       color: "#eab308",
       bg: "bg-yellow-50",
@@ -215,7 +251,7 @@ const Welcome = () => {
       id: "message",
       title: "Message",
       subtitle: "Send message",
-      to: "/message",
+      to: "/user/message",
       icon: ChatBubbleLeftRightIcon,
       color: "#5a32fa",
       bg: "bg-purple-50",
@@ -305,11 +341,11 @@ const Welcome = () => {
             </div>
             <div>
               <p className="text-[11px] text-gray-500 font-medium">Today's Earnings</p>
-              <p className="text-lg font-bold text-[#0b0c2a] mt-0.5">৳150.00</p>
+              <p className="text-lg font-bold text-[#0b0c2a] mt-0.5">{isLoading ? "…" : formatTaka(summary.todayEarnings)}</p>
             </div>
             <p className="text-[10px] text-emerald-600 font-semibold mt-2 flex items-center gap-1">
-              <span>▲ 12%</span>
-              <span className="text-gray-400 font-normal">vs yesterday</span>
+              <span>Today</span>
+              <span className="text-gray-400 font-normal">tasks + referrals</span>
             </p>
           </Card>
 
@@ -320,11 +356,11 @@ const Welcome = () => {
             </div>
             <div>
               <p className="text-[11px] text-gray-500 font-medium">This Month</p>
-              <p className="text-lg font-bold text-[#0b0c2a] mt-0.5">৳3,250.00</p>
+              <p className="text-lg font-bold text-[#0b0c2a] mt-0.5">{isLoading ? "…" : formatTaka(summary.monthEarnings)}</p>
             </div>
             <p className="text-[10px] text-emerald-600 font-semibold mt-2 flex items-center gap-1">
-              <span>▲ 18%</span>
-              <span className="text-gray-400 font-normal">vs last month</span>
+              <span>Monthly</span>
+              <span className="text-gray-400 font-normal">total earnings</span>
             </p>
           </Card>
 
@@ -335,7 +371,7 @@ const Welcome = () => {
             </div>
             <div>
               <p className="text-[11px] text-gray-500 font-medium">Total Withdrawn</p>
-              <p className="text-lg font-bold text-[#0b0c2a] mt-0.5">৳8,750.00</p>
+              <p className="text-lg font-bold text-[#0b0c2a] mt-0.5">{isLoading ? "…" : formatTaka(summary.totalWithdrawn)}</p>
             </div>
             <p className="text-[10px] text-gray-400 font-medium mt-2">All time</p>
           </Card>
@@ -347,7 +383,7 @@ const Welcome = () => {
             </div>
             <div>
               <p className="text-[11px] text-gray-500 font-medium">Pending Balance</p>
-              <p className="text-lg font-bold text-[#0b0c2a] mt-0.5">৳450.00</p>
+              <p className="text-lg font-bold text-[#0b0c2a] mt-0.5">{isLoading ? "…" : formatTaka(summary.pendingWithdraw)}</p>
             </div>
             <p className="text-[10px] text-amber-600 font-semibold mt-2">Pending</p>
           </Card>
@@ -359,12 +395,59 @@ const Welcome = () => {
             </div>
             <div>
               <p className="text-[11px] text-gray-500 font-medium">Success Rate</p>
-              <p className="text-lg font-bold text-[#0b0c2a] mt-0.5">98%</p>
+              <p className="text-lg font-bold text-[#0b0c2a] mt-0.5">{isLoading ? "…" : `${summary.successRate ?? 0}%`}</p>
             </div>
-            <p className="text-[10px] text-gray-400 font-medium mt-2">This month</p>
+            <p className="text-[10px] text-gray-400 font-medium mt-2">Withdrawal success</p>
           </Card>
 
         </div>
+
+        {/* 📈 Earnings Trend (Last 14 Days) */}
+        <Card className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-base font-bold text-[#0b0c2a] flex items-center gap-2">
+                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#5a32fa] to-[#7928ca] text-white grid place-items-center shadow-md shadow-indigo-500/20">
+                  <ChartPieIcon className="w-4 h-4" />
+                </span>
+                <span>Earnings Trend</span>
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">Daily tasks + referral earnings (last 14 days)</p>
+            </div>
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 px-3 py-1.5 rounded-lg bg-emerald-50">
+              <ArrowTrendingUpIcon className="w-3.5 h-3.5" />
+              {formatTaka(summary.monthEarnings)} this month
+            </span>
+          </div>
+          <div className="h-52">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chart} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="uEarn" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#5a32fa" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#5a32fa" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(d) => moment(d).format("MMM D")}
+                  tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval="preserveStartEnd"
+                />
+                <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} width={40} />
+                <Tooltip
+                  formatter={(v) => [formatTaka(v), "Earnings"]}
+                  labelFormatter={(d) => moment(d).format("MMM D, YYYY")}
+                  contentStyle={{ borderRadius: 12, border: "1px solid #f1f5f9", fontSize: 12 }}
+                />
+                <Area type="monotone" dataKey="amount" stroke="#5a32fa" strokeWidth={2.5} fill="url(#uEarn)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
 
         {/* ⚡ Quick Actions (10 Card Grid) */}
         <section className="space-y-4">
@@ -499,7 +582,7 @@ const Welcome = () => {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-base font-bold text-[#0b0c2a]">My Tasks</h3>
-                <Link to="/social-works" className="text-xs font-semibold text-[#5a32fa] hover:underline">
+                <Link to="/user/social-works" className="text-xs font-semibold text-[#5a32fa] hover:underline">
                   View All
                 </Link>
               </div>
@@ -508,26 +591,34 @@ const Welcome = () => {
               <div className="flex items-center justify-around my-4">
                 {/* Circular Donut Ring */}
                 <div className="relative w-28 h-28 flex items-center justify-center">
-                  <svg className="w-full h-full" viewBox="0 0 36 36">
-                    <path
-                      className="text-gray-100"
-                      strokeWidth="3.5"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className="text-[#5a32fa]"
-                      strokeDasharray="68, 100"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <div className="absolute flex flex-col items-center">
-                    <span className="text-xl font-black text-[#0b0c2a]">18</span>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: "Completed", value: tasks.completed, color: "#10b981" },
+                          { name: "Pending", value: tasks.pending, color: "#f59e0b" },
+                          { name: "Rejected", value: tasks.rejected, color: "#f43f5e" },
+                        ]}
+                        dataKey="value"
+                        innerRadius={34}
+                        outerRadius={44}
+                        paddingAngle={2}
+                        strokeWidth={0}
+                        startAngle={90}
+                        endAngle={-270}
+                      >
+                        {[
+                          { name: "Completed", value: tasks.completed, color: "#10b981" },
+                          { name: "Pending", value: tasks.pending, color: "#f59e0b" },
+                          { name: "Rejected", value: tasks.rejected, color: "#f43f5e" },
+                        ].map((entry, idx) => (
+                          <Cell key={idx} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-xl font-black text-[#0b0c2a]">{tasks.total || 0}</span>
                     <span className="text-[10px] text-gray-400 font-medium">Total</span>
                   </div>
                 </div>
@@ -536,24 +627,24 @@ const Welcome = () => {
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <span className="font-bold text-emerald-600">12</span>
+                    <span className="font-bold text-emerald-600">{tasks.completed || 0}</span>
                     <span className="text-gray-500">Completed</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                    <span className="font-bold text-amber-600">5</span>
+                    <span className="font-bold text-amber-600">{tasks.pending || 0}</span>
                     <span className="text-gray-500">Pending</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                    <span className="font-bold text-rose-600">1</span>
+                    <span className="font-bold text-rose-600">{tasks.rejected || 0}</span>
                     <span className="text-gray-500">Rejected</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <Link to="/social-works" className="mt-4">
+            <Link to="/user/social-works" className="mt-4">
               <Button
                 variant="outlined"
                 className="w-full rounded-xl normal-case text-xs font-bold border-[#5a32fa]/30 text-[#5a32fa] hover:bg-[#5a32fa]/5 py-3"
@@ -572,76 +663,34 @@ const Welcome = () => {
               </Link>
             </div>
 
-            <div className="divide-y divide-gray-50 space-y-3">
-              
-              {/* Activity 1 */}
-              <div className="flex items-center justify-between pt-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <CheckCircleIcon className="w-5 h-5" />
+            <div className="divide-y divide-gray-50">
+              {recentActivity.length === 0 ? (
+                <div className="py-10 text-center text-sm text-gray-400">No recent activity yet</div>
+              ) : recentActivity.map((act, idx) => {
+                const tone = activityTone[act.type] || activityTone.topup;
+                const isOut = act.type === "withdrawal";
+                return (
+                  <div key={idx} className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-xl ${tone.bg} ${tone.color} flex items-center justify-center`}>
+                        {tone.icon}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-[#0b0c2a]">{act.title}</p>
+                        <p className="text-[10px] text-gray-400">
+                          {act.type === "withdrawal" ? "Withdrawal" : act.type === "topup" ? "Deposit" : "Commission"} • {act.status}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-xs font-bold ${isOut ? "text-rose-500" : "text-emerald-600"}`}>
+                        {isOut ? "−" : "+"}{formatTaka(act.amount)}
+                      </p>
+                      <p className="text-[10px] text-gray-400">{fmtTime(act.time)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#0b0c2a]">Task Completed</p>
-                    <p className="text-[10px] text-gray-400">Data Entry</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-emerald-600">+৳50</p>
-                  <p className="text-[10px] text-gray-400">2 min ago</p>
-                </div>
-              </div>
-
-              {/* Activity 2 */}
-              <div className="flex items-center justify-between pt-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center">
-                    <PaperAirplaneIcon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#0b0c2a]">Withdrawal Request</p>
-                    <p className="text-[10px] text-gray-400">bKash</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-rose-500">-৳500</p>
-                  <p className="text-[10px] text-gray-400">1 hour ago</p>
-                </div>
-              </div>
-
-              {/* Activity 3 */}
-              <div className="flex items-center justify-between pt-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <UserGroupIcon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#0b0c2a]">Referral Bonus</p>
-                    <p className="text-[10px] text-gray-400">User: Rakibul</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-emerald-600">+৳50</p>
-                  <p className="text-[10px] text-gray-400">3 hours ago</p>
-                </div>
-              </div>
-
-              {/* Activity 4 */}
-              <div className="flex items-center justify-between pt-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                    <PlayCircleIcon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#0b0c2a]">Video Watching</p>
-                    <p className="text-[10px] text-gray-400">YouTube Watch</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-emerald-600">+৳20</p>
-                  <p className="text-[10px] text-gray-400">5 hours ago</p>
-                </div>
-              </div>
-
+                );
+              })}
             </div>
           </Card>
 
@@ -661,31 +710,13 @@ const Welcome = () => {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-2">
-                {/* bKash */}
+                {/* Real payment method */}
                 <div className="p-3 rounded-2xl border border-pink-100 bg-pink-50/40 flex flex-col items-center text-center">
                   <div className="w-8 h-8 rounded-full bg-pink-100 text-[#E2136E] flex items-center justify-center font-bold text-xs mb-2">
-                    bK
+                    {payment.method?.slice(0, 2).toUpperCase() || "bK"}
                   </div>
-                  <p className="text-xs font-bold text-gray-800">bKash</p>
-                  <p className="text-[10px] text-gray-400">013********</p>
-                </div>
-
-                {/* Nagad */}
-                <div className="p-3 rounded-2xl border border-orange-100 bg-orange-50/40 flex flex-col items-center text-center">
-                  <div className="w-8 h-8 rounded-full bg-orange-100 text-[#F7941D] flex items-center justify-center font-bold text-xs mb-2">
-                    Ng
-                  </div>
-                  <p className="text-xs font-bold text-gray-800">Nagad</p>
-                  <p className="text-[10px] text-gray-400">018********</p>
-                </div>
-
-                {/* Bank */}
-                <div className="p-3 rounded-2xl border border-blue-100 bg-blue-50/40 flex flex-col items-center text-center">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs mb-2">
-                    🏛️
-                  </div>
-                  <p className="text-xs font-bold text-gray-800">Bank</p>
-                  <p className="text-[10px] text-gray-400">**** 1234</p>
+                  <p className="text-xs font-bold text-gray-800">{payment.method || "bKash"}</p>
+                  <p className="text-[10px] text-gray-400">{maskAccount(payment.account) || "Not set"}</p>
                 </div>
 
                 {/* Add New */}
