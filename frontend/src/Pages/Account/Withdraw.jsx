@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Card, Dialog } from "@material-tailwind/react";
 import {
@@ -15,6 +15,9 @@ import {
   CheckIcon,
   ArrowPathIcon,
   SparklesIcon,
+  BuildingLibraryIcon,
+  CreditCardIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import { useQuery } from "react-query";
 import toast from "react-hot-toast";
@@ -22,57 +25,6 @@ import { api } from "../../util/axios";
 import { refreshUser } from "../../redux/features/user/userSlice";
 import HistoryTable from "./HistoryTable";
 import Loader from "../../Components/Loader";
-
-const defaultPaymentMethods = [
-  {
-    id: "Bkash",
-    name: "bKash",
-    subtitle: "বিকাশ পার্সোনাল",
-    logo: "/logo/bkash.png",
-    minAmount: 300,
-    maxAmount: 25000,
-    fee: "1.50%",
-    themeColor: "from-pink-500 to-rose-600",
-    accentColor: "#d9176c",
-    bgActive: "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20",
-  },
-  {
-    id: "Nagad",
-    name: "Nagad",
-    subtitle: "নগদ পার্সোনাল",
-    logo: "/logo/nagad.png",
-    minAmount: 300,
-    maxAmount: 25000,
-    fee: "1.50%",
-    themeColor: "from-orange-500 to-amber-600",
-    accentColor: "#f97316",
-    bgActive: "border-orange-400 bg-orange-50/30 ring-2 ring-orange-400/20",
-  },
-  {
-    id: "Rocket",
-    name: "Rocket",
-    subtitle: "রকেট একাউন্ট",
-    logo: "/logo/rocket.png",
-    minAmount: 300,
-    maxAmount: 25000,
-    fee: "1.50%",
-    themeColor: "from-purple-500 to-indigo-600",
-    accentColor: "#8b5cf6",
-    bgActive: "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20",
-  },
-  {
-    id: "Bank Transfer",
-    name: "Bank Transfer",
-    subtitle: "ব্যাংক একাউন্ট",
-    logo: "/logo/bank.png",
-    minAmount: 500,
-    maxAmount: 500000,
-    fee: "0.00%",
-    themeColor: "from-blue-600 to-indigo-700",
-    accentColor: "#2563eb",
-    bgActive: "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20",
-  },
-];
 
 const quickAmounts = [300, 500, 1000, 2000, 5000];
 
@@ -92,7 +44,7 @@ const maskAccount = (str) => {
 
 const Withdraw = () => {
   const [step, setStep] = useState(1); // 1: Request, 2: Confirm, 3: Complete
-  const [selectedMethod, setSelectedMethod] = useState("Bkash");
+  const [selectedMethod, setSelectedMethod] = useState("");
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("");
   const [showBalance, setShowBalance] = useState(true);
@@ -104,11 +56,11 @@ const Withdraw = () => {
   const dispatch = useDispatch();
 
   // Fetch dynamic active gateways from database
-  const { data: dynamicGateways = [] } = useQuery({
+  const { data: dynamicGateways = [], isLoading: isGatewayLoading } = useQuery({
     queryKey: ["active-payment-gateways"],
     queryFn: async () => {
       try {
-        const res = await api.get("/gateway");
+        const res = await api.get("/gateway?status=Active");
         return Array.isArray(res.data) ? res.data : [];
       } catch {
         return [];
@@ -117,82 +69,105 @@ const Withdraw = () => {
   });
 
   const paymentMethods = useMemo(() => {
-    if (!dynamicGateways || dynamicGateways.length === 0) return defaultPaymentMethods;
-    return dynamicGateways.map((g) => {
-      const nameLower = g.name.toLowerCase();
-      let logo = "/logo/bkash.png";
-      let themeColor = "from-pink-500 to-rose-600";
-      let accentColor = "#d9176c";
-      let bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
+    if (!dynamicGateways || dynamicGateways.length === 0) return [];
+    return dynamicGateways
+      .filter((g) => g.status === "Active" && g.isWithdrawSupported !== false)
+      .map((g) => {
+        const nameLower = (g.name || "").toLowerCase();
+        let logo = "/logo/bkash.png";
+        let themeColor = "from-pink-500 to-rose-600";
+        let accentColor = "#d9176c";
+        let bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
 
-      if (nameLower.includes("bkash")) {
-        logo = "/logo/bkash.png";
-        themeColor = "from-pink-500 to-rose-600";
-        accentColor = "#d9176c";
-        bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
-      } else if (nameLower.includes("nagad")) {
-        logo = "/logo/nagad.png";
-        themeColor = "from-orange-500 to-amber-600";
-        accentColor = "#f97316";
-        bgActive = "border-orange-400 bg-orange-50/30 ring-2 ring-orange-400/20";
-      } else if (nameLower.includes("rocket")) {
-        logo = "/logo/rocket.png";
-        themeColor = "from-purple-500 to-indigo-600";
-        accentColor = "#8b5cf6";
-        bgActive = "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20";
-      } else if (nameLower.includes("bank")) {
-        logo = "/logo/bank.png";
-        themeColor = "from-blue-600 to-indigo-700";
-        accentColor = "#2563eb";
-        bgActive = "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20";
-      } else if (nameLower.includes("upay")) {
-        logo = "/logo/upay.png";
-        themeColor = "from-amber-600 to-yellow-700";
-        accentColor = "#d97706";
-        bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
-      } else if (nameLower.includes("recharge")) {
-        logo = "/logo/recharge.png";
-        themeColor = "from-emerald-600 to-teal-700";
-        accentColor = "#059669";
-        bgActive = "border-emerald-400 bg-emerald-50/30 ring-2 ring-emerald-400/20";
-      } else if (nameLower.includes("paypal")) {
-        logo = "/logo/paypal.svg";
-        themeColor = "from-sky-600 to-blue-700";
-        accentColor = "#0284c7";
-        bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
-      } else if (nameLower.includes("stripe")) {
-        logo = "/logo/stripe.svg";
-        themeColor = "from-indigo-600 to-purple-700";
-        accentColor = "#4f46e5";
-        bgActive = "border-indigo-400 bg-indigo-50/30 ring-2 ring-indigo-400/20";
-      } else if (nameLower.includes("payeer")) {
-        logo = "/logo/payeer.svg";
-        themeColor = "from-sky-500 to-cyan-600";
-        accentColor = "#0ea5e9";
-        bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
-      } else if (nameLower.includes("binance") || nameLower.includes("usdt") || nameLower.includes("crypto")) {
-        logo = "/logo/binance.svg";
-        themeColor = "from-amber-500 to-yellow-600";
-        accentColor = "#f59e0b";
-        bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
-      }
+        if (nameLower.includes("bkash")) {
+          logo = "/logo/bkash.png";
+          themeColor = "from-pink-500 to-rose-600";
+          accentColor = "#d9176c";
+          bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
+        } else if (nameLower.includes("nagad")) {
+          logo = "/logo/nagad.png";
+          themeColor = "from-orange-500 to-amber-600";
+          accentColor = "#f97316";
+          bgActive = "border-orange-400 bg-orange-50/30 ring-2 ring-orange-400/20";
+        } else if (nameLower.includes("rocket")) {
+          logo = "/logo/rocket.png";
+          themeColor = "from-purple-500 to-indigo-600";
+          accentColor = "#8b5cf6";
+          bgActive = "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20";
+        } else if (nameLower.includes("bank")) {
+          logo = "/logo/bank.png";
+          themeColor = "from-blue-600 to-indigo-700";
+          accentColor = "#2563eb";
+          bgActive = "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20";
+        } else if (nameLower.includes("upay")) {
+          logo = "/logo/upay.png";
+          themeColor = "from-amber-600 to-yellow-700";
+          accentColor = "#d97706";
+          bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
+        } else if (nameLower.includes("recharge")) {
+          logo = "/logo/recharge.png";
+          themeColor = "from-emerald-600 to-teal-700";
+          accentColor = "#059669";
+          bgActive = "border-emerald-400 bg-emerald-50/30 ring-2 ring-emerald-400/20";
+        } else if (nameLower.includes("paypal")) {
+          logo = "/logo/paypal.svg";
+          themeColor = "from-sky-600 to-blue-700";
+          accentColor = "#0284c7";
+          bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
+        } else if (nameLower.includes("stripe")) {
+          logo = "/logo/stripe.svg";
+          themeColor = "from-indigo-600 to-purple-700";
+          accentColor = "#4f46e5";
+          bgActive = "border-indigo-400 bg-indigo-50/30 ring-2 ring-indigo-400/20";
+        } else if (nameLower.includes("payeer")) {
+          logo = "/logo/payeer.svg";
+          themeColor = "from-sky-500 to-cyan-600";
+          accentColor = "#0ea5e9";
+          bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
+        } else if (nameLower.includes("binance") || nameLower.includes("usdt") || nameLower.includes("crypto")) {
+          logo = "/logo/binance.svg";
+          themeColor = "from-amber-500 to-yellow-600";
+          accentColor = "#f59e0b";
+          bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
+        }
 
-      return {
-        id: g.name,
-        name: g.name,
-        subtitle: g.subName || "ক্যাশআউট",
-        logo: g.icon || logo,
-        minAmount: Number(g.minAmount) || 300,
-        maxAmount: Number(g.maxAmount) || 25000,
-        dailyLimit: Number(g.dailyLimit) || 200000,
-        fee: g.fee || "1.50%",
-        currency: g.currency || "BDT",
-        themeColor,
-        accentColor,
-        bgActive,
-      };
-    });
+        return {
+          id: g.name,
+          name: g.name,
+          subtitle: g.subName || "ক্যাশআউট",
+          logo: g.icon || logo,
+          minAmount: Number(g.minAmount) || 300,
+          maxAmount: Number(g.maxAmount) || 25000,
+          dailyLimit: Number(g.dailyLimit) || 200000,
+          fee: g.fee || "1.50%",
+          currency: g.currency || "BDT",
+          themeColor,
+          accentColor,
+          bgActive,
+        };
+      });
   }, [dynamicGateways]);
+
+  // Sync selected method with active gateways or user preference
+  useEffect(() => {
+    if (paymentMethods.length > 0) {
+      const match = paymentMethods.find(
+        (m) => m.id.toLowerCase() === (user?.paymentMethod || "").toLowerCase()
+      );
+      if (match) {
+        setSelectedMethod(match.id);
+      } else if (!paymentMethods.some((m) => m.id === selectedMethod)) {
+        setSelectedMethod(paymentMethods[0].id);
+      }
+    }
+  }, [paymentMethods, user?.paymentMethod]);
+
+  // Auto-fill account number from user profile if available
+  useEffect(() => {
+    if (user?.account && user.account !== "0000000" && !account) {
+      setAccount(user.account);
+    }
+  }, [user?.account]);
 
   // Fetch user's pending withdrawals to show accurate pending balance
   const { data: pendingData, refetch: refetchPending } = useQuery({
@@ -208,7 +183,21 @@ const Withdraw = () => {
     pendingData?.data?.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) || 0;
 
   const currentMethod =
-    paymentMethods.find((m) => m.id === selectedMethod) || paymentMethods[0];
+    paymentMethods.find((m) => m.id === selectedMethod) ||
+    paymentMethods[0] || {
+      id: "",
+      name: "Payment Method",
+      subtitle: "",
+      logo: "/logo/bank.png",
+      minAmount: 300,
+      maxAmount: 25000,
+      dailyLimit: 200000,
+      fee: "0%",
+      currency: "BDT",
+      themeColor: "from-gray-500 to-gray-700",
+      accentColor: "#6b7280",
+      bgActive: "",
+    };
 
   const userBalance = Number(user?.balance || 0);
   const numAmount = Number(amount || 0);
@@ -430,6 +419,37 @@ const Withdraw = () => {
           
           {/* STEP 1: REQUEST FORM */}
           {step === 1 && (
+            isGatewayLoading ? (
+              <div className="bg-white rounded-3xl p-10 border border-gray-100 shadow-sm flex flex-col items-center justify-center space-y-3">
+                <ArrowPathIcon className="w-8 h-8 text-purple-600 animate-spin" />
+                <p className="text-xs text-gray-500 font-semibold">পেমেন্ট মেথড লোড হচ্ছে...</p>
+              </div>
+            ) : paymentMethods.length === 0 ? (
+              <div className="bg-white rounded-3xl p-8 sm:p-10 border border-gray-100 shadow-sm text-center space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto shadow-inner">
+                  <BuildingLibraryIcon className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900">
+                    বর্তমানে কোনো উইথড্রয়াল গেটওয়ে সচল নেই
+                  </h3>
+                  <p className="text-xs text-gray-500 max-w-md mx-auto mt-1.5 leading-relaxed">
+                    সিস্টেমে এই মুহূর্তে কোনো উইথড্রয়াল মেথড অ্যাক্টিভ নেই। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন অথবা সরাসরি সাপোর্টে যোগাযোগ করুন।
+                  </p>
+                </div>
+                <div className="pt-2 flex justify-center">
+                  <a
+                    href="https://wa.me/+8801731686679"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20 hover:scale-[1.02] transition-transform"
+                  >
+                    <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                    সাপোর্টে যোগাযোগ করুন
+                  </a>
+                </div>
+              </div>
+            ) : (
             <div className="space-y-5 animate-fadeIn">
               {/* 1. Select Payment Method Card */}
               <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
@@ -617,6 +637,7 @@ const Withdraw = () => {
                 <ArrowRightIcon className="w-4 h-4 stroke-[2.5]" />
               </button>
             </div>
+            )
           )}
 
           {/* STEP 2: CONFIRM VIEW */}

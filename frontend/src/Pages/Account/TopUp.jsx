@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Card, Dialog } from "@material-tailwind/react";
 import {
@@ -18,6 +18,9 @@ import {
   DocumentDuplicateIcon,
   KeyIcon,
   PhoneIcon,
+  BuildingLibraryIcon,
+  CreditCardIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import { useQuery } from "react-query";
 import toast from "react-hot-toast";
@@ -25,61 +28,6 @@ import { api } from "../../util/axios";
 import { refreshUser } from "../../redux/features/user/userSlice";
 import HistoryTable from "./HistoryTable";
 import Loader from "../../Components/Loader";
-
-const defaultPaymentMethods = [
-  {
-    id: "Bkash",
-    name: "bKash",
-    subtitle: "Send Money (Personal)",
-    logo: "/logo/bkash.png",
-    accountKey: "bkash",
-    accountNumber: "",
-    minAmount: 100,
-    maxAmount: 25000,
-    themeColor: "from-pink-500 to-rose-600",
-    accentColor: "#d9176c",
-    bgActive: "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20",
-  },
-  {
-    id: "Nagad",
-    name: "Nagad",
-    subtitle: "Send Money (Personal)",
-    logo: "/logo/nagad.png",
-    accountKey: "nagad",
-    accountNumber: "",
-    minAmount: 100,
-    maxAmount: 25000,
-    themeColor: "from-orange-500 to-amber-600",
-    accentColor: "#f97316",
-    bgActive: "border-orange-400 bg-orange-50/30 ring-2 ring-orange-400/20",
-  },
-  {
-    id: "Rocket",
-    name: "Rocket",
-    subtitle: "Send Money (DBBL)",
-    logo: "/logo/rocket.png",
-    accountKey: "rocket",
-    accountNumber: "",
-    minAmount: 100,
-    maxAmount: 25000,
-    themeColor: "from-purple-500 to-indigo-600",
-    accentColor: "#8b5cf6",
-    bgActive: "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20",
-  },
-  {
-    id: "Bank Transfer",
-    name: "Bank Transfer",
-    subtitle: "Bank Account Transfer",
-    logo: "/logo/bank.png",
-    accountKey: "bank_transfer",
-    accountNumber: "",
-    minAmount: 500,
-    maxAmount: 500000,
-    themeColor: "from-blue-600 to-indigo-700",
-    accentColor: "#2563eb",
-    bgActive: "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20",
-  },
-];
 
 const quickAmounts = [100, 300, 500, 1000, 2000, 5000];
 
@@ -93,7 +41,7 @@ const formatCurrency = (val) => {
 
 const TopUp = () => {
   const [step, setStep] = useState(1); // 1: Request & Transfer, 2: Confirm, 3: Complete
-  const [selectedMethod, setSelectedMethod] = useState("Bkash");
+  const [selectedMethod, setSelectedMethod] = useState("");
   const [currency, setCurrency] = useState("bdt");
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("");
@@ -108,11 +56,11 @@ const TopUp = () => {
   const dispatch = useDispatch();
 
   // Fetch dynamic active gateways from database
-  const { data: dynamicGateways = [] } = useQuery({
+  const { data: dynamicGateways = [], isLoading: isGatewayLoading } = useQuery({
     queryKey: ["active-payment-gateways"],
     queryFn: async () => {
       try {
-        const res = await api.get("/gateway");
+        const res = await api.get("/gateway?status=Active");
         return Array.isArray(res.data) ? res.data : [];
       } catch {
         return [];
@@ -121,84 +69,96 @@ const TopUp = () => {
   });
 
   const paymentMethods = useMemo(() => {
-    if (!dynamicGateways || dynamicGateways.length === 0) return defaultPaymentMethods;
-    return dynamicGateways.map((g) => {
-      const nameLower = g.name.toLowerCase();
-      let logo = "/logo/bkash.png";
-      let themeColor = "from-pink-500 to-rose-600";
-      let accentColor = "#d9176c";
-      let bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
+    if (!dynamicGateways || dynamicGateways.length === 0) return [];
+    return dynamicGateways
+      .filter((g) => g.status === "Active" && g.isDepositSupported !== false)
+      .map((g) => {
+        const nameLower = (g.name || "").toLowerCase();
+        let logo = "/logo/bkash.png";
+        let themeColor = "from-pink-500 to-rose-600";
+        let accentColor = "#d9176c";
+        let bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
 
-      if (nameLower.includes("bkash")) {
-        logo = "/logo/bkash.png";
-        themeColor = "from-pink-500 to-rose-600";
-        accentColor = "#d9176c";
-        bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
-      } else if (nameLower.includes("nagad")) {
-        logo = "/logo/nagad.png";
-        themeColor = "from-orange-500 to-amber-600";
-        accentColor = "#f97316";
-        bgActive = "border-orange-400 bg-orange-50/30 ring-2 ring-orange-400/20";
-      } else if (nameLower.includes("rocket")) {
-        logo = "/logo/rocket.png";
-        themeColor = "from-purple-500 to-indigo-600";
-        accentColor = "#8b5cf6";
-        bgActive = "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20";
-      } else if (nameLower.includes("bank")) {
-        logo = "/logo/bank.png";
-        themeColor = "from-blue-600 to-indigo-700";
-        accentColor = "#2563eb";
-        bgActive = "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20";
-      } else if (nameLower.includes("upay")) {
-        logo = "/logo/upay.png";
-        themeColor = "from-amber-600 to-yellow-700";
-        accentColor = "#d97706";
-        bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
-      } else if (nameLower.includes("recharge")) {
-        logo = "/logo/recharge.png";
-        themeColor = "from-emerald-600 to-teal-700";
-        accentColor = "#059669";
-        bgActive = "border-emerald-400 bg-emerald-50/30 ring-2 ring-emerald-400/20";
-      } else if (nameLower.includes("paypal")) {
-        logo = "/logo/paypal.svg";
-        themeColor = "from-sky-600 to-blue-700";
-        accentColor = "#0284c7";
-        bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
-      } else if (nameLower.includes("stripe")) {
-        logo = "/logo/stripe.svg";
-        themeColor = "from-indigo-600 to-purple-700";
-        accentColor = "#4f46e5";
-        bgActive = "border-indigo-400 bg-indigo-50/30 ring-2 ring-indigo-400/20";
-      } else if (nameLower.includes("payeer")) {
-        logo = "/logo/payeer.svg";
-        themeColor = "from-sky-500 to-cyan-600";
-        accentColor = "#0ea5e9";
-        bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
-      } else if (nameLower.includes("binance") || nameLower.includes("usdt") || nameLower.includes("crypto")) {
-        logo = "/logo/binance.svg";
-        themeColor = "from-amber-500 to-yellow-600";
-        accentColor = "#f59e0b";
-        bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
-      }
+        if (nameLower.includes("bkash")) {
+          logo = "/logo/bkash.png";
+          themeColor = "from-pink-500 to-rose-600";
+          accentColor = "#d9176c";
+          bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
+        } else if (nameLower.includes("nagad")) {
+          logo = "/logo/nagad.png";
+          themeColor = "from-orange-500 to-amber-600";
+          accentColor = "#f97316";
+          bgActive = "border-orange-400 bg-orange-50/30 ring-2 ring-orange-400/20";
+        } else if (nameLower.includes("rocket")) {
+          logo = "/logo/rocket.png";
+          themeColor = "from-purple-500 to-indigo-600";
+          accentColor = "#8b5cf6";
+          bgActive = "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20";
+        } else if (nameLower.includes("bank")) {
+          logo = "/logo/bank.png";
+          themeColor = "from-blue-600 to-indigo-700";
+          accentColor = "#2563eb";
+          bgActive = "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20";
+        } else if (nameLower.includes("upay")) {
+          logo = "/logo/upay.png";
+          themeColor = "from-amber-600 to-yellow-700";
+          accentColor = "#d97706";
+          bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
+        } else if (nameLower.includes("recharge")) {
+          logo = "/logo/recharge.png";
+          themeColor = "from-emerald-600 to-teal-700";
+          accentColor = "#059669";
+          bgActive = "border-emerald-400 bg-emerald-50/30 ring-2 ring-emerald-400/20";
+        } else if (nameLower.includes("paypal")) {
+          logo = "/logo/paypal.svg";
+          themeColor = "from-sky-600 to-blue-700";
+          accentColor = "#0284c7";
+          bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
+        } else if (nameLower.includes("stripe")) {
+          logo = "/logo/stripe.svg";
+          themeColor = "from-indigo-600 to-purple-700";
+          accentColor = "#4f46e5";
+          bgActive = "border-indigo-400 bg-indigo-50/30 ring-2 ring-indigo-400/20";
+        } else if (nameLower.includes("payeer")) {
+          logo = "/logo/payeer.svg";
+          themeColor = "from-sky-500 to-cyan-600";
+          accentColor = "#0ea5e9";
+          bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
+        } else if (nameLower.includes("binance") || nameLower.includes("usdt") || nameLower.includes("crypto")) {
+          logo = "/logo/binance.svg";
+          themeColor = "from-amber-500 to-yellow-600";
+          accentColor = "#f59e0b";
+          bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
+        }
 
-      return {
-        id: g.name,
-        name: g.name,
-        subtitle: g.subName || g.instructions || "Send Money",
-        logo: g.icon || logo,
-        accountKey: g.name.toLowerCase().replace(/\s+/g, "_"),
-        accountNumber: g.accountNumber,
-        minAmount: Number(g.minAmount) || 10,
-        maxAmount: Number(g.maxAmount) || 50000,
-        dailyLimit: Number(g.dailyLimit) || 200000,
-        fee: g.fee || "1.50%",
-        currency: g.currency || "BDT",
-        themeColor,
-        accentColor,
-        bgActive,
-      };
-    });
+        return {
+          id: g.name,
+          name: g.name,
+          subtitle: g.subName || g.instructions || "Send Money",
+          logo: g.icon || logo,
+          accountKey: (g.name || "").toLowerCase().replace(/\s+/g, "_"),
+          accountNumber: g.accountNumber,
+          minAmount: Number(g.minAmount) || 10,
+          maxAmount: Number(g.maxAmount) || 50000,
+          dailyLimit: Number(g.dailyLimit) || 200000,
+          fee: g.fee || "1.50%",
+          currency: g.currency || "BDT",
+          instructions: g.instructions,
+          themeColor,
+          accentColor,
+          bgActive,
+        };
+      });
   }, [dynamicGateways]);
+
+  // Sync selected method with available active gateways
+  useEffect(() => {
+    if (paymentMethods.length > 0) {
+      if (!paymentMethods.some((m) => m.id === selectedMethod)) {
+        setSelectedMethod(paymentMethods[0].id);
+      }
+    }
+  }, [paymentMethods, selectedMethod]);
 
   // Fetch user's pending top-ups to display accurate pending balance
   const { data: pendingData, refetch: refetchPending } = useQuery({
@@ -214,7 +174,24 @@ const TopUp = () => {
     pendingData?.data?.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) || 0;
 
   const currentMethod =
-    paymentMethods.find((m) => m.id === selectedMethod) || paymentMethods[0];
+    paymentMethods.find((m) => m.id === selectedMethod) ||
+    paymentMethods[0] || {
+      id: "",
+      name: "Payment Method",
+      subtitle: "",
+      logo: "/logo/bank.png",
+      accountKey: "",
+      accountNumber: "",
+      minAmount: 10,
+      maxAmount: 50000,
+      dailyLimit: 200000,
+      fee: "0%",
+      currency: "BDT",
+      instructions: "",
+      themeColor: "from-gray-500 to-gray-700",
+      accentColor: "#6b7280",
+      bgActive: "",
+    };
 
   const adminNumber =
     currentMethod.accountNumber ||
@@ -447,6 +424,37 @@ const TopUp = () => {
           
           {/* STEP 1: REQUEST & TRANSFER FORM */}
           {step === 1 && (
+            isGatewayLoading ? (
+              <div className="bg-white rounded-3xl p-10 border border-gray-100 shadow-sm flex flex-col items-center justify-center space-y-3">
+                <ArrowPathIcon className="w-8 h-8 text-purple-600 animate-spin" />
+                <p className="text-xs text-gray-500 font-semibold">পেমেন্ট মেথড লোড হচ্ছে...</p>
+              </div>
+            ) : paymentMethods.length === 0 ? (
+              <div className="bg-white rounded-3xl p-8 sm:p-10 border border-gray-100 shadow-sm text-center space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto shadow-inner">
+                  <BuildingLibraryIcon className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900">
+                    বর্তমানে কোনো টপ-আপ গেটওয়ে সচল নেই
+                  </h3>
+                  <p className="text-xs text-gray-500 max-w-md mx-auto mt-1.5 leading-relaxed">
+                    সিস্টেমে এই মুহূর্তে কোনো ডিপোজিট/টপ-আপ মেথড অ্যাক্টিভ নেই। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন অথবা সরাসরি সাপোর্টে যোগাযোগ করুন।
+                  </p>
+                </div>
+                <div className="pt-2 flex justify-center">
+                  <a
+                    href="https://wa.me/+8801731686679"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20 hover:scale-[1.02] transition-transform"
+                  >
+                    <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                    সাপোর্টে যোগাযোগ করুন
+                  </a>
+                </div>
+              </div>
+            ) : (
             <div className="space-y-5 animate-fadeIn">
               {/* 1. Select Payment Method Card */}
               <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
@@ -527,18 +535,22 @@ const TopUp = () => {
                     <button
                       type="button"
                       onClick={handleCopy}
-                      disabled={adminNumber === "N/A"}
-                      className="w-full sm:w-auto px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-500/20 flex items-center justify-center gap-1.5 active:scale-95 transition-all shrink-0"
+                      disabled={!adminNumber || adminNumber === "N/A"}
+                      className={`w-full sm:w-auto px-4 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm ${
+                        copied
+                          ? "bg-emerald-500 text-white"
+                          : "bg-purple-600 hover:bg-purple-700 text-white active:scale-95"
+                      }`}
                     >
                       {copied ? (
                         <>
-                          <CheckIcon className="w-4 h-4 text-emerald-300 stroke-[3]" />
-                          <span>কপি হয়েছে!</span>
+                          <CheckIcon className="w-4 h-4 stroke-[3]" />
+                          <span>কপি হয়েছে</span>
                         </>
                       ) : (
                         <>
                           <DocumentDuplicateIcon className="w-4 h-4" />
-                          <span>নম্বর কপি করুন</span>
+                          <span>কপি করুন</span>
                         </>
                       )}
                     </button>
@@ -567,45 +579,49 @@ const TopUp = () => {
                   )}
                 </div>
 
-                {/* Info note */}
-                <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-100 flex items-center gap-2 text-xs text-purple-900 font-medium">
-                  <InformationCircleIcon className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span>প্রথমে উপরের নম্বরে টাকা পাঠান, তারপর নিচের ফরমটি পূরণ করুন।</span>
+                {/* Important notice */}
+                <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/60 flex items-start gap-2.5 text-xs text-amber-900">
+                  <InformationCircleIcon className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">সতর্কতা: </span>
+                    টাকা পাঠানোর সময় অবশ্যই <span className="font-bold">Send Money</span> অপশন
+                    ব্যবহার করবেন। ভুল নম্বরে টাকা পাঠালে এডমিন দায়ী থাকবে না।
+                  </div>
                 </div>
               </div>
 
-              {/* 2. Enter Top-Up Details Card */}
+              {/* 2. Amount & Trx Details Card */}
               <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xs sm:text-sm font-bold text-gray-800 tracking-tight">
-                    2. Enter Top-Up Details
+                    2. Payment Details
                   </h2>
                   <span className="text-[11px] font-semibold text-gray-400">
                     সীমা: ৳{currentMethod.minAmount} — ৳{currentMethod.maxAmount}
                   </span>
                 </div>
 
-                {/* Amount Input */}
+                {/* Amount input */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-gray-700">
-                    টপ-আপের পরিমাণ (BDT):
+                    টাকার পরিমাণ (Amount):
                   </label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-4 text-gray-700 font-bold text-base select-none">
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700 font-bold text-base select-none">
                       ৳
                     </span>
                     <input
                       type="number"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      placeholder="কত টাকা পাঠিয়েছেন লিখুন"
+                      placeholder="টাকার পরিমাণ লিখুন"
                       className="w-full pl-9 pr-4 py-3.5 bg-gray-50/70 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                     />
                   </div>
                 </div>
 
                 {/* Quick Amount Pills */}
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-1">
                   {quickAmounts.map((qa) => {
                     const isSelected = Number(amount) === qa;
                     return (
@@ -613,20 +629,20 @@ const TopUp = () => {
                         key={qa}
                         type="button"
                         onClick={() => setAmount(qa.toString())}
-                        className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                        className={`py-2 rounded-xl text-xs font-black transition-all ${
                           isSelected
-                            ? "bg-purple-600 text-white shadow-sm shadow-purple-500/20 scale-[1.02]"
-                            : "bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-100/80"
+                            ? "bg-[#0b0c2a] text-white shadow-md shadow-indigo-950/20 scale-[1.02]"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                         }`}
                       >
-                        ৳{qa.toLocaleString()}
+                        ৳{qa}
                       </button>
                     );
                   })}
                 </div>
 
                 {/* Transaction ID Input */}
-                <div className="space-y-1.5 pt-1">
+                <div className="space-y-1.5 pt-2">
                   <label className="block text-xs font-bold text-gray-700">
                     Transaction ID (TrxID):
                   </label>
@@ -697,6 +713,7 @@ const TopUp = () => {
                 <ArrowRightIcon className="w-4 h-4 stroke-[2.5]" />
               </button>
             </div>
+            )
           )}
 
           {/* STEP 2: CONFIRM VIEW */}
