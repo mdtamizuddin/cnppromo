@@ -58,8 +58,7 @@ const Topbar = ({
     user &&
     user.role !== "admin" &&
     user.role !== "moderator" &&
-    user.status !== "active" &&
-    !user.active;
+    user.status !== "active";
 
   // ----------------------------------------------------
   // LOGGED-IN ACTIVE USER: KEEP DESKTOP SIDEBAR & MOBILE BOTTOM BAR

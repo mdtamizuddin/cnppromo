@@ -45,6 +45,10 @@ const Lazy = ({ children }) => <Suspense fallback={<Loader />}>{children}</Suspe
 
 export const userRoutes = [
   {
+    index: true,
+    element: <AuthChecker><Lazy><Welcome /></Lazy></AuthChecker>,
+  },
+  {
     path: "message",
     element: (
       <AuthChecker requireActive={true}>

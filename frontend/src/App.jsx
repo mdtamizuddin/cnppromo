@@ -46,8 +46,7 @@ const MainLayout = () => {
     user &&
     user.role !== "admin" &&
     user.role !== "moderator" &&
-    user.status !== "active" &&
-    !user.active;
+    user.status !== "active";
 
   return (
     <>

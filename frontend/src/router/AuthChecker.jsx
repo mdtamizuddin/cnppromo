@@ -26,9 +26,9 @@ const AuthChecker = ({ children, requireActive = true }) => {
         );
     }
 
-    // 3. If user is not active (non-admins) -> show the RequierActive waiting screen
-    const isActive = user.status === "active" || user.active === true;
-    if (requireActive && user.role !== "admin" && user.role !== "moderator" && !isActive) {
+    // 3. Strictly verify active status (admin approval) for regular members
+    const isApprovedActive = user.status === "active";
+    if (requireActive && user.role !== "admin" && user.role !== "moderator" && !isApprovedActive) {
         return <RequierActive />;
     }
 
