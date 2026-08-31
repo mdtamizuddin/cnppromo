@@ -80,7 +80,7 @@ export default function HistoryTable({ historyType }) {
               <button
                 type="button"
                 onClick={() => handleCopy(record.account)}
-                className="text-gray-400 hover:text-[#5a32fa] transition-colors"
+                className="text-gray-400 hover:text-primary transition-colors"
                 title="কপি করুন"
               >
                 <DocumentDuplicateIcon className="w-3.5 h-3.5" />

@@ -40,9 +40,9 @@ const NoInternet = () => {
   return (
     <div className="relative min-h-screen w-full bg-[#070818] text-white flex items-center justify-center p-4 sm:p-6 overflow-hidden select-none font-sans">
       {/* Dynamic Ambient Background Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-[#5a32fa]/20 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-teal-500/20 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-rose-500/15 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-10 left-10 w-[300px] h-[300px] bg-indigo-600/15 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-10 left-10 w-[300px] h-[300px] bg-cyan-600/15 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Decorative Grid Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
@@ -60,16 +60,16 @@ const NoInternet = () => {
           <motion.div
             animate={{ scale: [1, 1.25, 1], opacity: [0.35, 0, 0.35] }}
             transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-0 rounded-full bg-gradient-to-tr from-rose-500/40 to-[#5a32fa]/40 blur-sm"
+            className="absolute inset-0 rounded-full bg-gradient-to-tr from-rose-500/40 to-teal-500/40 blur-sm"
           />
           <motion.div
             animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.2, 0.5] }}
             transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-            className="absolute inset-1.5 rounded-full bg-gradient-to-tr from-rose-500/25 to-indigo-500/25 border border-rose-500/30"
+            className="absolute inset-1.5 rounded-full bg-gradient-to-tr from-rose-500/25 to-teal-500/25 border border-rose-500/30"
           />
 
           {/* Central Glass Disc with Disconnected Server Icon */}
-          <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-900/90 to-[#121432]/90 border border-white/15 flex items-center justify-center shadow-xl shadow-black/40">
+          <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-900/90 to-[#042f2e]/90 border border-white/15 flex items-center justify-center shadow-xl shadow-black/40">
             <ServerStackIcon className="w-8 h-8 text-gray-300" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
@@ -114,7 +114,7 @@ const NoInternet = () => {
           <button
             onClick={handleRetry}
             disabled={isRetrying}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#5a32fa] to-[#7928ca] hover:from-[#4b26e0] hover:to-[#6820b3] text-white font-bold text-sm shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-sm shadow-lg shadow-teal-600/30 hover:shadow-teal-600/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
           >
             <ArrowPathIcon
               className={`w-4 h-4 ${isRetrying ? "animate-spin" : ""}`}

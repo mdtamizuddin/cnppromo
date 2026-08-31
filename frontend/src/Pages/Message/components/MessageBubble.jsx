@@ -180,7 +180,7 @@ const MessageBubble = memo(
             setPopoverOpen(false);
             onReply?.(msg);
           }}
-          className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#5a32fa] transition-colors rounded-lg font-medium text-left"
+          className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors rounded-lg font-medium text-left"
         >
           <ArrowUturnLeftIcon className="w-4 h-4 text-gray-400" />
           <span>Reply</span>
@@ -189,7 +189,7 @@ const MessageBubble = memo(
         <button
           onClick={copy}
           disabled={!hasText}
-          className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#5a32fa] transition-colors rounded-lg font-medium text-left disabled:opacity-40 disabled:pointer-events-none"
+          className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors rounded-lg font-medium text-left disabled:opacity-40 disabled:pointer-events-none"
         >
           <ClipboardIcon className="w-4 h-4 text-gray-400" />
           <span>Copy text</span>
@@ -201,7 +201,7 @@ const MessageBubble = memo(
             <button
               onClick={handleOpenEdit}
               disabled={!hasText}
-              className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#5a32fa] transition-colors rounded-lg font-medium text-left disabled:opacity-40 disabled:pointer-events-none"
+              className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors rounded-lg font-medium text-left disabled:opacity-40 disabled:pointer-events-none"
             >
               <PencilSquareIcon className="w-4 h-4 text-gray-400" />
               <span>Edit message</span>
@@ -244,7 +244,7 @@ const MessageBubble = memo(
                 pending ? "opacity-65" : ""
               } ${
                 own
-                  ? `bg-gradient-to-br from-[#5a32fa] to-[#4722db] text-white shadow-md shadow-indigo-500/15 ${
+                  ? `bg-gradient-to-br from-[#0D9488] to-[#0F766E] text-white shadow-md shadow-teal-500/15 ${
                       runEnd ? "rounded-[20px] rounded-br-[4px]" : "rounded-[20px]"
                     }`
                   : `bg-white text-gray-800 border border-gray-150/80 shadow-xs ${
@@ -262,7 +262,7 @@ const MessageBubble = memo(
                   className={`block w-full text-left mb-2 pl-2.5 pr-2 py-1.5 rounded-xl border-l-[3px] text-[11px] truncate transition-all ${
                     own
                       ? "border-white/80 bg-black/15 text-white/90 hover:bg-black/25"
-                      : "border-[#5a32fa] bg-indigo-50/70 text-gray-700 hover:bg-indigo-50"
+                      : "border-primary bg-primary-light text-gray-700 hover:bg-teal-50"
                   }`}
                 >
                   <span className="block font-bold text-[10px] opacity-75 mb-0.5">
@@ -297,8 +297,8 @@ const MessageBubble = memo(
                 onClick={() => onReply?.(msg)}
                 aria-label="Reply"
                 title="Reply"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand-soft
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary-light
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
                 <ArrowUturnLeftIcon className="w-4 h-4" />
               </button>
@@ -314,8 +314,8 @@ const MessageBubble = memo(
                   type="button"
                   aria-label="More actions"
                   title="More"
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand-soft
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary-light
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                 >
                   <EllipsisHorizontalIcon className="w-4 h-4" />
                 </button>
@@ -360,7 +360,7 @@ const MessageBubble = memo(
               {/* Modal Header */}
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-purple-50 text-[#5a32fa] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-primary-light text-primary flex items-center justify-center">
                     <PencilSquareIcon className="w-5 h-5" />
                   </div>
                   <div>
@@ -393,7 +393,7 @@ const MessageBubble = memo(
                         handleSaveEdit();
                       }
                     }}
-                    className="w-full p-3.5 text-xs text-gray-800 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5a32fa]/30 focus:border-[#5a32fa] transition-all resize-none"
+                    className="w-full p-3.5 text-xs text-gray-800 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none"
                   />
                   <div className="flex justify-between items-center px-1 text-[10px] text-gray-400">
                     <span>Press Enter to save, Shift+Enter for new line</span>
@@ -416,7 +416,7 @@ const MessageBubble = memo(
                   type="button"
                   disabled={updating || !editText.trim()}
                   onClick={handleSaveEdit}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#5a32fa] hover:bg-[#4923e0] disabled:opacity-50 disabled:pointer-events-none rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center gap-1.5"
+                  className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:pointer-events-none rounded-xl shadow-md shadow-teal-500/20 transition-all flex items-center gap-1.5"
                 >
                   {updating ? (
                     <>

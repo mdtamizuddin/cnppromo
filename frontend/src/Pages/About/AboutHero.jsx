@@ -7,8 +7,8 @@ const AboutHero = () => {
     return (
         <div className="relative bg-[#0b0c2a] pt-16 pb-32 overflow-hidden rounded-b-[40px] md:rounded-b-[60px] shadow-2xl">
             {/* Background elements */}
-            <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-[#5a32fa] rounded-full mix-blend-multiply filter blur-[120px] opacity-40"></div>
-            <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-pink-600 rounded-full mix-blend-multiply filter blur-[120px] opacity-30"></div>
+            <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-teal-500 rounded-full mix-blend-multiply filter blur-[120px] opacity-30"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-cyan-600 rounded-full mix-blend-multiply filter blur-[120px] opacity-20"></div>
 
             <div className="max-w-[1140px] mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center gap-12">
                 {/* Left Content */}
@@ -18,9 +18,9 @@ const AboutHero = () => {
                     transition={{ duration: 0.6 }}
                     className="flex-1 text-center md:text-left text-white"
                 >
-                    <h3 className="text-[#5a32fa] font-bold text-sm tracking-wider uppercase mb-2">ABOUT US</h3>
+                    <h3 className="text-primary font-bold text-sm tracking-wider uppercase mb-2">ABOUT US</h3>
                     <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight tracking-tight text-white">
-                        About <span className="text-[#724ff7]">CNP-PROMO</span>
+                        About <span className="text-primary-gradient-from bg-gradient-to-r from-teal-400 to-cyan-300 bg-clip-text text-transparent">CNP-PROMO</span>
                     </h1>
                     <p className="text-xl md:text-2xl font-bold text-gray-200 mb-6">
                         বিশ্বাস, স্বচ্ছতা এবং আপনার সফলতাই আমাদের লক্ষ্য
@@ -74,19 +74,19 @@ const AboutHero = () => {
                 >
                     <div className="relative w-[320px] h-[320px] md:w-[400px] md:h-[400px]">
                         {/* 3D styling elements instead of image */}
-                        <div className="absolute inset-0 bg-[#5a32fa] rounded-full opacity-20 animate-pulse"></div>
-                        <div className="absolute inset-4 bg-indigo-500 rounded-full opacity-30"></div>
+                        <div className="absolute inset-0 bg-primary rounded-full opacity-20 animate-pulse"></div>
+                        <div className="absolute inset-4 bg-teal-500 rounded-full opacity-30"></div>
                         <div className="absolute inset-0 flex items-center justify-center flex-col">
-                           <div className="w-48 h-64 bg-[#1a1b41] rounded-[2rem] border-4 border-[#2d2e5a] shadow-2xl relative overflow-hidden z-10 flex flex-col items-center pt-8">
+                           <div className="w-48 h-64 bg-[#0d2a28] rounded-[2rem] border-4 border-[#134e4a] shadow-2xl relative overflow-hidden z-10 flex flex-col items-center pt-8">
                                 <div className="w-20 h-2 bg-gray-600 rounded-full absolute top-3"></div>
                                 <div className="w-32 h-20 bg-green-500/20 rounded-xl mt-4 border border-green-500/30 flex items-center justify-center">
                                     <span className="text-green-400 font-bold text-2xl">৳</span>
                                 </div>
-                                <div className="w-32 h-10 bg-indigo-500/20 rounded-xl mt-4 border border-indigo-500/30"></div>
+                                <div className="w-32 h-10 bg-teal-500/20 rounded-xl mt-4 border border-teal-500/30"></div>
                            </div>
                            
                            {/* Floating Wallet */}
-                           <div className="absolute bottom-12 z-20 w-56 h-36 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl shadow-xl shadow-purple-900/50 transform rotate-[-5deg] border border-purple-400/30">
+                           <div className="absolute bottom-12 z-20 w-56 h-36 bg-gradient-to-r from-teal-600 to-cyan-600 rounded-2xl shadow-xl shadow-teal-900/50 transform rotate-[-5deg] border border-teal-400/30">
                                 <div className="absolute right-6 top-1/2 -translate-y-1/2 w-8 h-12 bg-amber-400 rounded-lg shadow-inner flex items-center justify-center">
                                     <div className="w-4 h-4 rounded-full bg-amber-600"></div>
                                 </div>
@@ -99,10 +99,10 @@ const AboutHero = () => {
                            </div>
                            
                            {/* Floating elements */}
-                           <div className="absolute top-12 left-0 w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/30 animate-bounce">
+                           <div className="absolute top-12 left-0 w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/30 animate-bounce">
                                 <span className="text-white font-bold">৳</span>
                            </div>
-                           <div className="absolute top-0 right-12 w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/30 animate-pulse">
+                           <div className="absolute top-0 right-12 w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center shadow-lg shadow-cyan-500/30 animate-pulse">
                                 <span className="text-white font-bold">৳</span>
                            </div>
                         </div>

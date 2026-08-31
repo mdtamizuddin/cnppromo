@@ -38,28 +38,28 @@ const ClipboardIllustration = () => (
      <div className="absolute bottom-10 -left-2 w-12 h-16 bg-[#a2d2ff] rounded-full -rotate-12 opacity-80 blur-[2px]"></div>
 
      {/* Clipboard */}
-     <div className="relative z-10 w-44 h-56 bg-white rounded-xl shadow-xl shadow-indigo-500/10 border-2 border-[#5a32fa] flex flex-col items-center">
+     <div className="relative z-10 w-44 h-56 bg-white rounded-xl shadow-xl shadow-teal-500/10 border-2 border-primary flex flex-col items-center">
         {/* Clip */}
-        <div className="absolute -top-3 w-16 h-6 bg-[#5a32fa] rounded-full border-[3px] border-white z-20"></div>
-        <div className="absolute -top-1 w-10 h-2 bg-indigo-300 rounded-full z-30"></div>
+        <div className="absolute -top-3 w-16 h-6 bg-primary rounded-full border-[3px] border-white z-20"></div>
+        <div className="absolute -top-1 w-10 h-2 bg-teal-300 rounded-full z-30"></div>
         
         {/* Content Lines */}
         <div className="mt-10 px-5 w-full flex flex-col gap-5">
            {/* Header row with avatar */}
            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-[#5a32fa] shrink-0">
+              <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center text-primary shrink-0">
                  <FontAwesomeIcon icon={faUser} className="text-lg" />
               </div>
               <div className="flex-1 space-y-2">
-                 <div className="w-full h-2.5 bg-indigo-100 rounded-full"></div>
-                 <div className="w-2/3 h-2.5 bg-indigo-100 rounded-full"></div>
+                 <div className="w-full h-2.5 bg-teal-100 rounded-full"></div>
+                 <div className="w-2/3 h-2.5 bg-teal-100 rounded-full"></div>
               </div>
            </div>
            {/* Lines */}
            <div className="space-y-3 mt-2">
-              <div className="w-full h-2.5 bg-indigo-50 rounded-full"></div>
-              <div className="w-full h-2.5 bg-indigo-50 rounded-full"></div>
-              <div className="w-3/4 h-2.5 bg-indigo-50 rounded-full"></div>
+              <div className="w-full h-2.5 bg-teal-50 rounded-full"></div>
+              <div className="w-full h-2.5 bg-teal-50 rounded-full"></div>
+              <div className="w-3/4 h-2.5 bg-teal-50 rounded-full"></div>
            </div>
         </div>
      </div>
@@ -75,7 +75,7 @@ const ClipboardIllustration = () => (
      </div>
 
      {/* Plus Button Badge */}
-     <div className="absolute z-30 -bottom-4 right-8 w-16 h-16 bg-[#5a32fa] rounded-full flex items-center justify-center text-white text-4xl font-light shadow-xl border-[4px] border-white hover:scale-105 transition-transform cursor-pointer">
+     <div className="absolute z-30 -bottom-4 right-8 w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-4xl font-light shadow-xl border-[4px] border-white hover:scale-105 transition-transform cursor-pointer">
         +
      </div>
   </div>
@@ -92,7 +92,7 @@ const FormInput = ({ label, icon, ...props }) => (
             )}
         </label>
         <div className="flex">
-            <div className="w-[44px] shrink-0 border border-r-0 border-gray-200 rounded-l-xl flex items-center justify-center text-[#5a32fa] bg-indigo-50/40">
+            <div className="w-[44px] shrink-0 border border-r-0 border-gray-200 rounded-l-xl flex items-center justify-center text-primary bg-teal-50/40">
                 <FontAwesomeIcon icon={icon} className="text-[15px]" />
             </div>
             <div className="relative w-full">
@@ -111,7 +111,7 @@ const PasswordInput = ({ label, icon, value, name, onChange, placeholder, error 
         <div>
             <label className="block text-gray-800 text-[14px] font-bold mb-1.5">{label} <span className="text-red-500">*</span></label>
             <div className="flex">
-                <div className="w-[44px] shrink-0 border border-r-0 border-gray-200 rounded-l-xl flex items-center justify-center text-[#5a32fa] bg-indigo-50/40">
+                <div className="w-[44px] shrink-0 border border-r-0 border-gray-200 rounded-l-xl flex items-center justify-center text-primary bg-teal-50/40">
                     <FontAwesomeIcon icon={icon} className="text-[15px]" />
                 </div>
                 <div className="relative w-full">
@@ -122,7 +122,7 @@ const PasswordInput = ({ label, icon, value, name, onChange, placeholder, error 
                        onChange={onChange}
                        placeholder={placeholder}
                        required
-                       className={`w-full border ${error ? 'border-red-400' : 'border-gray-200'} rounded-r-xl py-2.5 pl-3 pr-10 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-[14px]`} 
+                       className={`w-full border ${error ? 'border-red-400' : 'border-gray-200'} rounded-r-xl py-2.5 pl-3 pr-10 focus:outline-none focus:border-primary focus:ring-1 focus:ring-teal-500/30 transition-colors text-[14px]`} 
                    />
                    <div 
                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
@@ -391,7 +391,7 @@ const Register = () => {
                                 type="checkbox" 
                                 checked={agree}
                                 onChange={(e) => setAgree(e.target.checked)}
-                                className="w-5 h-5 rounded border-gray-300 text-[#5a32fa] focus:ring-[#5a32fa] cursor-pointer" 
+                                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer" 
                             />
                             <span className="text-gray-700 font-medium text-[14px]">আমি শর্তাবলী ও গোপনীয়তা নীতিমালা পড়েছি এবং এতে সম্মত।</span>
                         </div>
@@ -399,7 +399,7 @@ const Register = () => {
                         <button 
                             type="submit" 
                             disabled={loading || !agree}
-                            className="w-full bg-[#5a32fa] text-white py-4 rounded-xl font-bold text-[17px] mt-6 flex items-center justify-center gap-2.5 hover:bg-[#4b26e0] transition-colors shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-primary text-white py-4 rounded-xl font-bold text-[17px] mt-6 flex items-center justify-center gap-2.5 hover:bg-primary-hover transition-colors shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? "অপেক্ষা করুন..." : "রেজিস্ট্রেশন করুন"}
                         </button>
@@ -413,7 +413,7 @@ const Register = () => {
                         
                         {/* Login Link */}
                         <div className="text-center text-[15px] text-gray-600 pb-2">
-                            ইতিমধ্যেই একাউন্ট আছে? <Link to="/login" className="text-[#5a32fa] font-semibold hover:underline tracking-wide ml-1">লগ ইন করুন</Link>
+                            ইতিমধ্যেই একাউন্ট আছে? <Link to="/login" className="text-primary font-semibold hover:underline tracking-wide ml-1">লগ ইন করুন</Link>
                         </div>
                     </form>
                     </Card>

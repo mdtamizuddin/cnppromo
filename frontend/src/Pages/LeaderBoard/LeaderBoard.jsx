@@ -104,7 +104,7 @@ const LeaderBoard = () => {
           <div className="flex items-center gap-3">
             <Link
               to="/user/home"
-              className="w-10 h-10 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:text-[#5a32fa] hover:border-[#5a32fa] transition-all"
+              className="w-10 h-10 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:text-primary hover:border-primary transition-all"
             >
               <ChevronLeftIcon className="w-5 h-5 stroke-[2.5]" />
             </Link>
@@ -116,7 +116,7 @@ const LeaderBoard = () => {
           <IconButton
             variant="text"
             onClick={() => setInfoOpen(true)}
-            className="w-10 h-10 rounded-2xl text-gray-500 hover:text-[#5a32fa] hover:bg-purple-50"
+            className="w-10 h-10 rounded-2xl text-gray-500 hover:text-primary hover:bg-teal-50"
             title="নিয়মাবলী ও তথ্য"
           >
             <QuestionMarkCircleIcon className="w-6 h-6" />
@@ -124,7 +124,7 @@ const LeaderBoard = () => {
         </div>
 
         {/* 🌟 Top Performers Hero Banner matching screenshot */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#5a32fa] via-[#7c3aed] to-[#d946ef] p-6 sm:p-8 text-white shadow-xl shadow-purple-500/20">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#042f2e] via-[#0f766e] to-[#0284c7] p-6 sm:p-8 text-white shadow-xl shadow-teal-900/20">
           <div className="absolute -right-6 -bottom-6 w-60 h-60 bg-pink-400/20 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center relative z-10">
@@ -183,7 +183,7 @@ const LeaderBoard = () => {
             onClick={() => setActiveTab("earners")}
             className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
               activeTab === "earners"
-                ? "bg-purple-50 text-[#5a32fa] border border-purple-100 shadow-sm"
+                ? "bg-primary-light text-primary border border-teal-100 shadow-sm"
                 : "text-gray-500 hover:text-gray-800"
             }`}
           >
@@ -195,7 +195,7 @@ const LeaderBoard = () => {
             onClick={() => setActiveTab("referrers")}
             className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
               activeTab === "referrers"
-                ? "bg-purple-50 text-[#5a32fa] border border-purple-100 shadow-sm"
+                ? "bg-primary-light text-primary border border-teal-100 shadow-sm"
                 : "text-gray-500 hover:text-gray-800"
             }`}
           >
@@ -207,7 +207,7 @@ const LeaderBoard = () => {
             onClick={() => setActiveTab("withdrawers")}
             className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
               activeTab === "withdrawers"
-                ? "bg-purple-50 text-[#5a32fa] border border-purple-100 shadow-sm"
+                ? "bg-primary-light text-primary border border-teal-100 shadow-sm"
                 : "text-gray-500 hover:text-gray-800"
             }`}
           >
@@ -217,16 +217,16 @@ const LeaderBoard = () => {
         </div>
 
         {/* 🕒 Timeframe Filter & Last Updated Bar */}
-        <div className="p-3.5 bg-purple-50/60 rounded-2xl border border-purple-100 flex items-center justify-between gap-2 text-xs">
+        <div className="p-3.5 bg-teal-50/60 rounded-2xl border border-teal-100 flex items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-1.5 text-gray-600 font-medium">
-            <ClockIcon className="w-4 h-4 text-[#5a32fa]" />
+            <ClockIcon className="w-4 h-4 text-primary" />
             <span>Last updated: Today, {dayjs().format("hh:mm A")}</span>
           </div>
 
           <select
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value)}
-            className="bg-white border border-purple-200 rounded-xl px-3 py-1 text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+            className="bg-white border border-teal-200 rounded-xl px-3 py-1 text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
           >
             <option value="month">This Month</option>
             <option value="week">This Week</option>
@@ -256,7 +256,7 @@ const LeaderBoard = () => {
               <h4 className="text-xs sm:text-sm font-bold text-[#0b0c2a] truncate">
                 {top2?.user?.name || "Nusrat Jahan"}
               </h4>
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 text-[#5a32fa] text-[9px] font-black">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-light text-primary text-[9px] font-black">
                 <SparklesIcon className="w-2.5 h-2.5" />
                 <span>Super Earner</span>
               </div>
@@ -264,7 +264,7 @@ const LeaderBoard = () => {
 
             <div className="pt-1">
               <p className="text-[10px] text-gray-400 font-medium">Earned</p>
-              <p className="text-xs sm:text-sm font-black text-[#5a32fa]">
+              <p className="text-xs sm:text-sm font-black text-primary">
                 ৳ {getEarnings(top2, 18250)}.00
               </p>
             </div>
@@ -288,7 +288,7 @@ const LeaderBoard = () => {
               <h4 className="text-sm sm:text-base font-black text-[#0b0c2a] truncate">
                 {top1?.user?.name || "Rasel Ahmed"}
               </h4>
-              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-100 text-[#5a32fa] text-[10px] font-black">
+              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary-light text-primary text-[10px] font-black">
                 <SparklesIcon className="w-3 h-3" />
                 <span>Super Earner</span>
               </div>
@@ -320,7 +320,7 @@ const LeaderBoard = () => {
               <h4 className="text-xs sm:text-sm font-bold text-[#0b0c2a] truncate">
                 {top3?.user?.name || "Madina Akter"}
               </h4>
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 text-[#5a32fa] text-[9px] font-black">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-light text-primary text-[9px] font-black">
                 <SparklesIcon className="w-2.5 h-2.5" />
                 <span>Super Earner</span>
               </div>
@@ -375,12 +375,12 @@ const LeaderBoard = () => {
                         <h4 className="text-xs sm:text-sm font-bold text-[#0b0c2a] flex items-center gap-1.5">
                           <span>{item?.user?.name || `Top User ${rank}`}</span>
                           {isCurrentUser && (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[#5a32fa] text-white">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-primary text-white">
                               You
                             </span>
                           )}
                         </h4>
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 text-[#5a32fa] text-[9px] font-bold mt-0.5">
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-light text-primary text-[9px] font-bold mt-0.5">
                           <SparklesIcon className="w-2.5 h-2.5" />
                           <span>Super Earner</span>
                         </div>
@@ -402,9 +402,9 @@ const LeaderBoard = () => {
         </Card>
 
         {/* 🌟 "Keep it up!" Bottom Motivation Banner matching screenshot */}
-        <div className="p-6 rounded-3xl bg-gradient-to-r from-purple-50 via-pink-50/50 to-indigo-50/60 border border-purple-100 shadow-sm flex items-center justify-between gap-4">
+        <div className="p-6 rounded-3xl bg-gradient-to-r from-teal-50 via-cyan-50/50 to-sky-50/60 border border-teal-100 shadow-sm flex items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#5a32fa] to-[#d946ef] text-white flex items-center justify-center shadow-lg shadow-purple-500/25 shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-brand-gradient text-white flex items-center justify-center shadow-lg shadow-teal-500/25 shrink-0">
               <StarIcon className="w-6 h-6 stroke-2" />
             </div>
 
@@ -437,7 +437,7 @@ const LeaderBoard = () => {
       >
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
           <h3 className="text-base font-black text-[#0b0c2a] flex items-center gap-2">
-            <TrophyIcon className="w-5 h-5 text-[#5a32fa]" />
+            <TrophyIcon className="w-5 h-5 text-primary" />
             <span>লিডারবোর্ড নিয়মাবলী ও নীতিমালা</span>
           </h3>
           <IconButton
@@ -464,7 +464,7 @@ const LeaderBoard = () => {
         <DialogFooter>
           <Button
             onClick={() => setInfoOpen(false)}
-            className="w-full bg-[#5a32fa] text-white font-bold text-xs rounded-xl py-2.5 normal-case"
+            className="w-full bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl py-2.5 normal-case"
           >
             বুঝেছি
           </Button>

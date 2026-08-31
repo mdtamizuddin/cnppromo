@@ -25,7 +25,7 @@ const DashboardIllustration = () => (
 
             {/* Withdraw Button */}
             <div className="px-6 py-4 flex justify-end">
-                <button className="bg-white border-2 border-indigo-100 text-[#5a32fa] text-xs font-bold px-5 py-2 rounded-lg shadow-sm">
+                <button className="bg-white border-2 border-teal-100 text-primary text-xs font-bold px-5 py-2 rounded-lg shadow-sm">
                     Withdraw
                 </button>
             </div>
@@ -33,7 +33,7 @@ const DashboardIllustration = () => (
             {/* Recent Earnings List */}
             <div className="px-6 pb-6 mt-2">
                 <h5 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-[#5a32fa]"></div>
+                    <div className="w-2 h-2 rounded-full bg-primary"></div>
                     Recent Earning
                 </h5>
                 <div className="space-y-4">
@@ -122,7 +122,7 @@ const AboutUs = () => {
                     transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
                     className="order-1 lg:order-2"
                 >
-                    <span className="text-[#5a32fa] font-bold text-xs tracking-widest uppercase block mb-2">ABOUT US</span>
+                    <span className="text-primary font-bold text-xs tracking-widest uppercase block mb-2">ABOUT US</span>
                     <h2 className="text-2xl lg:text-[32px] font-bold text-[#0b0c2a] leading-tight mb-6">
                         কেন CNP-PROMO সেরা?
                     </h2>
@@ -130,7 +130,7 @@ const AboutUs = () => {
                     <div className="space-y-4">
                         {features.map((feature, index) => (
                             <div key={index} className="flex items-center gap-3 group">
-                                <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center shrink-0 group-hover:bg-[#5a32fa] group-hover:text-white text-[#5a32fa] transition-colors duration-300">
+                                <div className="w-7 h-7 rounded-full bg-teal-50 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white text-primary transition-colors duration-300">
                                     <FontAwesomeIcon icon={faCheckCircle} className="text-base" />
                                 </div>
                                 <span className="text-[15px] font-medium text-gray-700">{feature}</span>

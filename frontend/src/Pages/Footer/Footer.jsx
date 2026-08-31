@@ -29,8 +29,8 @@ const Footer = () => {
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="relative w-11 h-11 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full border-[6px] border-[#5a32fa] border-r-transparent rotate-45"></div>
-                <div className="w-3.5 h-3.5 bg-[#5a32fa] rounded-full mr-1 mt-1"></div>
+                <div className="absolute inset-0 rounded-full border-[6px] border-primary border-r-transparent rotate-45"></div>
+                <div className="w-3.5 h-3.5 bg-primary rounded-full mr-1 mt-1"></div>
               </div>
               <div>
                 <h2 className="text-white text-xl font-bold tracking-wide">
@@ -148,7 +148,7 @@ const Footer = () => {
             <div className="space-y-6">
               <Link
                 to="/user/message"
-                className="flex items-center justify-between w-full max-w-[260px] bg-[#5a32fa] hover:bg-[#4b26e0] text-white px-5 py-3 rounded-md transition-colors text-[15px] font-medium shadow-lg shadow-indigo-500/20"
+                className="flex items-center justify-between w-full max-w-[260px] bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-md transition-colors text-[15px] font-medium shadow-lg shadow-teal-500/20"
               >
                 <div className="flex items-center gap-3">
                   <FontAwesomeIcon icon={faFacebookMessenger} className="text-xl" />

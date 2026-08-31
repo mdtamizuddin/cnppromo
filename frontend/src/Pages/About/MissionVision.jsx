@@ -5,7 +5,7 @@ const MissionVision = () => {
     return (
         <div className="mb-20">
             <div className="text-center mb-10">
-                <h3 className="text-[#5a32fa] font-bold text-sm tracking-wider uppercase mb-2">OUR MISSION & VISION</h3>
+                <h3 className="text-primary font-bold text-sm tracking-wider uppercase mb-2">OUR MISSION & VISION</h3>
                 <h2 className="text-3xl md:text-4xl font-extrabold text-[#0b0c2a]">আমাদের লক্ষ্য ও উদ্দেশ্য</h2>
             </div>
 
@@ -16,20 +16,20 @@ const MissionVision = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
-                    className="bg-indigo-50/50 rounded-[30px] p-8 md:p-10 flex flex-col sm:flex-row items-center sm:items-start gap-6 border border-indigo-100/50 hover:shadow-xl hover:shadow-indigo-100 transition-all duration-300"
+                    className="bg-teal-50/50 rounded-[30px] p-8 md:p-10 flex flex-col sm:flex-row items-center sm:items-start gap-6 border border-teal-100/50 hover:shadow-xl hover:shadow-teal-100 transition-all duration-300"
                 >
                     <div className="w-24 h-24 shrink-0 bg-white rounded-full flex items-center justify-center shadow-md">
                         {/* Target Icon CSS Illustration */}
-                        <div className="relative w-16 h-16 rounded-full border-4 border-indigo-500 flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full border-4 border-indigo-400 flex items-center justify-center">
-                                <div className="w-4 h-4 rounded-full bg-indigo-600"></div>
+                        <div className="relative w-16 h-16 rounded-full border-4 border-teal-500 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full border-4 border-teal-400 flex items-center justify-center">
+                                <div className="w-4 h-4 rounded-full bg-teal-600"></div>
                             </div>
-                            <div className="absolute top-0 right-0 w-8 h-1 bg-indigo-600 transform rotate-45 -translate-y-2 translate-x-2"></div>
-                            <div className="absolute top-0 right-0 w-3 h-3 bg-indigo-600 transform rotate-45 -translate-y-4 translate-x-4"></div>
+                            <div className="absolute top-0 right-0 w-8 h-1 bg-teal-600 transform rotate-45 -translate-y-2 translate-x-2"></div>
+                            <div className="absolute top-0 right-0 w-3 h-3 bg-teal-600 transform rotate-45 -translate-y-4 translate-x-4"></div>
                         </div>
                     </div>
                     <div className="text-center sm:text-left">
-                        <h4 className="text-[#5a32fa] text-xl font-bold mb-3">Our Mission</h4>
+                        <h4 className="text-primary text-xl font-bold mb-3">Our Mission</h4>
                         <p className="text-gray-600 leading-relaxed text-[15px]">
                             আমাদের লক্ষ্য হলো এমন একটি প্ল্যাটফর্ম তৈরি করা যেখানে প্রত্যেকেই ঘরে বসে সহজ কাজ করে সম্মানজনক উপায়ে ইনকাম করতে পারে। আমরা চাই আর্থিক স্বাধীনতা সবার জন্য সহজলভ্য।
                         </p>

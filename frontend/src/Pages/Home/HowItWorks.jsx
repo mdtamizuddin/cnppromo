@@ -10,9 +10,9 @@ const HowItWorks = () => {
             title: "রেজিস্ট্রেশন করুন",
             desc: "সহজেই আমাদের ওয়েবসাইটে রেজিস্ট্রেশন করে একাউন্ট খুলুন।",
             icon: faUserPlus,
-            color: "purple",
-            hex: "#5a32fa",
-            lightHex: "#e8e4ff"
+            color: "teal",
+            hex: "#0D9488",
+            lightHex: "#e6f8f5"
         },
         {
             num: "02",
@@ -20,7 +20,7 @@ const HowItWorks = () => {
             desc: "দৈনিক কাজ সম্পন্ন করুন এবং আপনার একাউন্ট ব্যালেন্স বাড়তে থাকবে।",
             icon: faBullhorn,
             color: "blue",
-            hex: "#1b84ff",
+            hex: "#0284c7",
             lightHex: "#e0efff"
         },
         {
@@ -28,9 +28,9 @@ const HowItWorks = () => {
             title: "টাকা উত্তোলন করুন",
             desc: "আপনার ইনকামকৃত টাকা সহজে বিকাশ, নগদ বা অন্য মাধ্যমে উত্তোলন করুন।",
             icon: faWallet,
-            color: "green",
-            hex: "#00c853",
-            lightHex: "#e0f8e9"
+            color: "amber",
+            hex: "#f59e0b",
+            lightHex: "#fef3c7"
         }
     ];
 
@@ -38,7 +38,7 @@ const HowItWorks = () => {
         <section className="py-16 bg-[#f9fafe] relative">
             <div className="max-w-[1140px] mx-auto px-6">
                 <div className="text-center mb-16">
-                    <span className="text-[#5a32fa] font-bold text-[13px] tracking-widest uppercase block mb-3">HOW IT WORKS</span>
+                    <span className="text-primary font-bold text-[13px] tracking-widest uppercase block mb-3">HOW IT WORKS</span>
                     <h2 className="text-2xl md:text-[32px] font-bold text-[#0b0c2a]">কিভাবে কাজ করবেন?</h2>
                 </div>
 
@@ -88,8 +88,8 @@ const HowItWorks = () => {
                                     className="hidden md:flex absolute top-1/2 -right-8 lg:-right-10 transform -translate-y-1/2 w-6 lg:w-8 items-center z-0"
                                 >
                                     <svg width="100%" height="24" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M0 12H36" stroke="#5a32fa" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round"/>
-                                        <path d="M30 6L38 12L30 18" stroke="#5a32fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M0 12H36" stroke="#0D9488" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round"/>
+                                        <path d="M30 6L38 12L30 18" stroke="#0D9488" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     </svg>
                                 </motion.div>
                             )}
@@ -98,8 +98,8 @@ const HowItWorks = () => {
                             {index !== steps.length - 1 && (
                                 <div className="md:hidden flex justify-center my-6">
                                     <svg width="24" height="40" viewBox="0 0 24 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 0V36" stroke="#5a32fa" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round"/>
-                                        <path d="M6 30L12 38L18 30" stroke="#5a32fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M12 0V36" stroke="#0D9488" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round"/>
+                                        <path d="M6 30L12 38L18 30" stroke="#0D9488" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     </svg>
                                 </div>
                             )}

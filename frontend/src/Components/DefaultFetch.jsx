@@ -50,7 +50,7 @@ const DefaultFetch = () => {
         <div className="fixed inset-0 z-[9999] bg-[#070818] text-white flex items-center justify-center p-4 sm:p-6 overflow-hidden select-none font-sans">
           {/* Dynamic Ambient Background Glows */}
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-rose-600/20 rounded-full blur-[150px] pointer-events-none" />
-          <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-[#5a32fa]/15 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-teal-500/15 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute top-10 left-10 w-[300px] h-[300px] bg-amber-600/10 rounded-full blur-[100px] pointer-events-none" />
 
           {/* Decorative Grid Pattern */}

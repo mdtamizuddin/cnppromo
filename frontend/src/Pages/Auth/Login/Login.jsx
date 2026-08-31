@@ -30,15 +30,15 @@ const LockIllustration = () => (
     
     {/* Small decorative dots */}
     <div className="absolute top-4 left-6 flex gap-1 flex-wrap w-8 opacity-40">
-        {[...Array(9)].map((_, i) => <div key={i} className="w-1 h-1 bg-[#5a32fa] rounded-full"></div>)}
+        {[...Array(9)].map((_, i) => <div key={i} className="w-1 h-1 bg-primary rounded-full"></div>)}
     </div>
 
     {/* The Lock Body */}
     <div className="relative z-10 flex flex-col items-center">
       {/* Shackle */}
-      <div className="w-14 h-12 border-8 border-[#5a32fa] rounded-t-3xl border-b-0 relative top-1 z-0"></div>
+      <div className="w-14 h-12 border-8 border-primary rounded-t-3xl border-b-0 relative top-1 z-0"></div>
       {/* Body */}
-      <div className="w-24 h-16 bg-[#5a32fa] rounded-t-xl rounded-b-lg relative flex flex-col items-center justify-between overflow-hidden shadow-lg z-10">
+      <div className="w-24 h-16 bg-primary rounded-t-xl rounded-b-lg relative flex flex-col items-center justify-between overflow-hidden shadow-lg z-10">
         <div className="flex-1 flex flex-col items-center justify-center w-full relative -top-1">
           {/* Keyhole */}
           <div className="w-3 h-3 bg-white rounded-full"></div>
@@ -46,16 +46,16 @@ const LockIllustration = () => (
         </div>
         {/* Bottom edge dots */}
         <div className="w-full h-[18px] bg-gray-100 flex items-center justify-center gap-[7px]">
-           <div className="w-1.5 h-1.5 bg-[#5a32fa] rounded-full"></div>
-           <div className="w-1.5 h-1.5 bg-[#5a32fa] rounded-full"></div>
-           <div className="w-1.5 h-1.5 bg-[#5a32fa] rounded-full"></div>
-           <div className="w-1.5 h-1.5 bg-[#5a32fa] rounded-full"></div>
+           <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+           <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+           <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+           <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
         </div>
       </div>
     </div>
     
     {/* User Badge */}
-    <div className="absolute bottom-3 left-7 z-20 w-[42px] h-[42px] bg-[#5a32fa] rounded-full border-[3px] border-white flex items-center justify-center shadow-md">
+    <div className="absolute bottom-3 left-7 z-20 w-[42px] h-[42px] bg-primary rounded-full border-[3px] border-white flex items-center justify-center shadow-md">
       <FontAwesomeIcon icon={faUser} className="text-white text-sm" />
     </div>
   </div>
@@ -184,10 +184,10 @@ const Login = () => {
                         {/* Remember me & Forgot Password */}
                         <div className="flex items-center justify-between pt-1">
                             <label className="flex items-center text-[14px] text-gray-600 cursor-pointer hover:text-gray-800 transition-colors">
-                                <input type="checkbox" className="mr-2.5 rounded border-gray-300 w-4 h-4 text-[#5a32fa] focus:ring-[#5a32fa]" />
+                                <input type="checkbox" className="mr-2.5 rounded border-gray-300 w-4 h-4 text-primary focus:ring-primary" />
                                 আমাকে মনে রাখুন
                             </label>
-                            <Link to="/forgot-password" className="text-[14px] text-[#5a32fa] font-medium hover:underline tracking-wide">
+                            <Link to="/forgot-password" className="text-[14px] text-primary font-medium hover:underline tracking-wide">
                                 পাসওয়ার্ড ভুলে গেছেন?
                             </Link>
                         </div>
@@ -196,7 +196,7 @@ const Login = () => {
                         <button 
                             type="submit" 
                             disabled={loading}
-                            className="w-full bg-[#5a32fa] text-white py-3.5 rounded-xl font-medium text-[17px] mt-4 flex items-center justify-center gap-2.5 hover:bg-[#4b26e0] transition-colors shadow-lg shadow-indigo-500/25 disabled:opacity-70"
+                            className="w-full bg-primary text-white py-3.5 rounded-xl font-medium text-[17px] mt-4 flex items-center justify-center gap-2.5 hover:bg-primary-hover transition-colors shadow-lg shadow-indigo-500/25 disabled:opacity-70"
                         >
                             <FontAwesomeIcon icon={faRightToBracket} className="text-lg" /> 
                             {loading ? "অপেক্ষা করুন..." : "লগ ইন করো"}
@@ -211,7 +211,7 @@ const Login = () => {
                         
                         {/* Register Link */}
                         <div className="text-center text-[15px] text-gray-600">
-                            এখনো একাউন্ট নেই? <Link to="/register" className="text-[#5a32fa] font-semibold hover:underline tracking-wide ml-1">রেজিস্টার করুন</Link>
+                            এখনো একাউন্ট নেই? <Link to="/register" className="text-primary font-semibold hover:underline tracking-wide ml-1">রেজিস্টার করুন</Link>
                         </div>
                     </form>
                 </Card>

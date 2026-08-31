@@ -42,9 +42,9 @@ const trainingCourses = [
     subtitle: "টাস্ক খোঁজার সঠিক উপায় এবং সফলভাবে সম্পন্ন করার নিয়ম শিখুন।",
     lessons: "12 টি লেসন",
     level: "শুরুকারীদের জন্য",
-    bg: "from-purple-600 via-indigo-600 to-purple-800",
+    bg: "from-teal-600 via-cyan-600 to-teal-800",
     icon: "💻",
-    tagColor: "bg-purple-50 text-[#5a32fa]",
+    tagColor: "bg-primary-light text-primary",
     videoUrl: "https://www.youtube.com/watch?v=yTByYhrqrXo",
     topics: [
       "১. ড্যাশবোর্ড থেকে উপযুক্ত টাস্ক নির্বাচন করা",
@@ -90,7 +90,7 @@ const trainingCourses = [
     subtitle: "উইথড্রয়াল ও পেমেন্টের সম্পূর্ণ প্রসেস ধাপে ধাপে শিখুন।",
     lessons: "6 টি লেসন",
     level: "শুরুকারীদের জন্য",
-    bg: "from-pink-500 via-rose-600 to-purple-600",
+    bg: "from-pink-500 via-rose-600 to-teal-600",
     icon: "👛",
     tagColor: "bg-pink-50 text-pink-600",
     videoUrl: "https://www.youtube.com/watch?v=yTByYhrqrXo",
@@ -109,8 +109,8 @@ const TRAINING_QUICK_ACTIONS = [
     subtitle: "দেখুন ও শিখুন",
     icon: PlayIcon,
     to: "/user/social-works",
-    color: "#5a32fa",
-    bg: "bg-purple-50",
+    color: "#0D9488",
+    bg: "bg-teal-50",
   },
   {
     id: 2,
@@ -248,7 +248,7 @@ const Training = () => {
           {/* Card 1: ট্রেনিং সেন্টার */}
           <Card className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-purple-50 text-[#5a32fa] flex items-center justify-center text-2xl shrink-0 font-bold">
+              <div className="w-14 h-14 rounded-2xl bg-primary-light text-primary flex items-center justify-center text-2xl shrink-0 font-bold">
                 📖
               </div>
               <div className="space-y-1">
@@ -264,7 +264,7 @@ const Training = () => {
                 href="#courses"
                 className="w-full"
               >
-                <Button className="w-full bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold py-3 rounded-xl shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2">
+                <Button className="w-full bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold py-3 rounded-xl shadow-md shadow-teal-500/20 flex items-center justify-center gap-2">
                   <span>শেখা শুরু করুন</span>
                   <ArrowRightIcon className="w-3.5 h-3.5" />
                 </Button>
@@ -281,57 +281,24 @@ const Training = () => {
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-[#0b0c2a]">সাপোর্ট পেজে মেসেজ করুন</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">
-                  যেকোনো সমস্যা বা সাহায্যের জন্য আমাদের সাপোর্ট টিমের সাথে কথা বলুন।
+                  যেকোনো সমস্যা ও প্রশ্নের তাৎক্ষণিক উত্তরের জন্য সাপোর্ট সেন্টারে যোগাযোগ করুন।
                 </p>
               </div>
             </div>
 
             <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-              <Link to="/user/message" className="w-full">
-                <Button className="w-full bg-[#10b981] hover:bg-[#059669] normal-case text-xs font-bold py-3 rounded-xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2">
-                  <ChatBubbleLeftRightIcon className="w-4 h-4" />
-                  <span>মেসেঞ্জারে মেসেজ করুন</span>
+              <Link
+                to="/user/message"
+                className="w-full"
+              >
+                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 normal-case text-white text-xs font-bold py-3 rounded-xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2">
+                  <span>মেসেজ পাঠান</span>
+                  <ArrowRightIcon className="w-3.5 h-3.5" />
                 </Button>
               </Link>
             </div>
           </Card>
-
         </div>
-
-        {/* ⚡ "আপনি কী করতে চান?" (5 Action Cards Grid) */}
-        <section className="space-y-4">
-          <h2 className="text-base sm:text-lg font-bold text-[#0b0c2a]">
-            আপনি কী করতে চান?
-          </h2>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
-            {quickActions.map((action) => {
-              const ActionIcon = QUICK_ICONS[action.icon] || action.icon || PlayIcon;
-              return (
-                <Link key={action.id} to={action.to}>
-                  <Card className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center h-full justify-between group">
-                    <div
-                      className={`w-12 h-12 rounded-2xl ${action.bg} flex items-center justify-center mb-2.5 group-hover:scale-110 transition-transform`}
-                      style={{ color: action.color }}
-                    >
-                      <ActionIcon className="w-6 h-6" />
-                    </div>
-
-                    <div>
-                      <h3
-                        className="text-xs sm:text-sm font-bold truncate max-w-full"
-                        style={{ color: action.color }}
-                      >
-                        {action.title}
-                      </h3>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{action.subtitle}</p>
-                    </div>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
 
         {/* 📚 "জনপ্রিয় ট্রেনিং" (Popular Training Courses List) */}
         <section id="courses" className="space-y-4">
@@ -341,10 +308,10 @@ const Training = () => {
             </h2>
             <button
               onClick={() => setSelectedCourse(courses[0])}
-              className="text-xs font-semibold text-[#5a32fa] hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
             >
               <span>সবগুলো দেখুন</span>
-              <ArrowRightIcon className="w-3 h-3" />
+              <ArrowRightIcon className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -363,7 +330,7 @@ const Training = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <h3 className="text-sm sm:text-base font-bold text-[#0b0c2a] group-hover:text-[#5a32fa] transition-colors leading-snug">
+                    <h3 className="text-sm sm:text-base font-bold text-[#0b0c2a] group-hover:text-primary transition-colors leading-snug">
                       {course.title}
                     </h3>
                     <p className="text-xs text-gray-500 line-clamp-1">
@@ -371,7 +338,7 @@ const Training = () => {
                     </p>
                     <div className="flex items-center gap-2 pt-1">
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 flex items-center gap-1">
-                        <BookOpenIcon className="w-3 h-3 text-[#5a32fa]" />
+                        <BookOpenIcon className="w-3 h-3 text-primary" />
                         {course.lessons}
                       </span>
                       <span className="text-[10px] text-gray-400 flex items-center gap-1">
@@ -385,7 +352,7 @@ const Training = () => {
                 <div className="w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100 flex justify-end">
                   <Button
                     onClick={() => setSelectedCourse(course)}
-                    className="w-full sm:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] normal-case font-bold text-xs px-5 py-2.5 rounded-xl shadow-md shadow-indigo-500/20 flex items-center justify-center gap-1.5 transition-all hover:scale-105"
+                    className="w-full sm:w-auto bg-primary hover:bg-primary-hover normal-case font-bold text-white text-xs px-5 py-2.5 rounded-xl shadow-md shadow-teal-500/20 flex items-center justify-center gap-1.5 transition-all hover:scale-105"
                   >
                     <span>শুরু করুন</span>
                     <ArrowRightIcon className="w-3.5 h-3.5" />
@@ -397,9 +364,9 @@ const Training = () => {
         </section>
 
         {/* 💬 Bottom Messenger Support Card */}
-        <Card className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-purple-50 via-indigo-50/70 to-blue-50/60 border border-purple-100/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <Card className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-teal-50 via-cyan-50/70 to-sky-50/60 border border-teal-100/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-3xl bg-[#5a32fa] text-white flex items-center justify-center text-3xl shadow-lg shadow-purple-500/25 shrink-0">
+            <div className="w-16 h-16 rounded-3xl bg-primary text-white flex items-center justify-center text-3xl shadow-lg shadow-teal-500/25 shrink-0">
               💬
             </div>
             <div className="space-y-1 text-left">
@@ -414,7 +381,7 @@ const Training = () => {
 
           <div className="flex items-center gap-3 w-full md:w-auto justify-end">
             <Link to="/user/message" className="w-full md:w-auto">
-              <Button className="w-full md:w-auto bg-[#5a32fa] hover:bg-[#4b26e0] normal-case text-xs font-bold px-6 py-3 rounded-xl shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2">
+              <Button className="w-full md:w-auto bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md shadow-teal-500/20 flex items-center justify-center gap-2">
                 <ChatBubbleLeftRightIcon className="w-4 h-4" />
                 <span>মেসেঞ্জারে মেসেজ করুন</span>
               </Button>
@@ -423,7 +390,7 @@ const Training = () => {
             <Button
               variant="outlined"
               onClick={() => setShowTrainerList(!showTrainerList)}
-              className="border-purple-200 text-[#5a32fa] normal-case text-xs font-bold px-4 py-3 rounded-xl hover:bg-white"
+              className="border-teal-200 text-primary normal-case text-xs font-bold px-4 py-3 rounded-xl hover:bg-white"
             >
               ট্রেইনারগণ
             </Button>
@@ -435,7 +402,7 @@ const Training = () => {
           <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <UserGroupIcon className="w-5 h-5 text-[#5a32fa]" />
+                <UserGroupIcon className="w-5 h-5 text-primary" />
                 <h3 className="text-base font-bold text-[#0b0c2a]">অফিশিয়াল ট্রেইনার ও সাপোর্ট টিম</h3>
               </div>
               <IconButton
@@ -457,17 +424,17 @@ const Training = () => {
                     <img
                       src={trainer.image}
                       alt={trainer.name}
-                      className="w-16 h-16 rounded-full object-cover shadow-sm border-2 border-[#5a32fa]"
+                      className="w-16 h-16 rounded-full object-cover shadow-sm border-2 border-primary"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full object-cover shadow-sm border-2 border-[#5a32fa] bg-gradient-to-br from-[#5a32fa] to-[#7c3aed] flex items-center justify-center text-white font-black text-xl">
+                    <div className="w-16 h-16 rounded-full object-cover shadow-sm border-2 border-primary bg-brand-gradient flex items-center justify-center text-white font-black text-xl">
                       {(trainer.name || "T").charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div>
                     <p className="font-bold text-sm text-[#0b0c2a]">{trainer.name}</p>
                     <p className="text-[11px] text-gray-500">{trainer.title}</p>
-                    <p className="text-[10px] text-indigo-600 font-semibold mt-1">
+                    <p className="text-[10px] text-primary font-semibold mt-1">
                       🕒 {trainer.time}
                     </p>
                   </div>
@@ -529,8 +496,8 @@ const Training = () => {
                 />
               </div>
 
-              <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-100 space-y-2">
-                <p className="text-xs font-bold text-[#5a32fa]">এই লেসনে যা শিখবেন:</p>
+              <div className="p-4 rounded-2xl bg-primary-light border border-teal-100 space-y-2">
+                <p className="text-xs font-bold text-primary">এই লেসনে যা শিখবেন:</p>
                 <ul className="space-y-1 text-xs text-gray-700">
                   {selectedCourse.topics.map((topic, i) => (
                     <li key={i} className="flex items-center gap-2">
@@ -555,7 +522,7 @@ const Training = () => {
           </Button>
           <Link to="/user/works">
             <Button
-              className="bg-[#5a32fa] normal-case text-xs px-6 py-2.5 rounded-xl flex items-center gap-1.5"
+              className="bg-primary hover:bg-primary-hover normal-case text-white text-xs px-6 py-2.5 rounded-xl flex items-center gap-1.5"
             >
               <span>কাজ শুরু করুন</span>
               <ArrowRightIcon className="w-3.5 h-3.5" />

@@ -19,10 +19,10 @@ const TrustedBanner = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="bg-indigo-50/70 rounded-[30px] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-8 border border-indigo-100"
+            className="bg-teal-50/70 rounded-[30px] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-8 border border-teal-100"
         >
             <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-[#5a32fa] text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30">
+                <div className="w-16 h-16 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-lg shadow-teal-500/30">
                     <FontAwesomeIcon icon={faShieldHalved} className="text-3xl" />
                 </div>
                 <div>
@@ -43,7 +43,7 @@ const TrustedBanner = () => {
                             className="w-10 h-10 rounded-full border-2 border-white object-cover"
                         />
                     ))}
-                    <div className="w-10 h-10 rounded-full border-2 border-white bg-[#5a32fa] text-white flex items-center justify-center text-xs font-bold z-10 relative">
+                    <div className="w-10 h-10 rounded-full border-2 border-white bg-primary text-white flex items-center justify-center text-xs font-bold z-10 relative">
                         10K+
                     </div>
                 </div>

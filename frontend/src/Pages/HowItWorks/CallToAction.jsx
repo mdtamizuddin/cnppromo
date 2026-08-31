@@ -20,9 +20,9 @@ const CallToAction = () => {
                     <div className="absolute inset-0 bg-blue-500 rounded-2xl opacity-20 filter blur-xl group-hover:opacity-40 transition-opacity duration-300"></div>
                     <div className="relative w-20 h-20">
                         {/* Box Lid */}
-                        <div className="absolute top-0 left-1 right-1 h-6 bg-[#5a32fa] rounded-sm z-20 border border-indigo-400/30 shadow-md"></div>
+                        <div className="absolute top-0 left-1 right-1 h-6 bg-primary rounded-sm z-20 border border-teal-400/30 shadow-md"></div>
                         {/* Box Body */}
-                        <div className="absolute top-6 left-2 right-2 bottom-0 bg-[#4b26e0] rounded-b-md z-10 border border-indigo-500/30 shadow-inner"></div>
+                        <div className="absolute top-6 left-2 right-2 bottom-0 bg-primary-hover rounded-b-md z-10 border border-teal-500/30 shadow-inner"></div>
                         {/* Ribbon Vertical */}
                         <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-3 bg-amber-400 z-30 shadow-sm"></div>
                         {/* Ribbon Horizontal */}
@@ -45,7 +45,7 @@ const CallToAction = () => {
 
             <Link 
                 to="/register" 
-                className="bg-white text-[#0b0c2a] hover:text-[#5a32fa] font-bold text-[17px] py-3.5 px-8 rounded-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md shrink-0"
+                className="bg-white text-[#0b0c2a] hover:text-primary font-bold text-[17px] py-3.5 px-8 rounded-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md shrink-0"
             >
                 এখনই যোগ দিন
                 <FontAwesomeIcon icon={faArrowRight} />

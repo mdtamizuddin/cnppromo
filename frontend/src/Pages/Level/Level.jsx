@@ -259,7 +259,7 @@ const Level = () => {
 
               <p className="text-[11px] text-gray-500">
                 আর মাত্র{" "}
-                <strong className="text-[#5a32fa]">
+                <strong className="text-primary">
                   {Math.max(0, nextLevelTarget - directRefers)} জন
                 </strong>{" "}
                 রেফারেল যুক্ত করলেই স্বয়ংক্রিয়ভাবে লেভেল {currentLevel + 1} এ উন্নীত হবেন!
@@ -359,13 +359,13 @@ const Level = () => {
         {/* ⚡ 4 VIP Privileges Cards */}
         <section className="space-y-4">
           <h2 className="text-base sm:text-lg font-bold text-[#0b0c2a] flex items-center gap-2">
-            <SparklesIcon className="w-5 h-5 text-[#5a32fa]" />
+            <SparklesIcon className="w-5 h-5 text-primary" />
             <span>ভিআইপি মেম্বারদের বিশেষ সুবিধাসমূহ</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#5a32fa] flex items-center justify-center text-xl">
+              <div className="w-10 h-10 rounded-xl bg-primary-light text-primary flex items-center justify-center text-xl">
                 🚀
               </div>
               <h4 className="text-xs sm:text-sm font-bold text-[#0b0c2a]">উচ্চতর কমিশন</h4>

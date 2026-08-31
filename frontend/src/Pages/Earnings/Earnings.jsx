@@ -377,8 +377,8 @@ const Earnings = () => {
       );
     } else if (item.rawType === "topup") {
       return (
-        <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center">
-          <ArrowsRightLeftIcon className="w-5 h-5 text-purple-500" />
+        <div className="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center">
+          <ArrowsRightLeftIcon className="w-5 h-5 text-primary" />
         </div>
       );
     } else {
@@ -399,7 +399,7 @@ const Earnings = () => {
     if (!item) {
       return (
         <div className="bg-white rounded-3xl p-8 text-center border border-gray-100 shadow-sm space-y-3">
-          <div className="w-14 h-14 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-2xl mx-auto">
+          <div className="w-14 h-14 rounded-full bg-primary-light text-primary flex items-center justify-center text-2xl mx-auto">
             📋
           </div>
           <h3 className="text-sm font-bold text-gray-800">কোনো লেনদেন নির্বাচিত নেই</h3>
@@ -448,7 +448,7 @@ const Earnings = () => {
               </p>
               <button
                 onClick={() => copyText(item.trxId)}
-                className="flex items-center gap-1.5 text-xs font-mono font-bold text-gray-800 hover:text-purple-600 transition-colors mt-0.5"
+                className="flex items-center gap-1.5 text-xs font-mono font-bold text-gray-800 hover:text-primary transition-colors mt-0.5"
                 title="কপি করুন"
               >
                 <span>{item.trxId}</span>
@@ -470,7 +470,7 @@ const Earnings = () => {
         {/* Section 1: User Information */}
         <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm space-y-3">
           <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-            <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-primary-light text-primary flex items-center justify-center">
               <UserIcon className="w-4 h-4" />
             </div>
             <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider">
@@ -524,7 +524,7 @@ const Earnings = () => {
             {item.method && (
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 font-medium">Payment Method</span>
-                <span className="font-bold text-purple-600">{item.method}</span>
+                <span className="font-bold text-primary">{item.method}</span>
               </div>
             )}
 
@@ -538,7 +538,7 @@ const Earnings = () => {
             {item.gen && (
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 font-medium">Referral Generation</span>
-                <span className="font-bold text-purple-600">Gen {item.gen}</span>
+                <span className="font-bold text-primary">Gen {item.gen}</span>
               </div>
             )}
 
@@ -578,7 +578,7 @@ const Earnings = () => {
         {(item.image || item.note || item.rawType === "withdrawal") && (
           <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm space-y-3.5">
             <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-              <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-xl bg-primary-light text-primary flex items-center justify-center">
                 <ShieldCheckIcon className="w-4 h-4" />
               </div>
               <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider">
@@ -601,7 +601,7 @@ const Earnings = () => {
                     />
                   </div>
                   <div className="h-28 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 gap-1.5 p-2 text-center hover:bg-gray-50 transition-colors">
-                    <CloudArrowDownIcon className="w-6 h-6 text-purple-500" />
+                    <CloudArrowDownIcon className="w-6 h-6 text-primary" />
                     <span className="text-[11px] font-bold text-gray-700">View Full Size</span>
                   </div>
                 </div>
@@ -638,7 +638,7 @@ const Earnings = () => {
         <div className="pt-2 block lg:hidden">
           <button
             onClick={() => setSelectedTransaction(null)}
-            className="w-full py-4 rounded-2xl bg-[#6035f8] hover:bg-[#5025e0] text-white font-bold text-sm shadow-lg shadow-purple-500/25 active:scale-[0.99] transition-all"
+            className="w-full py-4 rounded-2xl bg-primary hover:bg-primary-hover text-white font-bold text-sm shadow-lg shadow-teal-500/25 active:scale-[0.99] transition-all"
           >
             Back to History
           </button>
@@ -668,7 +668,7 @@ const Earnings = () => {
               className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition-all relative"
             >
               <BellIcon className="w-5 h-5" />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-purple-600 ring-2 ring-white" />
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary ring-2 ring-white" />
             </Link>
           </div>
 
@@ -707,7 +707,7 @@ const Earnings = () => {
             className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition-all relative"
           >
             <BellIcon className="w-5 h-5" />
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-purple-600 ring-2 ring-white" />
+            <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary ring-2 ring-white" />
           </Link>
         </div>
 
@@ -720,7 +720,7 @@ const Earnings = () => {
             }}
             className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
               mainTab === "all"
-                ? "bg-[#6035f8] text-white shadow-md shadow-purple-500/20"
+                ? "bg-primary text-white shadow-md shadow-teal-500/20"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -733,7 +733,7 @@ const Earnings = () => {
             }}
             className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
               mainTab === "withdrawals"
-                ? "bg-[#6035f8] text-white shadow-md shadow-purple-500/20"
+                ? "bg-primary text-white shadow-md shadow-teal-500/20"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -753,7 +753,7 @@ const Earnings = () => {
                 setCurrentPage(1);
               }}
               placeholder="Search by transaction ID or username..."
-              className="w-full h-11 pl-10 pr-3 rounded-2xl bg-white border border-gray-200/90 shadow-sm text-xs font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+              className="w-full h-11 pl-10 pr-3 rounded-2xl bg-white border border-gray-200/90 shadow-sm text-xs font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-primary transition-all"
             />
           </div>
           <button
@@ -761,7 +761,7 @@ const Earnings = () => {
               setStatusFilter("All");
               setSearchQuery("");
             }}
-            className="w-11 h-11 rounded-2xl bg-white border border-gray-200/90 shadow-sm flex items-center justify-center text-gray-500 hover:text-purple-600 active:scale-95 transition-all shrink-0"
+            className="w-11 h-11 rounded-2xl bg-white border border-gray-200/90 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary active:scale-95 transition-all shrink-0"
             title="ফিল্টার রিসেট করুন"
           >
             <AdjustmentsHorizontalIcon className="w-5 h-5 stroke-[2]" />
@@ -788,7 +788,7 @@ const Earnings = () => {
                 }}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
                   active
-                    ? "bg-[#6035f8] text-white shadow-md shadow-purple-500/20"
+                    ? "bg-primary text-white shadow-md shadow-teal-500/20"
                     : chip.label === "Credit" || chip.label === "Success"
                     ? "bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100/60"
                     : chip.label === "Debit" || chip.label === "Rejected"
@@ -826,8 +826,8 @@ const Earnings = () => {
                     }}
                     className={`bg-white rounded-2xl p-3.5 sm:p-4 border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                       isSelected
-                        ? "border-purple-300 ring-2 ring-purple-400/20 bg-purple-50/20 shadow-sm"
-                        : "border-gray-100 hover:border-purple-100 hover:bg-gray-50/50 shadow-sm"
+                        ? "border-primary ring-2 ring-teal-400/20 bg-primary-light/40 shadow-sm"
+                        : "border-gray-100 hover:border-teal-100 hover:bg-gray-50/50 shadow-sm"
                     }`}
                   >
                     {/* Left: Icon + Info */}
@@ -859,7 +859,7 @@ const Earnings = () => {
               })
             ) : (
               <div className="bg-white rounded-3xl p-10 text-center border border-gray-100 shadow-sm space-y-2">
-                <div className="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl mx-auto">
+                <div className="w-12 h-12 rounded-full bg-primary-light text-primary flex items-center justify-center text-xl mx-auto">
                   📋
                 </div>
                 <h3 className="text-sm font-bold text-gray-800">কোনো লেনদেন পাওয়া যায়নি</h3>

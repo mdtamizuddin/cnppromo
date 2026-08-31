@@ -10,9 +10,9 @@ const HowItWorksSteps = () => {
             title: "অ্যাকাউন্ট তৈরি করুন",
             desc: "আপনার সঠিক তথ্য দিয়ে রেজিস্ট্রেশন করুন এবং অ্যাকাউন্ট অ্যাক্টিভেশন সম্পন্ন করুন।",
             icon: faUserPlus,
-            color: "purple",
-            hex: "#5a32fa",
-            lightHex: "#e8e4ff"
+            color: "teal",
+            hex: "#0D9488",
+            lightHex: "#e6f8f5"
         },
         {
             num: "০২",
@@ -91,8 +91,8 @@ const HowItWorksSteps = () => {
                                 className="hidden lg:flex absolute top-1/2 -right-8 transform -translate-y-1/2 w-6 items-center z-0"
                             >
                                 <svg width="100%" height="24" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M0 12H36" stroke="#5a32fa" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round"/>
-                                    <path d="M30 6L38 12L30 18" stroke="#5a32fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M0 12H36" stroke="#0D9488" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round"/>
+                                    <path d="M30 6L38 12L30 18" stroke="#0D9488" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
                             </motion.div>
                         )}

@@ -171,8 +171,8 @@ const Welcome = () => {
       subtitle: "Overview",
       to: "/user/home",
       icon: HomeIcon,
-      color: "#5a32fa",
-      bg: "bg-purple-50",
+      color: "#0D9488",
+      bg: "bg-teal-50",
     },
     {
       id: "tasks",
@@ -245,8 +245,8 @@ const Welcome = () => {
       subtitle: "Send message",
       to: "/user/message",
       icon: ChatBubbleLeftRightIcon,
-      color: "#5a32fa",
-      bg: "bg-purple-50",
+      color: "#0D9488",
+      bg: "bg-teal-50",
       activeBorder: true,
     },
   ];
@@ -592,7 +592,7 @@ const Welcome = () => {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-base font-bold text-[#0b0c2a]">My Tasks</h3>
-                <Link to="/user/social-works" className="text-xs font-semibold text-[#5a32fa] hover:underline">
+                <Link to="/user/social-works" className="text-xs font-semibold text-primary hover:underline">
                   View All
                 </Link>
               </div>

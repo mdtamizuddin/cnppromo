@@ -61,8 +61,8 @@ const ReferralLevels = () => {
     return (
         <section className="mb-20">
             <div className="text-center mb-10">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-100/80 border border-purple-200/60 text-[#5a32fa] text-xs font-bold tracking-wide mb-3">
-                    <span className="w-2 h-2 rounded-full bg-[#5a32fa] animate-pulse"></span>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-light border border-teal-200/60 text-primary text-xs font-bold tracking-wide mb-3">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                     আপনার রেফারেল জেনারেশনসমূহ
                 </div>
                 <h2 className="text-3xl font-extrabold text-[#0b0c2a] mb-4">

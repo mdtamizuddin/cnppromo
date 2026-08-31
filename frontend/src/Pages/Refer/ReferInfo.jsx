@@ -34,8 +34,8 @@ export function TableWithStripedRows() {
       rate: settings?.ref_comm?.gen1 || 0,
       count: data?.gen1 || 0,
       totalEarned: (data?.gen1 || 0) * (settings?.ref_comm?.gen1 || 0),
-      color: "from-purple-500 to-indigo-600",
-      badge: "bg-purple-50 text-[#5a32fa] border-purple-100",
+      color: "from-teal-500 to-cyan-600",
+      badge: "bg-primary-light text-primary border-teal-100",
     },
     {
       name: "২য় জেনারেশন",
@@ -91,7 +91,7 @@ export function TableWithStripedRows() {
             <p className="text-xs text-gray-500 font-medium">মোট টিম মেম্বার</p>
             <p className="text-2xl font-black text-[#0b0c2a]">{totalMembers} জন</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-[#5a32fa] flex items-center justify-center text-xl">
+          <div className="w-12 h-12 rounded-2xl bg-primary-light text-primary flex items-center justify-center text-xl">
             👥
           </div>
         </Card>
@@ -158,7 +158,7 @@ const ReferInfo = () => {
               size="sm"
               className="rounded-xl border-gray-200 bg-white text-gray-800 normal-case text-xs font-bold flex items-center gap-1.5 shadow-sm hover:bg-gray-50"
             >
-              <ArrowLeftIcon className="w-4 h-4 text-[#5a32fa]" />
+              <ArrowLeftIcon className="w-4 h-4 text-primary" />
               <span>ব্যাক টু রেফারেল হাব</span>
             </Button>
           </Link>

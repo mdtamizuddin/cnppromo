@@ -13,13 +13,13 @@ const HowItWorksHero = () => {
                     transition={{ duration: 0.6 }}
                     className="flex-1 text-center md:text-left"
                 >
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-100/80 border border-purple-200/60 text-[#5a32fa] text-xs font-bold tracking-wide mb-3">
-                        <span className="w-2 h-2 rounded-full bg-[#5a32fa] animate-pulse"></span>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-light border border-teal-200/60 text-primary text-xs font-bold tracking-wide mb-3">
+                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                         কিভাবে কাজ করে
                     </div>
 
                     <h1 className="text-3xl sm:text-4xl md:text-[44px] font-extrabold mb-6 leading-tight tracking-tight text-[#0b0c2a]">
-                        কিভাবে <span className="text-[#5a32fa]">CNP-PROMO</span> কাজ করে?
+                        কিভাবে <span className="text-primary">CNP-PROMO</span> কাজ করে?
                     </h1>
 
                     <p className="text-gray-600 leading-relaxed text-[15px] mb-4 max-w-[500px] mx-auto md:mx-0 font-medium">
@@ -38,19 +38,19 @@ const HowItWorksHero = () => {
                     className="flex-1 w-full flex justify-center relative"
                 >
                     <div className="relative w-[300px] h-[300px] md:w-[350px] md:h-[350px]">
-                        <div className="absolute inset-0 bg-[#5a32fa] rounded-full opacity-10 blur-xl"></div>
-                        <div className="absolute inset-4 bg-indigo-500 rounded-full opacity-10"></div>
+                        <div className="absolute inset-0 bg-primary rounded-full opacity-10 blur-xl"></div>
+                        <div className="absolute inset-4 bg-teal-500 rounded-full opacity-10"></div>
                         <div className="absolute inset-0 flex items-center justify-center flex-col">
-                           <div className="w-40 h-56 bg-[#1a1b41] rounded-3xl border-4 border-[#2d2e5a] shadow-xl relative overflow-hidden z-10 flex flex-col items-center pt-6">
+                           <div className="w-40 h-56 bg-[#042f2e] rounded-3xl border-4 border-[#134e4a] shadow-xl relative overflow-hidden z-10 flex flex-col items-center pt-6">
                                 <div className="w-16 h-1.5 bg-gray-600 rounded-full absolute top-2.5"></div>
                                 <div className="w-24 h-16 bg-green-500/20 rounded-lg mt-3 border border-green-500/30 flex items-center justify-center">
                                     <span className="text-green-400 font-bold text-xl">৳</span>
                                 </div>
-                                <div className="w-24 h-8 bg-indigo-500/20 rounded-lg mt-3 border border-indigo-500/30"></div>
+                                <div className="w-24 h-8 bg-teal-500/20 rounded-lg mt-3 border border-teal-500/30"></div>
                            </div>
                            
                            {/* Floating Wallet */}
-                           <div className="absolute bottom-10 z-20 w-48 h-32 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg shadow-purple-900/30 transform rotate-[-5deg] border border-purple-400/30">
+                           <div className="absolute bottom-10 z-20 w-48 h-32 bg-gradient-to-r from-teal-600 to-cyan-600 rounded-xl shadow-lg shadow-teal-900/30 transform rotate-[-5deg] border border-teal-400/30">
                                 <div className="absolute right-5 top-1/2 -translate-y-1/2 w-6 h-10 bg-amber-400 rounded-md shadow-inner flex items-center justify-center">
                                     <div className="w-3 h-3 rounded-full bg-amber-600"></div>
                                 </div>
@@ -63,10 +63,10 @@ const HowItWorksHero = () => {
                            </div>
                            
                            {/* Floating elements */}
-                           <div className="absolute top-8 left-0 w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center shadow-md shadow-purple-500/30 animate-bounce">
+                           <div className="absolute top-8 left-0 w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center shadow-md shadow-teal-500/30 animate-bounce">
                                 <span className="text-white font-bold text-sm">৳</span>
                            </div>
-                           <div className="absolute top-0 right-10 w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center shadow-md shadow-indigo-500/30 animate-pulse">
+                           <div className="absolute top-0 right-10 w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center shadow-md shadow-cyan-500/30 animate-pulse">
                                 <span className="text-white font-bold text-xs">৳</span>
                            </div>
                         </div>

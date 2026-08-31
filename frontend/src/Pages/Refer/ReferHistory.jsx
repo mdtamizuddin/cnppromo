@@ -54,12 +54,12 @@ export function TableWithStripedRows() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="রেফারেল মেম্বার খুঁজুন..."
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-[#5a32fa]"
+            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-primary"
           />
         </div>
 
         <div className="text-xs font-semibold text-gray-500">
-          মোট জয়েনিং: <span className="text-[#5a32fa] font-black">{referList.length}</span> জন
+          মোট জয়েনিং: <span className="text-primary font-black">{referList.length}</span> জন
         </div>
       </div>
 
@@ -104,7 +104,7 @@ export function TableWithStripedRows() {
                   <td className="py-3.5 px-4 font-bold text-[#0b0c2a]">
                     <span className="flex items-center gap-1.5">
                       <span>{reffer?.name || referredUser?.name || "Member"}</span>
-                      <CheckBadgeIcon className="w-3.5 h-3.5 text-[#5a32fa]" />
+                      <CheckBadgeIcon className="w-3.5 h-3.5 text-primary" />
                     </span>
                   </td>
 
@@ -138,7 +138,7 @@ export function TableWithStripedRows() {
 
                   {/* Generation */}
                   <td className="py-3.5 px-4">
-                    <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-[#5a32fa] font-bold text-[11px] border border-purple-100">
+                    <span className="px-2.5 py-0.5 rounded-full bg-primary-light text-primary font-bold text-[11px] border border-teal-100">
                       Gen {gen || 1}
                     </span>
                   </td>

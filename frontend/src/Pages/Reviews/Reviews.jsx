@@ -241,7 +241,7 @@ const Reviews = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-[#0b0c2a] flex items-center gap-2">
-                <ChatBubbleLeftRightIcon className="w-5 h-5 text-[#5a32fa]" />
+                <ChatBubbleLeftRightIcon className="w-5 h-5 text-primary" />
                 <span>মেম্বারদের চ্যাট ও পেমেন্ট স্ক্রিনশট রিভিউ 📱</span>
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
@@ -300,7 +300,7 @@ const Reviews = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${activeTab === tab.id
-                  ? "bg-[#5a32fa] text-white shadow-md shadow-indigo-500/20"
+                  ? "bg-primary text-white shadow-md shadow-teal-500/20"
                   : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/80"
                   }`}
               >
@@ -317,7 +317,7 @@ const Reviews = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="রিভিউ খুঁজুন..."
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-[#5a32fa]"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-primary"
             />
           </div>
 
@@ -348,7 +348,7 @@ const Reviews = () => {
                     <div>
                       <h4 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-1.5">
                         <span>{story.name}</span>
-                        <CheckBadgeIcon className="w-4 h-4 text-[#5a32fa]" />
+                        <CheckBadgeIcon className="w-4 h-4 text-primary" />
                       </h4>
                       <p className="text-[11px] text-gray-400">
                         @{story.username || "member"} • {story.district || "বাংলাদেশ"}
@@ -356,7 +356,7 @@ const Reviews = () => {
                     </div>
                   </div>
 
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 bg-purple-50 text-[#5a32fa] rounded-full border border-purple-100 shrink-0">
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 bg-primary-light text-primary rounded-full border border-teal-100 shrink-0">
                     ভেরিফাইড মেম্বার
                   </span>
                 </div>
@@ -379,7 +379,7 @@ const Reviews = () => {
                 <button
                   onClick={() => handleLike(story._id || story.id)}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all ${likedReviews[story._id || story.id]
-                    ? "bg-purple-50 text-[#5a32fa] font-bold"
+                    ? "bg-primary-light text-primary font-bold"
                     : "hover:bg-gray-50 text-gray-500"
                     }`}
                 >
@@ -408,7 +408,7 @@ const Reviews = () => {
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link to="/register">
-              <Button className="bg-[#5a32fa] hover:bg-[#4b26e0] normal-case font-bold text-xs px-6 py-3 rounded-xl shadow-lg shadow-indigo-500/25">
+              <Button className="bg-primary hover:bg-primary-hover normal-case font-bold text-xs px-6 py-3 rounded-xl shadow-lg shadow-teal-500/25">
                 ফ্রি রেজিস্টার করুন
               </Button>
             </Link>

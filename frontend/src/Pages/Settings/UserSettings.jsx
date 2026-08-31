@@ -166,9 +166,9 @@ const handleDeviceLimitSubmit = async (e) => {
       <div className="container mx-auto px-4 max-w-3xl space-y-4">
         
         {/* 📱 Top Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1c4b] via-[#2c2f73] to-[#5a32fa] text-white p-5 shadow-lg shadow-indigo-500/20">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#042f2e] via-[#0f766e] to-[#0284c7] text-white p-5 shadow-lg shadow-teal-900/20">
           <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute bottom-0 right-10 w-24 h-24 rounded-full bg-purple-400/20 blur-xl" />
+          <div className="absolute bottom-0 right-10 w-24 h-24 rounded-full bg-teal-400/20 blur-xl" />
           <div className="relative flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <Link
@@ -219,7 +219,7 @@ const handleDeviceLimitSubmit = async (e) => {
                 onClick={() => setActiveTab(t.id)}
                 className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 ${
                   isSelected
-                    ? "bg-[#5a32fa] text-white shadow-sm"
+                    ? "bg-primary text-white shadow-sm"
                     : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
                 }`}
               >
@@ -234,7 +234,7 @@ const handleDeviceLimitSubmit = async (e) => {
         {activeTab === "profile" && (
           <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5a32fa] to-[#7928ca] text-white flex items-center justify-center font-black text-sm shadow-md shadow-indigo-500/20">
+              <div className="w-10 h-10 rounded-xl bg-brand-gradient text-white flex items-center justify-center font-black text-sm shadow-md shadow-teal-500/20">
                 <UserIcon className="w-5 h-5" />
               </div>
               <div>
@@ -279,7 +279,7 @@ const handleDeviceLimitSubmit = async (e) => {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="আপনার নাম লিখুন"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-[#5a32fa]"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-primary"
                   />
                 </div>
 
@@ -291,7 +291,7 @@ const handleDeviceLimitSubmit = async (e) => {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="01XXXXXXXXX"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-[#5a32fa]"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-primary"
                   />
                 </div>
               </div>
@@ -302,7 +302,7 @@ const handleDeviceLimitSubmit = async (e) => {
                   <select
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-[#5a32fa]"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-primary"
                   >
                     <option value="Male">পুরুষ (Male)</option>
                     <option value="Female">মহিলা (Female)</option>
@@ -315,7 +315,7 @@ const handleDeviceLimitSubmit = async (e) => {
                   <select
                     value={formData.education}
                     onChange={(e) => setFormData({ ...formData, education: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-[#5a32fa]"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-primary"
                   >
                     <option value="HSC">HSC / Alim</option>
                     <option value="SSC">SSC / Dakhil</option>
@@ -333,14 +333,14 @@ const handleDeviceLimitSubmit = async (e) => {
                   value={formData.fbId}
                   onChange={(e) => setFormData({ ...formData, fbId: e.target.value })}
                   placeholder="https://facebook.com/username"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-[#5a32fa]"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-primary"
                 />
               </div>
 
               <div className="pt-2">
                 <Button
                   type="submit"
-                  className="w-full sm:w-auto bg-gradient-to-r from-[#5a32fa] to-[#7928ca] hover:from-[#4b26e0] hover:to-[#6820ae] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
+                  className="w-full sm:w-auto bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-teal-500/20"
                 >
                   প্রোফাইল সেভ করুন
                 </Button>
@@ -355,7 +355,7 @@ const handleDeviceLimitSubmit = async (e) => {
           <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
             <div>
               <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#5a32fa] to-[#7928ca] text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+                <span className="w-8 h-8 rounded-xl bg-brand-gradient text-white flex items-center justify-center shadow-md shadow-teal-500/20">
                   <LockClosedIcon className="w-4 h-4" />
                 </span>
                 <span>পাসওয়ার্ড পরিবর্তন করুন</span>
@@ -375,7 +375,7 @@ const handleDeviceLimitSubmit = async (e) => {
                     value={passData.oldPassword}
                     onChange={(e) => setPassData({ ...passData, oldPassword: e.target.value })}
                     placeholder="বর্তমান পাসওয়ার্ড দিন"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-[#5a32fa] pr-10"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-primary pr-10"
                   />
                   <button
                     type="button"
@@ -397,7 +397,7 @@ const handleDeviceLimitSubmit = async (e) => {
                       value={passData.newPassword}
                       onChange={(e) => setPassData({ ...passData, newPassword: e.target.value })}
                       placeholder="কমপক্ষে ৬ অক্ষর"
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-[#5a32fa] pr-10"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-primary pr-10"
                     />
                     <button
                       type="button"
@@ -417,7 +417,7 @@ const handleDeviceLimitSubmit = async (e) => {
                     value={passData.confirmPassword}
                     onChange={(e) => setPassData({ ...passData, confirmPassword: e.target.value })}
                     placeholder="পুনরায় নতুন পাসওয়ার্ড লিখুন"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-[#5a32fa]"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
@@ -425,7 +425,7 @@ const handleDeviceLimitSubmit = async (e) => {
               <div className="pt-2">
                 <Button
                   type="submit"
-                  className="w-full sm:w-auto bg-gradient-to-r from-[#5a32fa] to-[#7928ca] hover:from-[#4b26e0] hover:to-[#6820ae] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
+                  className="w-full sm:w-auto bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-teal-500/20"
                 >
                   পাসওয়ার্ড আপডেট করুন
                 </Button>
@@ -437,7 +437,7 @@ const handleDeviceLimitSubmit = async (e) => {
           <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
             <div>
               <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20">
+                <span className="w-8 h-8 rounded-xl bg-brand-gradient text-white flex items-center justify-center shadow-md shadow-teal-500/20">
                   <DevicePhoneMobileIcon className="w-4 h-4" />
                 </span>
                 <span>সক্রিয় ডিভাইস সীমা</span>
@@ -459,7 +459,7 @@ const handleDeviceLimitSubmit = async (e) => {
                     required
                     value={deviceLimit}
                     onChange={(e) => setDeviceLimit(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:border-[#5a32fa]"
+                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
@@ -468,7 +468,7 @@ const handleDeviceLimitSubmit = async (e) => {
                 <Button
                   type="submit"
                   disabled={deviceLimitSaving}
-                  className="w-full sm:w-auto bg-gradient-to-r from-[#5a32fa] to-[#7928ca] hover:from-[#4b26e0] hover:to-[#6820ae] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
+                  className="w-full sm:w-auto bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-teal-500/20"
                 >
                   {deviceLimitSaving ? "সেভ হচ্ছে..." : "ডিভাইস লিমিট সেভ করুন"}
                 </Button>
@@ -499,7 +499,7 @@ const handleDeviceLimitSubmit = async (e) => {
                 <select
                   value={formData.paymentMethod}
                   onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-[#5a32fa]"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-primary"
                 >
                   <option value="Bkash">🌸 বিকাশ (bKash Personal)</option>
                   <option value="Nagad">🔥 নগদ (Nagad Personal)</option>
@@ -515,14 +515,14 @@ const handleDeviceLimitSubmit = async (e) => {
                   value={formData.account}
                   onChange={(e) => setFormData({ ...formData, account: e.target.value })}
                   placeholder="01XXXXXXXXX"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:border-[#5a32fa]"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:border-primary"
                 />
               </div>
 
               <div className="pt-2">
                 <Button
                   type="submit"
-                  className="w-full sm:w-auto bg-gradient-to-r from-[#5a32fa] to-[#7928ca] hover:from-[#4b26e0] hover:to-[#6820ae] normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-indigo-500/20"
+                  className="w-full sm:w-auto bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-teal-500/20"
                 >
                   পেমেন্ট ইনফো সেভ করুন
                 </Button>
@@ -556,7 +556,7 @@ const handleDeviceLimitSubmit = async (e) => {
                   disabled={prefSaving}
                   checked={pushEnabled}
                   onChange={(e) => handleToggleNotifications(e.target.checked)}
-                  className="w-4 h-4 text-[#5a32fa] rounded cursor-pointer accent-[#5a32fa]"
+                  className="w-4 h-4 text-primary rounded cursor-pointer accent-teal-600"
                 />
               </div>
 
@@ -569,7 +569,7 @@ const handleDeviceLimitSubmit = async (e) => {
                   type="checkbox"
                   checked={soundEnabled}
                   onChange={(e) => setSoundEnabled(e.target.checked)}
-                  className="w-4 h-4 text-[#5a32fa] rounded cursor-pointer accent-[#5a32fa]"
+                  className="w-4 h-4 text-primary rounded cursor-pointer accent-teal-600"
                 />
               </div>
 
@@ -578,7 +578,7 @@ const handleDeviceLimitSubmit = async (e) => {
                   <p className="font-bold text-[#0b0c2a]">ডিফল্ট ভাষা</p>
                   <p className="text-[11px] text-gray-400">বাংলা (বাংলাদেশ)</p>
                 </div>
-                <span className="px-2.5 py-1 rounded-xl bg-purple-50 text-[#5a32fa] font-bold text-[11px]">
+                <span className="px-2.5 py-1 rounded-xl bg-primary-light text-primary font-bold text-[11px]">
                   বাংলা (সক্রিয়)
                 </span>
               </div>

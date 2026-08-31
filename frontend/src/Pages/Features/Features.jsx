@@ -86,14 +86,14 @@ const Features = () => {
             
             {/* Left Content */}
             <div className="lg:col-span-7 text-center lg:text-left space-y-4">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-100/80 border border-purple-200/60 text-purple-700 text-xs font-semibold tracking-wide">
-                <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-light border border-teal-200/60 text-primary text-xs font-semibold tracking-wide">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                 ফিচারসমূহ
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0b0c2a] leading-tight tracking-tight">
                 কেন{" "}
-                <span className="text-[#5a32fa]">
+                <span className="text-primary">
                   CNP-PROMO
                 </span>{" "}
                 সেরা?
@@ -134,14 +134,14 @@ const Features = () => {
                 className="p-8 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center text-center group"
               >
                 {/* Circular Purple Icon Badge */}
-                <div className="w-16 h-16 rounded-full bg-[#5a32fa]/10 flex items-center justify-center text-[#5a32fa] mb-6 group-hover:bg-[#5a32fa] group-hover:text-white transition-all duration-300 shadow-sm">
+                <div className="w-16 h-16 rounded-full bg-primary-light flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm">
                   <IconComponent className="w-8 h-8 transition-transform group-hover:scale-110" />
                 </div>
 
                 {/* Title */}
                 <Typography
                   variant="h5"
-                  className="text-[#0b0c2a] font-bold text-lg sm:text-xl mb-3 tracking-tight group-hover:text-[#5a32fa] transition-colors"
+                  className="text-[#0b0c2a] font-bold text-lg sm:text-xl mb-3 tracking-tight group-hover:text-primary transition-colors"
                 >
                   {item.title}
                 </Typography>
@@ -203,12 +203,12 @@ const Features = () => {
 
       {/* 🎁 Call to Action (CTA) Banner */}
       <section className="container mx-auto px-4 max-w-7xl mt-10">
-        <div className="bg-gradient-to-r from-purple-50 via-indigo-50/50 to-blue-50/40 rounded-3xl p-6 sm:p-8 lg:p-10 border border-purple-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-teal-50 via-cyan-50/50 to-sky-50/40 rounded-3xl p-6 sm:p-8 lg:p-10 border border-teal-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           
           {/* Left Icon + Text */}
           <div className="flex items-center gap-5 text-center md:text-left flex-col md:flex-row">
             {/* Gift Box Icon */}
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#5a32fa] to-[#050C9C] text-white flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0 text-3xl">
+            <div className="w-16 h-16 rounded-2xl bg-brand-gradient text-white flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0 text-3xl">
               🎁
             </div>
             
@@ -224,7 +224,7 @@ const Features = () => {
 
           {/* Right CTA Button */}
           <Link to="/register" className="shrink-0 w-full md:w-auto">
-            <Button className="w-full md:w-auto bg-[#5a32fa] hover:bg-[#4722e0] text-white normal-case font-bold text-sm px-8 py-3.5 rounded-2xl shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 transition-all hover:scale-105">
+            <Button className="w-full md:w-auto bg-primary hover:bg-primary-hover text-white normal-case font-bold text-sm px-8 py-3.5 rounded-2xl shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 transition-all hover:scale-105">
               <span>আজই যোগ দিন</span>
               <ArrowRightIcon className="w-4 h-4" />
             </Button>

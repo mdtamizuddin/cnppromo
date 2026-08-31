@@ -30,10 +30,10 @@ const CATEGORY_META = {
   referrals: { label: "রেফারেল", icon: UserGroupIcon, iconBg: "bg-blue-50 text-blue-600" },
   tasks: { label: "টাস্ক", icon: BanknotesIcon, iconBg: "bg-amber-50 text-amber-600" },
   task: { label: "টাস্ক", icon: BanknotesIcon, iconBg: "bg-amber-50 text-amber-600" },
-  system: { label: "সিস্টেম", icon: MegaphoneIcon, iconBg: "bg-purple-50 text-[#5a32fa]" },
-  levels: { label: "লেভেল", icon: TrophyIcon, iconBg: "bg-violet-50 text-violet-600" },
+  system: { label: "সিস্টেম", icon: MegaphoneIcon, iconBg: "bg-primary-light text-primary" },
+  levels: { label: "লেভেল", icon: TrophyIcon, iconBg: "bg-teal-50 text-teal-600" },
   security: { label: "সিকিউরিটি", icon: ShieldCheckIcon, iconBg: "bg-rose-50 text-rose-600" },
-  announcement: { label: "ঘোষণা", icon: MegaphoneIcon, iconBg: "bg-purple-50 text-[#5a32fa]" },
+  announcement: { label: "ঘোষণা", icon: MegaphoneIcon, iconBg: "bg-primary-light text-primary" },
   reward: { label: "বোনাস", icon: SparklesIcon, iconBg: "bg-amber-50 text-amber-600" },
 };
 
@@ -103,7 +103,7 @@ const Notifications = () => {
           <div className="flex items-center gap-2.5">
             <Link
               to="/user/home"
-              className="w-8 h-8 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:text-[#5a32fa] transition-colors"
+              className="w-8 h-8 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:text-primary transition-colors"
             >
               <ChevronLeftIcon className="w-4 h-4 stroke-[2.5]" />
             </Link>
@@ -122,7 +122,7 @@ const Notifications = () => {
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllAsRead}
-              className="text-[11px] font-bold text-[#5a32fa] hover:text-[#4b26e0] flex items-center gap-1"
+              className="text-[11px] font-bold text-primary hover:text-primary-hover flex items-center gap-1"
             >
               <CheckIcon className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>সব পড়া হয়েছে</span>
@@ -140,7 +140,7 @@ const Notifications = () => {
                 onClick={() => setFilter(cat.id)}
                 className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all shrink-0 ${
                   isSelected
-                    ? "bg-[#5a32fa] text-white shadow-sm"
+                    ? "bg-primary text-white shadow-sm"
                     : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
                 }`}
               >
@@ -174,7 +174,7 @@ const Notifications = () => {
                   onClick={() => handleMarkAsRead(item)}
                   className={`p-3 rounded-2xl border transition-all flex items-start gap-3 relative cursor-pointer ${
                     !item.isRead
-                      ? "bg-white border-purple-200/80 shadow-sm"
+                      ? "bg-white border-primary/40 shadow-sm"
                       : "bg-white/70 border-gray-200/60 opacity-85 hover:opacity-100"
                   }`}
                 >
@@ -205,7 +205,7 @@ const Notifications = () => {
                       <div className="pt-1">
                         <Link
                           to={resolveNotificationLink(item.link, user?.role)}
-                          className="inline-flex items-center gap-1 text-[11px] font-bold text-[#5a32fa] hover:underline"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
                         >
                           <span>বিস্তারিত দেখুন</span>
                           <ArrowRightIcon className="w-3 h-3" />

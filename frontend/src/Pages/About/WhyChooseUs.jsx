@@ -23,7 +23,7 @@ const WhyChooseUs = () => {
                     transition={{ duration: 0.6 }}
                     className="flex-1 w-full"
                 >
-                    <h3 className="text-[#5a32fa] font-bold text-sm tracking-wider uppercase mb-2">WHY CHOOSE US</h3>
+                    <h3 className="text-primary font-bold text-sm tracking-wider uppercase mb-2">WHY CHOOSE US</h3>
                     <h2 className="text-3xl md:text-4xl font-extrabold text-[#0b0c2a] mb-8">আমরা কেন আলাদা?</h2>
 
                     <div className="space-y-4">
@@ -36,7 +36,7 @@ const WhyChooseUs = () => {
                                 transition={{ duration: 0.4, delay: idx * 0.1 }}
                                 className="flex items-center gap-4"
                             >
-                                <FontAwesomeIcon icon={faCircleCheck} className="text-[#5a32fa] text-xl" />
+                                <FontAwesomeIcon icon={faCircleCheck} className="text-primary text-xl" />
                                 <span className="text-[#0b0c2a] font-semibold text-[17px]">{reason}</span>
                             </motion.div>
                         ))}
@@ -53,7 +53,7 @@ const WhyChooseUs = () => {
                 >
                     <div className="relative rounded-[30px] overflow-hidden shadow-2xl group">
                         {/* Image Placeholder - fallback to a gradient if image fails to load */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900 to-[#5a32fa] -z-10"></div>
+                        <div className="absolute inset-0 bg-gradient-to-tr from-teal-950 to-teal-600 -z-10"></div>
                         <img 
                             src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=80" 
                             alt="Team Collaboration" 

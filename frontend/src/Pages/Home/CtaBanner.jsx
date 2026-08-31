@@ -13,12 +13,12 @@ const CtaBanner = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-50px" }}
                     transition={{ duration: 0.7, ease: "easeOut" }}
-                    className="relative bg-gradient-to-r from-[#0b0c2a] via-[#3a1b9e] to-[#5a32fa] rounded-3xl p-6 lg:p-10 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 z-10"
+                    className="relative bg-gradient-to-r from-[#042f2e] via-[#0f766e] to-[#0284c7] rounded-3xl p-6 lg:p-10 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 z-10"
                 >
                     
                     {/* Background decoration */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -z-10"></div>
-                    <div className="absolute bottom-0 left-1/4 w-40 h-40 bg-[#5a32fa] rounded-full blur-3xl opacity-50 -z-10"></div>
+                    <div className="absolute bottom-0 left-1/4 w-40 h-40 bg-teal-400 rounded-full blur-3xl opacity-30 -z-10"></div>
                     
                     {/* Dashed curve line abstract */}
                     <svg className="absolute inset-0 w-full h-full object-cover opacity-10 pointer-events-none -z-10" xmlns="http://www.w3.org/2000/svg">
@@ -34,7 +34,7 @@ const CtaBanner = () => {
                             <h2 className="text-xl lg:text-[26px] font-bold text-white mb-2 leading-tight">
                                 আজই জয়েন করুন এবং ঘরে বসে <br className="hidden md:block" /> উপার্জন শুরু করুন!
                             </h2>
-                            <p className="text-indigo-200 text-[14px] font-medium">
+                            <p className="text-teal-100 text-[14px] font-medium">
                                 আপনার সফলতার যাত্রা শুরু হোক আমাদের সাথে!
                             </p>
                         </div>
@@ -42,7 +42,7 @@ const CtaBanner = () => {
 
                     {/* Button */}
                     <Link to="/register" className="shrink-0 w-full md:w-auto">
-                        <button className="w-full bg-white text-[#5a32fa] hover:bg-gray-50 px-8 py-4 rounded-xl font-bold text-[16px] transition-all flex items-center justify-center gap-3 shadow-lg">
+                        <button className="w-full bg-white text-primary hover:bg-teal-50 px-8 py-4 rounded-xl font-bold text-[16px] transition-all flex items-center justify-center gap-3 shadow-lg">
                             Join Now <FontAwesomeIcon icon={faArrowRight} />
                         </button>
                     </Link>
