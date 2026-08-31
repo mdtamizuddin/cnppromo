@@ -29,6 +29,7 @@ export const userSlice = createSlice({
     logOutUser: (state) => {
       state.user = null;
       state.noData = true;
+      Cookies.remove("token-you");
       Cookies.remove("accessToken");
       window.location.href = "/login";
     },
