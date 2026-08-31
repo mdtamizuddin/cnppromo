@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { Outlet, ScrollRestoration, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import AdminSidebar from "./AdminSidebar";
 import AdminBottomBar from "./AdminBottomBar";
 import DefaultFetch from "../DefaultFetch";
+import Loader from "../Loader";
 import { Toaster } from "react-hot-toast";
 
 const AdminLayout = () => {
+  const { user } = useSelector((state) => state.user);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { pathname } = useLocation();
 
@@ -14,6 +17,17 @@ const AdminLayout = () => {
   const closeSidebar = () => setSidebarOpen(false);
 
   const fullBleed = pathname.startsWith("/admin/message");
+  const isStaff = user?.role === "admin" || user?.role === "moderator";
+
+  if (!isStaff) {
+    return (
+      <div className="bg-[#f3f4f9] min-h-screen flex items-center justify-center">
+        <ScrollRestoration />
+        <DefaultFetch />
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#f3f4f9] min-h-screen text-[#333]">

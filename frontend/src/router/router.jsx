@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import App from "../App";
 import Loader from "../Components/Loader";
 import AuthChecker from "./AuthChecker";
+import AdminChecker from "../util/UserChecker";
 import RouteErrorBoundary from "../Components/RouteErrorBoundary";
 import { userRoutes } from "./userRoutes";
 import { adminRoutes } from "./adminRoutes";
@@ -109,7 +110,11 @@ const router = createBrowserRouter([
       // --- ADMIN ROUTES ---
       {
         path: "admin",
-        element: <Lazy><AdminLayout /></Lazy>,
+        element: (
+          <AdminChecker>
+            <Lazy><AdminLayout /></Lazy>
+          </AdminChecker>
+        ),
         children: adminRoutes,
       },
       // --- 404 CATCH-ALL ---
