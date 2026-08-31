@@ -27,46 +27,40 @@ export const ImageBubble = ({ src }) => {
 };
 
 export const VideoBubble = ({ src }) => {
-  const [active, setActive] = useState(false);
+  const [error, setError] = useState(false);
 
-  if (active) {
+  if (!src) return null;
+
+  if (error) {
     return (
-      <video
-        controls
-        autoPlay
-        className="mt-1 rounded-xl w-full max-w-[280px] bg-black"
-        style={{ aspectRatio: "16 / 10" }}
-      >
-        <source src={src} type="video/mp4" />
-      </video>
+      <div className="mt-1 p-3 rounded-xl bg-gray-900 text-white text-xs max-w-[280px] space-y-1">
+        <p className="text-gray-300">ভিডিও লোড করা যায়নি</p>
+        <a
+          href={src}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-teal-400 hover:underline font-bold inline-block"
+        >
+          সরাসরি দেখুন ↗
+        </a>
+      </div>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => setActive(true)}
-      aria-label="Play video"
-      className="relative mt-1 w-full max-w-[280px] rounded-xl overflow-hidden bg-gray-900/90 group
-        focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-      style={{ aspectRatio: "16 / 10" }}
-    >
-      {/* Poster frames aren't stored, so the first frame stands in for the thumbnail. */}
+    <div className="relative mt-1 overflow-hidden rounded-2xl bg-black max-w-[320px] shadow-md border border-black/10">
       <video
         src={src}
-        muted
+        controls
         playsInline
         preload="metadata"
-        className="absolute inset-0 w-full h-full object-cover opacity-70"
-      />
-      <span className="absolute inset-0 flex items-center justify-center">
-        <span
-          className="flex items-center justify-center w-12 h-12 rounded-full bg-white/95 shadow-lg
-            transition-transform duration-200 group-hover:scale-105"
-        >
-          <PlayIcon className="w-5 h-5 text-gray-900 ml-0.5" />
-        </span>
-      </span>
-    </button>
+        className="w-full h-auto max-h-[320px] rounded-2xl object-contain bg-black"
+        onError={() => setError(true)}
+      >
+        <source src={src} />
+        Your browser does not support HTML5 video.
+      </video>
+    </div>
   );
 };
+

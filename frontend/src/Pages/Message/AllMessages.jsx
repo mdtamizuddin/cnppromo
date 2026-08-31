@@ -48,25 +48,19 @@ const AllMessages = () => {
             >
               <LinkifyText text={msg?.message} />
               {msg.image && <Image height={100} src={msg?.image} />}
-              {msg.video &&
-                (playing ? (
+              {msg.video && (
+                <div className="mt-2 rounded-xl overflow-hidden bg-black max-w-[300px]">
                   <video
-                    width={300}
+                    src={msg.video}
                     controls
-                    autoPlay={false}
-                    className="rounded-lg"
+                    playsInline
+                    preload="metadata"
+                    className="w-full max-h-[260px] rounded-xl object-contain bg-black"
                   >
-                    <source src={msg.video} type="video/mp4" />
+                    <source src={msg.video} />
                   </video>
-                ) : (
-                  <div className="w-[300px] h-[140px] flex items-center justify-center flex-col">
-                    <PlayCircleFilled
-                      className="text-4xl cursor-pointer"
-                      onClick={() => setPlaying(true)}
-                    />
-                    <h2 className="text-sm mt-2">Click To Play</h2>
-                  </div>
-                ))}
+                </div>
+              )}
               {msg.audio && (
                 <div className="flex items-center gap-x-2">
                   <button
