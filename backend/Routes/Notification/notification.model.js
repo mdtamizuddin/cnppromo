@@ -8,7 +8,7 @@ const notificationSchema = new mongoose.Schema({
     },
     category: {
         type: String,
-        enum: ["payments", "referrals", "tasks", "system", "levels", "security"],
+        enum: ["payments", "referrals", "tasks", "task", "system", "levels", "security", "announcement", "reward"],
         default: "system",
     },
     type: {

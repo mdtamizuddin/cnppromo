@@ -29,9 +29,12 @@ const CATEGORY_META = {
   payments: { label: "পেমেন্ট", icon: CreditCardIcon, iconBg: "bg-emerald-50 text-emerald-600" },
   referrals: { label: "রেফারেল", icon: UserGroupIcon, iconBg: "bg-blue-50 text-blue-600" },
   tasks: { label: "টাস্ক", icon: BanknotesIcon, iconBg: "bg-amber-50 text-amber-600" },
+  task: { label: "টাস্ক", icon: BanknotesIcon, iconBg: "bg-amber-50 text-amber-600" },
   system: { label: "সিস্টেম", icon: MegaphoneIcon, iconBg: "bg-purple-50 text-[#5a32fa]" },
   levels: { label: "লেভেল", icon: TrophyIcon, iconBg: "bg-violet-50 text-violet-600" },
   security: { label: "সিকিউরিটি", icon: ShieldCheckIcon, iconBg: "bg-rose-50 text-rose-600" },
+  announcement: { label: "ঘোষণা", icon: MegaphoneIcon, iconBg: "bg-purple-50 text-[#5a32fa]" },
+  reward: { label: "বোনাস", icon: SparklesIcon, iconBg: "bg-amber-50 text-amber-600" },
 };
 
 const toLocalTime = (iso) =>

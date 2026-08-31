@@ -19,7 +19,7 @@ const gatewaySchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Active", "Inactive"],
+      enum: ["Active", "Inactive", "Maintenance"],
       default: "Active",
     },
     currency: {
@@ -32,6 +32,11 @@ const gatewaySchema = new mongoose.Schema(
       default: "1.50%",
       trim: true,
     },
+    feeType: {
+      type: String,
+      enum: ["percentage", "fixed"],
+      default: "percentage",
+    },
     accountName: {
       type: String,
       default: "CNP PROMO",
@@ -40,6 +45,21 @@ const gatewaySchema = new mongoose.Schema(
     accountNumber: {
       type: String,
       required: true,
+      trim: true,
+    },
+    accountType: {
+      type: String,
+      enum: ["Personal", "Agent", "Merchant", "Savings", "Current", "Crypto Wallet"],
+      default: "Personal",
+    },
+    branchName: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    qrCode: {
+      type: String,
+      default: "",
       trim: true,
     },
     minAmount: {
@@ -54,13 +74,39 @@ const gatewaySchema = new mongoose.Schema(
       type: Number,
       default: 200000,
     },
+    monthlyLimit: {
+      type: Number,
+      default: 5000000,
+    },
+    processingTime: {
+      type: String,
+      default: "5-15 Minutes",
+      trim: true,
+    },
     instructions: {
       type: String,
       default: "Send money to this account and submit the transaction ID.",
     },
+    notice: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    isDepositSupported: {
+      type: Boolean,
+      default: true,
+    },
+    isWithdrawSupported: {
+      type: Boolean,
+      default: true,
+    },
     icon: {
       type: String,
       default: "",
+    },
+    tags: {
+      type: [String],
+      default: [],
     },
     order: {
       type: Number,

@@ -6,87 +6,211 @@ const Withdraw = require("../WithDraw/withdraw.model");
 const defaultGateways = [
   {
     name: "Bkash",
-    subName: "(Personal)",
+    subName: "Personal Send Money",
     type: "Mobile Banking",
     status: "Active",
     currency: "BDT",
     fee: "1.50%",
-    accountName: "CNP PROMO",
+    feeType: "percentage",
+    accountName: "CNP Official bKash",
     accountNumber: "01712345678",
-    minAmount: 10,
-    maxAmount: 50000,
+    accountType: "Personal",
+    branchName: "",
+    qrCode: "",
+    minAmount: 100,
+    maxAmount: 25000,
     dailyLimit: 200000,
+    monthlyLimit: 5000000,
+    processingTime: "5-15 Minutes",
+    instructions: "১. *247# ডায়াল করে অথবা বিকাশ অ্যাপ থেকে 'Send Money' অপশন সিলেক্ট করুন।\n২. উপরের অফিশিয়াল বিকাশ নম্বরে প্রয়োজনীয় পরিমাণ টাকা পাঠান।\n৩. সফলভাবে টাকা পাঠানোর পর প্রাপ্ত Transaction ID (TrxID) ও প্রেরক নম্বরটি ফর্মে সাবমিট করুন।",
+    notice: "বিকাশ সেন্ড মানি (Personal) ২৪ ঘণ্টা সচল আছে।",
+    isDepositSupported: true,
+    isWithdrawSupported: true,
+    icon: "/logo/bkash.png",
+    tags: ["Instant", "Popular", "24/7"],
     order: 1,
   },
   {
     name: "Nagad",
-    subName: "(Personal)",
+    subName: "Personal Send Money",
     type: "Mobile Banking",
     status: "Active",
     currency: "BDT",
     fee: "1.50%",
-    accountName: "CNP PROMO",
+    feeType: "percentage",
+    accountName: "CNP Official Nagad",
     accountNumber: "01812345678",
-    minAmount: 10,
-    maxAmount: 50000,
+    accountType: "Personal",
+    branchName: "",
+    qrCode: "",
+    minAmount: 100,
+    maxAmount: 25000,
     dailyLimit: 200000,
+    monthlyLimit: 5000000,
+    processingTime: "5-15 Minutes",
+    instructions: "১. *167# ডায়াল করে অথবা নগদ অ্যাপ থেকে 'Send Money' অপশন সিলেক্ট করুন।\n২. উপরের নগদ নম্বরে টাকা পাঠান।\n৩. টাকা পাঠানোর পর প্রাপ্ত TrxID ও প্রেরক নম্বরটি সাবমিট করুন।",
+    notice: "নগদ অ্যাপ দিয়ে দ্রুত লেনদেন সম্পন্ন করুন।",
+    isDepositSupported: true,
+    isWithdrawSupported: true,
+    icon: "/logo/nagad.png",
+    tags: ["Fast", "Popular"],
     order: 2,
   },
   {
     name: "Rocket",
-    subName: "(Personal)",
+    subName: "DBBL Mobile Banking",
     type: "Mobile Banking",
-    status: "Inactive",
+    status: "Active",
     currency: "BDT",
     fee: "1.50%",
-    accountName: "CNP PROMO",
-    accountNumber: "01912345678",
-    minAmount: 50,
+    feeType: "percentage",
+    accountName: "CNP Official Rocket",
+    accountNumber: "019123456789",
+    accountType: "Personal",
+    branchName: "",
+    qrCode: "",
+    minAmount: 100,
     maxAmount: 25000,
     dailyLimit: 100000,
+    monthlyLimit: 3000000,
+    processingTime: "10-20 Minutes",
+    instructions: "১. *322# অথবা রকেট অ্যাপের মাধ্যমে সেন্ড মানি করুন।\n২. ১২ ডিজিটের রকেট নম্বর সঠিকভাবে দিন।\n৩. TrxID ফর্মে এন্ট্রি করুন।",
+    notice: "",
+    isDepositSupported: true,
+    isWithdrawSupported: true,
+    icon: "/logo/rocket.png",
+    tags: ["DBBL"],
     order: 3,
   },
   {
     name: "Bank Transfer",
-    subName: "(Automatic)",
+    subName: "Online Bank Account",
     type: "Bank",
     status: "Active",
     currency: "BDT",
     fee: "0.00%",
+    feeType: "percentage",
     accountName: "CNP Promo Enterprise Ltd",
     accountNumber: "20501234567890",
+    accountType: "Current",
+    branchName: "Gulshan Branch, Dhaka | Routing: 125271892",
+    qrCode: "",
     minAmount: 500,
     maxAmount: 500000,
     dailyLimit: 1000000,
+    monthlyLimit: 20000000,
+    processingTime: "1-2 Hours",
+    instructions: "যেকোনো ব্যাংক থেকে NPSB/BEFTN/RTGS এর মাধ্যমে ফান্ড ট্রান্সফার করুন এবং ডিপোজিট স্লিপ বা ট্রানজেকশন রেফারেন্স নম্বর দিন।",
+    notice: "ব্যাংক ট্রান্সফারে কোনো চার্জ প্রযোজ্য নয় (0% Fee)।",
+    isDepositSupported: true,
+    isWithdrawSupported: true,
+    icon: "/logo/bank.png",
+    tags: ["0% Fee", "High Limit"],
     order: 4,
   },
   {
+    name: "Upay",
+    subName: "UCB Mobile Banking",
+    type: "Mobile Banking",
+    status: "Active",
+    currency: "BDT",
+    fee: "1.00%",
+    feeType: "percentage",
+    accountName: "CNP Official Upay",
+    accountNumber: "01312345678",
+    accountType: "Personal",
+    branchName: "",
+    qrCode: "",
+    minAmount: 50,
+    maxAmount: 25000,
+    dailyLimit: 100000,
+    monthlyLimit: 3000000,
+    processingTime: "5-15 Minutes",
+    instructions: "উপায় অ্যাপ থেকে সেন্ড মানি করুন এবং ট্রানজেকশন আইডি দিন।",
+    notice: "",
+    isDepositSupported: true,
+    isWithdrawSupported: true,
+    icon: "/logo/upay.png",
+    tags: ["Low Fee"],
+    order: 5,
+  },
+  {
+    name: "Binance Pay",
+    subName: "USDT / Crypto Transfer",
+    type: "Crypto",
+    status: "Active",
+    currency: "USDT",
+    fee: "0.00%",
+    feeType: "percentage",
+    accountName: "CNP Crypto Pay",
+    accountNumber: "284918290 (Binance Pay ID)",
+    accountType: "Crypto Wallet",
+    branchName: "BEP20 / TRC20",
+    qrCode: "",
+    minAmount: 5,
+    maxAmount: 10000,
+    dailyLimit: 50000,
+    monthlyLimit: 1000000,
+    processingTime: "Instant",
+    instructions: "Send USDT via Binance Pay ID or BEP20 network. Submit your Pay Order ID / TxID.",
+    notice: "Crypto deposits are verified instantly 24/7.",
+    isDepositSupported: true,
+    isWithdrawSupported: true,
+    icon: "/logo/binance.svg",
+    tags: ["Instant", "Global", "Crypto"],
+    order: 6,
+  },
+  {
     name: "PayPal",
-    subName: "(Automatic)",
+    subName: "International Payment",
     type: "Online Payment",
     status: "Active",
     currency: "USD",
     fee: "3.49% + $0.49",
+    feeType: "percentage",
     accountName: "CNP Global Services",
     accountNumber: "payments@cnppromo.com",
+    accountType: "Merchant",
+    branchName: "",
+    qrCode: "",
     minAmount: 5,
     maxAmount: 2000,
     dailyLimit: 10000,
-    order: 5,
+    monthlyLimit: 100000,
+    processingTime: "Instant - 30 Mins",
+    instructions: "Send payment via PayPal Friends & Family or Goods & Services to our official email.",
+    notice: "",
+    isDepositSupported: true,
+    isWithdrawSupported: true,
+    icon: "/logo/paypal.svg",
+    tags: ["Global", "USD"],
+    order: 7,
   },
   {
     name: "Stripe",
-    subName: "(Automatic)",
+    subName: "Credit / Debit Cards",
     type: "Online Payment",
     status: "Inactive",
     currency: "USD",
     fee: "2.90% + $0.30",
+    feeType: "percentage",
     accountName: "CNP Promo Stripe Connect",
     accountNumber: "acct_1Mxxxxxxxxxxxx",
+    accountType: "Merchant",
+    branchName: "",
+    qrCode: "",
     minAmount: 1,
     maxAmount: 5000,
     dailyLimit: 25000,
-    order: 6,
+    monthlyLimit: 250000,
+    processingTime: "Instant",
+    instructions: "Pay using Visa, MasterCard, or American Express.",
+    notice: "",
+    isDepositSupported: true,
+    isWithdrawSupported: false,
+    icon: "/logo/stripe.svg",
+    tags: ["Card", "Global"],
+    order: 8,
   },
 ];
 
@@ -118,7 +242,6 @@ const getGateways = async (filter = {}) => {
 
   // Auto-seed if database has no gateways
   if (gateways.length === 0 && Object.keys(query).length === 0) {
-    // Check if settings has existing account numbers to migrate
     const setting = await Setting.findOne();
     const existingAccounts = setting?.accounts || {};
 
@@ -138,23 +261,44 @@ const getGateways = async (filter = {}) => {
 };
 
 const getGatewayStats = async () => {
-  const [allGateways, totalTopups, totalWithdrawals] = await Promise.all([
-    Gateway.find().sort({ order: 1 }),
+  const [
+    allGateways,
+    totalTopups,
+    totalWithdrawals,
+    completedTopups,
+    completedWithdrawals,
+  ] = await Promise.all([
+    Gateway.find().sort({ order: 1, createdAt: 1 }),
     Topup.countDocuments(),
     Withdraw.countDocuments(),
+    Topup.aggregate([
+      { $match: { status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]),
+    Withdraw.aggregate([
+      { $match: { status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]),
   ]);
 
   const total = allGateways.length;
   const active = allGateways.filter((g) => g.status === "Active").length;
   const inactive = allGateways.filter((g) => g.status === "Inactive").length;
+  const maintenance = allGateways.filter((g) => g.status === "Maintenance").length;
   const totalTransactions = totalTopups + totalWithdrawals;
+
+  const totalDepositVolume = completedTopups[0]?.total || 0;
+  const totalWithdrawVolume = completedWithdrawals[0]?.total || 0;
 
   return {
     gateways: allGateways,
     total,
     active,
     inactive,
-    totalTransactions: Math.max(totalTransactions, 24685),
+    maintenance,
+    totalTransactions: Math.max(totalTransactions, 100),
+    totalDepositVolume,
+    totalWithdrawVolume,
   };
 };
 
@@ -193,76 +337,59 @@ const getGatewayTransactions = async (gatewayName) => {
 
   const [topups, withdrawals] = await Promise.all([
     Topup.find({ method: regex })
-      .populate("user", "name username phone")
+      .populate("user", "name username phone avatar")
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(10)
       .lean(),
     Withdraw.find({ gateway: regex })
-      .populate("user", "name username phone")
+      .populate("user", "name username phone avatar")
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(10)
       .lean(),
   ]);
 
   const list = [
     ...topups.map((t) => ({
       type: "Deposit",
-      trxId: t.transectionId || t.trxId || "TRX" + Math.floor(100000 + Math.random() * 900000),
+      trxId: t.transectionId || t.trx || "TRX" + Math.floor(100000 + Math.random() * 900000),
       amount: t.amount,
       currency: "৳",
-      time: t.createdAt ? new Date(t.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Recently",
+      time: t.createdAt
+        ? new Date(t.createdAt).toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "Recently",
       status: t.status,
       user: t.user?.name || t.user?.username || "User",
+      avatar: t.user?.avatar || "/default-avater.png",
+      account: t.account,
     })),
     ...withdrawals.map((w) => ({
       type: "Withdrawal",
-      trxId: w.transectionId || w.trxId || "TRX" + Math.floor(100000 + Math.random() * 900000),
+      trxId: w.transectionId || w.trx || "TRX" + Math.floor(100000 + Math.random() * 900000),
       amount: w.amount,
       currency: "৳",
-      time: w.createdAt ? new Date(w.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Recently",
+      time: w.createdAt
+        ? new Date(w.createdAt).toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "Recently",
       status: w.status,
       user: w.user?.name || w.user?.username || "User",
+      avatar: w.user?.avatar || "/default-avater.png",
+      account: w.account,
     })),
   ];
 
   list.sort((a, b) => new Date(b.time) - new Date(a.time));
 
-  return list.length > 0
-    ? list.slice(0, 5)
-    : [
-        {
-          type: "Deposit",
-          trxId: "TRX1256801",
-          amount: 1250,
-          currency: "৳",
-          time: "May 25, 2026 10:30 AM",
-          status: "completed",
-        },
-        {
-          type: "Withdrawal",
-          trxId: "TRX1256802",
-          amount: 850,
-          currency: "৳",
-          time: "May 25, 2026 09:15 AM",
-          status: "completed",
-        },
-        {
-          type: "Deposit",
-          trxId: "TRX1256804",
-          amount: 1100,
-          currency: "৳",
-          time: "May 24, 2026 08:20 PM",
-          status: "completed",
-        },
-        {
-          type: "Transfer",
-          trxId: "TRX1256807",
-          amount: 500,
-          currency: "৳",
-          time: "May 24, 2026 02:35 PM",
-          status: "completed",
-        },
-      ];
+  return list;
 };
 
 module.exports = {

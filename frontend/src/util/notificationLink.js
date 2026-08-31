@@ -4,7 +4,7 @@
 const LINK_MAP = {
   "/works": { user: "/user/works", admin: "/admin/works" },
   "/refer": { user: "/user/refer", admin: "/admin/refers" },
-  "/settings": { user: "/user/settings", admin: "/admin/settings" },
+  "/settings": { user: "/user/settings", admin: "/admin/profile" },
   "/account/withdraw": { user: "/user/account/withdraw", admin: "/admin/withdrawals" },
   "/account/topup": { user: "/user/account", admin: "/admin/topup" },
   "/social-works": { user: "/user/social-works", admin: "/admin/social-works" },

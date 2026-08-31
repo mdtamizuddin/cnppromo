@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const mongoose = require("mongoose");
 const authChecker = require("../../util/authChecker");
 const service = require("./notification.service");
 
@@ -54,12 +55,36 @@ router.post("/broadcast", authChecker, async (req, res) => {
         if (req.user.role !== "admin" && req.user.role !== "moderator") {
             return res.status(403).send({ message: "Forbidden" });
         }
-        const { title, message, category, target } = req.body;
+        const { title, message, category, target, userId } = req.body;
         if (!title || !message) {
             return res.status(400).send({ message: "Title and message are required" });
         }
 
         const User = require("../User/user.model");
+
+        // Send to a single specific user (by id or username)
+        if (target === "specific") {
+            const isId =
+                typeof userId === "string" && mongoose.isValidObjectId(userId);
+            const resolver = isId ? { _id: userId } : { username: userId };
+            if (!isId && !userId) {
+                return res.status(400).send({ message: "User is required" });
+            }
+            const user = await User.findOne(resolver).select("_id username");
+            if (!user) {
+                return res.status(404).send({ message: "User not found" });
+            }
+            const result = await service.notifyMany([user._id], {
+                title,
+                message,
+                category: category || "announcement",
+            });
+            return res.send({
+                message: `Notification sent to ${user.username}`,
+                count: result.length,
+            });
+        }
+
         let query = {};
         if (target === "active") query.status = "active";
         if (target === "non-active") query.status = { $ne: "active" };

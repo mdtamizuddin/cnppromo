@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient, useQuery } from "react-query";
 import { Card, Button, Typography } from "@material-tailwind/react";
 import {
   MegaphoneIcon,
@@ -20,7 +20,9 @@ const AdminBroadcast = () => {
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [target, setTarget] = useState("all"); // 'all' | 'active' | 'non-active'
+  const [target, setTarget] = useState("all"); // 'all' | 'active' | 'non-active' | 'specific'
+  const [search, setSearch] = useState("");
+  const [selectedUser, setSelectedUser] = useState(null);
   const [category, setCategory] = useState("announcement"); // 'announcement' | 'reward' | 'task' | 'security'
   const [history, setHistory] = useState([
     {
@@ -57,6 +59,8 @@ const AdminBroadcast = () => {
               ? "All Users"
               : target === "active"
               ? "Active Users"
+              : target === "specific"
+              ? `@${selectedUser?.username || "User"}`
               : "Pending Users",
           category,
           time: "Just now",
@@ -74,10 +78,23 @@ const AdminBroadcast = () => {
     },
   });
 
+  const searchQuery = useQuery({
+    queryKey: ["broadcast-user-search", search],
+    queryFn: async () => {
+      const res = await api.get(`/user/search/${encodeURIComponent(search)}`);
+      return res.data?.user;
+    },
+    enabled: target === "specific" && !!search.trim(),
+  });
+
   const handleSend = (e) => {
     e.preventDefault();
     if (!title.trim() || !message.trim()) {
       toast.error("Please enter both title and message");
+      return;
+    }
+    if (target === "specific" && !selectedUser) {
+      toast.error("Please select a user to send to");
       return;
     }
     broadcastMutation.mutate({
@@ -85,6 +102,7 @@ const AdminBroadcast = () => {
       message,
       target,
       category,
+      ...(target === "specific" ? { userId: selectedUser?._id } : {}),
     });
   };
 
@@ -119,7 +137,7 @@ const AdminBroadcast = () => {
               <label className="text-xs font-bold text-gray-700">
                 Target Audience:
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
                   type="button"
                   onClick={() => setTarget("all")}
@@ -153,8 +171,99 @@ const AdminBroadcast = () => {
                 >
                   ⏳ Pending Only
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setTarget("specific")}
+                  className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all ${
+                    target === "specific"
+                      ? "bg-rose-600 text-white border-rose-600 shadow-md shadow-rose-500/20"
+                      : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  🎯 Specific User
+                </button>
               </div>
             </div>
+
+            {/* Specific User Search */}
+            {target === "specific" && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700">
+                  Select User:
+                </label>
+                {selectedUser ? (
+                  <div className="flex items-center justify-between p-3 rounded-2xl border border-rose-200 bg-rose-50/60">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-black">
+                        {selectedUser.name?.charAt(0)?.toUpperCase() || "U"}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-900">
+                          {selectedUser.username}
+                        </p>
+                        <p className="text-[10px] text-gray-500">
+                          {selectedUser.name}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedUser(null);
+                        setSearch("");
+                      }}
+                      className="text-[11px] font-bold text-rose-600 hover:underline"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        setSelectedUser(null);
+                      }}
+                      placeholder="Enter username to search..."
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                    />
+                    <div className="pt-1">
+                      {search.trim() && selectedUser === null && (
+                        searchQuery.isLoading ? (
+                          <p className="text-[11px] text-gray-400">
+                            Searching...
+                          </p>
+                        ) : searchQuery.data ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedUser(searchQuery.data)}
+                            className="w-full flex items-center gap-2.5 p-3 rounded-2xl border border-gray-200 bg-white hover:border-rose-300 hover:bg-rose-50/40 transition-colors text-left"
+                          >
+                            <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-black">
+                              {searchQuery.data?.name?.charAt(0)?.toUpperCase() || "U"}
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-900">
+                                {searchQuery.data?.username}
+                              </p>
+                              <p className="text-[10px] text-gray-500">
+                                {searchQuery.data?.name}
+                              </p>
+                            </div>
+                          </button>
+                        ) : (
+                          <p className="text-[11px] text-gray-400">
+                            No user found with "{search}"
+                          </p>
+                        )
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Category Selector */}
             <div className="space-y-1.5">
@@ -239,7 +348,7 @@ const AdminBroadcast = () => {
                 <span>Live In-App User Preview</span>
               </div>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-gray-300">
-                Target: {target.toUpperCase()}
+                Target: {target === "specific" ? `@${selectedUser?.username || "User"}` : target.toUpperCase()}
               </span>
             </div>
 

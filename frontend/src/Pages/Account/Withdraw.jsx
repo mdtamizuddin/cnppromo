@@ -15,7 +15,6 @@ import {
   CheckIcon,
   ArrowPathIcon,
   SparklesIcon,
-  ShieldExclamationIcon,
 } from "@heroicons/react/24/outline";
 import { useQuery } from "react-query";
 import toast from "react-hot-toast";
@@ -65,7 +64,7 @@ const defaultPaymentMethods = [
     id: "Bank Transfer",
     name: "Bank Transfer",
     subtitle: "ব্যাংক একাউন্ট",
-    logo: "/logo/upay.png",
+    logo: "/logo/bank.png",
     minAmount: 500,
     maxAmount: 500000,
     fee: "0.00%",
@@ -126,7 +125,12 @@ const Withdraw = () => {
       let accentColor = "#d9176c";
       let bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
 
-      if (nameLower.includes("nagad")) {
+      if (nameLower.includes("bkash")) {
+        logo = "/logo/bkash.png";
+        themeColor = "from-pink-500 to-rose-600";
+        accentColor = "#d9176c";
+        bgActive = "border-pink-400 bg-pink-50/30 ring-2 ring-pink-400/20";
+      } else if (nameLower.includes("nagad")) {
         logo = "/logo/nagad.png";
         themeColor = "from-orange-500 to-amber-600";
         accentColor = "#f97316";
@@ -137,20 +141,40 @@ const Withdraw = () => {
         accentColor = "#8b5cf6";
         bgActive = "border-purple-400 bg-purple-50/30 ring-2 ring-purple-400/20";
       } else if (nameLower.includes("bank")) {
-        logo = "/logo/upay.png";
+        logo = "/logo/bank.png";
         themeColor = "from-blue-600 to-indigo-700";
         accentColor = "#2563eb";
         bgActive = "border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20";
-      } else if (nameLower.includes("paypal")) {
+      } else if (nameLower.includes("upay")) {
         logo = "/logo/upay.png";
+        themeColor = "from-amber-600 to-yellow-700";
+        accentColor = "#d97706";
+        bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
+      } else if (nameLower.includes("recharge")) {
+        logo = "/logo/recharge.png";
+        themeColor = "from-emerald-600 to-teal-700";
+        accentColor = "#059669";
+        bgActive = "border-emerald-400 bg-emerald-50/30 ring-2 ring-emerald-400/20";
+      } else if (nameLower.includes("paypal")) {
+        logo = "/logo/paypal.svg";
         themeColor = "from-sky-600 to-blue-700";
         accentColor = "#0284c7";
         bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
-      } else if (nameLower.includes("stripe") || nameLower.includes("payeer")) {
-        logo = "/logo/upay.png";
+      } else if (nameLower.includes("stripe")) {
+        logo = "/logo/stripe.svg";
         themeColor = "from-indigo-600 to-purple-700";
         accentColor = "#4f46e5";
         bgActive = "border-indigo-400 bg-indigo-50/30 ring-2 ring-indigo-400/20";
+      } else if (nameLower.includes("payeer")) {
+        logo = "/logo/payeer.svg";
+        themeColor = "from-sky-500 to-cyan-600";
+        accentColor = "#0ea5e9";
+        bgActive = "border-sky-400 bg-sky-50/30 ring-2 ring-sky-400/20";
+      } else if (nameLower.includes("binance") || nameLower.includes("usdt") || nameLower.includes("crypto")) {
+        logo = "/logo/binance.svg";
+        themeColor = "from-amber-500 to-yellow-600";
+        accentColor = "#f59e0b";
+        bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
       }
 
       return {
@@ -438,6 +462,9 @@ const Withdraw = () => {
                               src={m.logo}
                               alt={m.name}
                               className="w-full h-full object-contain"
+                              onError={(e) => {
+                                e.currentTarget.src = "/logo/bank.png";
+                              }}
                             />
                           </div>
                           <div>
@@ -635,6 +662,9 @@ const Withdraw = () => {
                       src={currentMethod.logo}
                       alt={currentMethod.name}
                       className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.currentTarget.src = "/logo/bank.png";
+                      }}
                     />
                   </div>
                   <div>
