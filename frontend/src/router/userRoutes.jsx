@@ -31,6 +31,7 @@ const ExternalWithdraw = lazyRetry(() => import("../Pages/External-Withdraw/Exte
 const Account = lazyRetry(() => import("../Pages/Account/Account"));
 const TopUp = lazyRetry(() => import("../Pages/Account/TopUp"));
 const Withdraw = lazyRetry(() => import("../Pages/Account/Withdraw"));
+const PaymentGateway = lazyRetry(() => import("../Pages/Account/PaymentGateway"));
 const Works = lazyRetry(() => import("../Pages/Admin/Works/Works"));
 const SocialWork = lazyRetry(() => import("../Pages/SocialWork/SocialWork"));
 const SocialWorkDetails = lazyRetry(() => import("../Pages/SocialWork/WorkDetails"));
@@ -99,6 +100,10 @@ export const userRoutes = [
   {
     path: "external-withdraw",
     element: <AuthChecker><Lazy><ExternalWithdraw page={"user"} /></Lazy></AuthChecker>,
+  },
+  {
+    path: "payment-gateway",
+    element: <AuthChecker><Lazy><PaymentGateway /></Lazy></AuthChecker>,
   },
   {
     path: "account",

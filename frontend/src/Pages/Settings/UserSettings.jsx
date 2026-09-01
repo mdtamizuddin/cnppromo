@@ -5,7 +5,6 @@ import { Card, Button } from "@material-tailwind/react";
 import {
   UserIcon,
   LockClosedIcon,
-  CreditCardIcon,
   BellIcon,
   ChevronLeftIcon,
   CheckBadgeIcon,
@@ -32,8 +31,6 @@ const UserSettings = () => {
     gender: user?.gender || "Male",
     education: user?.education || "Other",
     fbId: user?.fbId || "",
-    paymentMethod: user?.paymentMethod || "Bkash",
-    account: user?.account || "",
   });
 
   // Password Form State
@@ -152,8 +149,7 @@ const handleDeviceLimitSubmit = async (e) => {
 
   const tabs = [
     { id: "profile", label: "প্রোফাইল তথ্য", icon: UserIcon },
-    { id: "security", label: "সিকিউরিটি & পাসওয়ার্ড", icon: LockClosedIcon },
-    { id: "payment", label: "উইথড্রয়াল অ্যাকাউন্ট", icon: CreditCardIcon },
+    { id: "security", label: "সিকিউরিটি & পাসওয়ার্ড", icon: LockClosedIcon },
     { id: "preferences", label: "প্রিফারেন্স & নোটিফিকেশন", icon: BellIcon },
   ];
 
@@ -478,60 +474,7 @@ const handleDeviceLimitSubmit = async (e) => {
           </>
         )}
 
-        {/* 💳 Tab 3: Withdrawal Accounts */}
-        {activeTab === "payment" && (
-          <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-[#0b0c2a] flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-rose-500/20">
-                  <CreditCardIcon className="w-4 h-4" />
-                </span>
-                <span>উইথড্রয়াল অ্যাকাউন্ট ডিফল্ট সেটিংস</span>
-              </h3>
-              <p className="text-[11px] text-gray-400 mt-1.5">
-                টাকা উত্তোলনের সময় যে নম্বর ও মেথড স্বয়ংক্রিয়ভাবে ব্যবহৃত হবে
-              </p>
-            </div>
-
-            <form onSubmit={handleProfileSubmit} className="space-y-3.5">
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold text-gray-700">পছন্দের পেমেন্ট মেথড</label>
-                <select
-                  value={formData.paymentMethod}
-                  onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-primary"
-                >
-                  <option value="Bkash">🌸 বিকাশ (bKash Personal)</option>
-                  <option value="Nagad">🔥 নগদ (Nagad Personal)</option>
-                  <option value="Rocket">🚀 রকেট (Rocket DBBL)</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold text-gray-700">ডিফল্ট পার্সোনাল অ্যাকাউন্ট নম্বর</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.account}
-                  onChange={(e) => setFormData({ ...formData, account: e.target.value })}
-                  placeholder="01XXXXXXXXX"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:border-primary"
-                />
-              </div>
-
-              <div className="pt-2">
-                <Button
-                  type="submit"
-                  className="w-full sm:w-auto bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-md shadow-teal-500/20"
-                >
-                  পেমেন্ট ইনফো সেভ করুন
-                </Button>
-              </div>
-            </form>
-          </Card>
-        )}
-
-        {/* ⚙️ Tab 4: Preferences & Alerts */}
+        {/* ⚙️ Tab 3: Preferences & Alerts */}
         {activeTab === "preferences" && (
           <Card className="p-5 bg-white rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
             <div>

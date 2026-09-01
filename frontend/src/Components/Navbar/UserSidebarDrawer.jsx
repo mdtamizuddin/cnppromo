@@ -40,6 +40,7 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
     { label: "আমার টাস্ক", to: "/user/works", icon: ClipboardDocumentListIcon },
     { label: "আমার আয়", to: "/user/earnings", icon: BanknotesIcon },
     { label: "উইথড্র", to: "/user/account/withdraw", icon: CreditCardIcon },
+    { label: "পেমেন্ট গেটওয়ে", to: "/user/payment-gateway", icon: BanknotesIcon },
     { label: "রেফার & আর্ন", to: "/user/refer", icon: UserGroupIcon },
     { label: "ওয়ালেট", to: "/user/account", icon: WalletIcon },
     { label: "ট্রেনিং & সাপোর্ট", to: "/user/training", icon: AcademicCapIcon },

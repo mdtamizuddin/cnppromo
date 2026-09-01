@@ -202,6 +202,15 @@ const Welcome = () => {
       bg: "bg-rose-50",
     },
     {
+      id: "payment-methods",
+      title: "Payment Methods",
+      subtitle: "Gateways & limits",
+      to: "/user/payment-gateway",
+      icon: BanknotesIcon,
+      color: "#0891b2",
+      bg: "bg-cyan-50",
+    },
+    {
       id: "refer",
       title: "Refer & Earn",
       subtitle: "Invite & earn",
