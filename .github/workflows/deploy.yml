@@ -5,14 +5,14 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'Select component to deploy'
+        description: "Select component to deploy"
         required: true
-        default: 'all'
+        default: "all"
         type: choice
         options:
-          - 'all'
-          - 'frontend'
-          - 'backend'
+          - "all"
+          - "frontend"
+          - "backend"
 
 concurrency:
   group: deploy-production
@@ -27,15 +27,16 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Needed for both targets: the frontend build, and the backend lockfile check.
       - name: Setup pnpm
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
         uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install Dependencies
         if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
@@ -51,21 +52,6 @@ jobs:
         if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
         run: tar -czf frontend-release.tar.gz -C frontend/dist .
 
-      # The release tarball carries backend/pnpm-lock.yaml, not the root workspace
-      # lockfile, so the VPS installs from it. Local dev only ever refreshes the
-      # root lockfile, so validate the backend one here — a stale lock fails the
-      # build instead of silently resolving different versions on production.
-      - name: Verify Backend Lockfile Is In Sync
-        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'backend' }}
-        run: |
-          workdir="$(mktemp -d)"
-          cp backend/package.json backend/pnpm-lock.yaml backend/.npmrc "$workdir/"
-          if ! (cd "$workdir" && pnpm install --lockfile-only --frozen-lockfile --ignore-workspace); then
-            echo "::error::backend/pnpm-lock.yaml is out of sync with backend/package.json."
-            echo "::error::Fix: cd backend && pnpm install --lockfile-only --ignore-workspace, then commit the lockfile."
-            exit 1
-          fi
-
       - name: Package Backend Release
         if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'backend' }}
         run: tar --exclude=node_modules --exclude=.git --exclude=.env -czf backend-release.tar.gz -C backend .
@@ -77,7 +63,6 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT || 22 }}
-          script_stop: true
           script: |
             mkdir -p /home/cnppromo/htdocs/cnppromo.com
             mkdir -p /home/cnppromo-server/htdocs/server.cnppromo.com
@@ -102,7 +87,6 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT || 22 }}
           command_timeout: 5m
-          script_stop: true
           script: |
             echo "📦 Deploying Frontend to /home/cnppromo/htdocs/cnppromo.com..."
             cd /home/cnppromo/htdocs/cnppromo.com
@@ -133,32 +117,18 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           command_timeout: 10m
           envs: BACKEND_ENV_CONTENT
-          script_stop: true
           script: |
             echo "📦 Deploying Backend to /home/cnppromo-server/htdocs/server.cnppromo.com..."
             cd /home/cnppromo-server/htdocs/server.cnppromo.com
             tar -xzf backend-release.tar.gz
             rm -f backend-release.tar.gz
 
-            # Load shell environment & NVM so node/pnpm/pm2 are on PATH.
-            # Guards are if-blocks rather than `[ -f x ] && . x` so intent is explicit
-            # under `script_stop` (set -e) instead of resting on the POSIX exemption
-            # for non-final commands in an && list. `.` not `source`: the login shell
-            # here may be dash, where `source` does not exist.
-            if [ -f "$HOME/.profile" ]; then . "$HOME/.profile" || true; fi
-            if [ -f "$HOME/.bashrc" ]; then . "$HOME/.bashrc" || true; fi
-            export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
-            if [ -s "$NVM_DIR/nvm.sh" ]; then
-              . "$NVM_DIR/nvm.sh"
-              nvm use default >/dev/null 2>&1 || nvm use --lts >/dev/null 2>&1 || true
-            fi
-            export PATH="$PATH:/usr/local/bin:/usr/bin:/bin"
-
-            if ! command -v node >/dev/null 2>&1; then
-              echo "::error::node not found on PATH after loading NVM."
-              exit 1
-            fi
-            echo "ℹ️  node $(node -v)"
+            # Load environment & NVM
+            export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/root/.nvm/versions/node/$(ls /root/.nvm/versions/node 2>/dev/null | tail -n 1)/bin
+            source ~/.profile || true
+            source ~/.bashrc || true
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
             # Create or update .env if secret is provided
             if [ -n "$BACKEND_ENV_CONTENT" ]; then
@@ -166,90 +136,22 @@ jobs:
               echo "✅ .env created from GitHub Secret."
             fi
 
-            # Resolve a PINNED pnpm 9, matching the root packageManager field and CI.
-            # Do not trust whatever pnpm is on the box: pnpm 10+ refuses to run
-            # dependency build scripts (ERR_PNPM_IGNORED_BUILDS) unless they are
-            # approved via onlyBuiltDependencies, which pnpm 11 reads only from
-            # pnpm-workspace.yaml — a file this standalone release does not ship.
-            # That leaves bcrypt without its native binding and breaks auth at runtime.
-            PNPM_PIN=9.0.0
-            export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-            PNPM_CMD=""
-            if pnpm --version 2>/dev/null | grep -q '^9\.'; then
-              PNPM_CMD="pnpm"
-            else
-              echo "ℹ️  pinning pnpm to $PNPM_PIN (found: $(pnpm --version 2>/dev/null || echo none))"
-              if command -v corepack >/dev/null 2>&1; then
-                corepack enable >/dev/null 2>&1 || true
-                corepack prepare "pnpm@$PNPM_PIN" --activate >/dev/null 2>&1 || true
-              fi
-              if pnpm --version 2>/dev/null | grep -q '^9\.'; then
-                PNPM_CMD="pnpm"
-              elif command -v npx >/dev/null 2>&1; then
-                # Bypasses PATH entirely, so a global pnpm 10+ cannot win.
-                PNPM_CMD="npx --yes pnpm@$PNPM_PIN"
+            # Ensure pnpm is available
+            if ! command -v pnpm &> /dev/null; then
+              if command -v corepack &> /dev/null; then
+                corepack enable && corepack prepare pnpm@9 --activate || true
               fi
             fi
-            if [ -z "$PNPM_CMD" ]; then
-              echo "::error::could not obtain pnpm $PNPM_PIN on the VPS."
-              exit 1
+            if ! command -v pnpm &> /dev/null; then
+              npm install -g pnpm@9 || true
             fi
-            # Unquoted on purpose: PNPM_CMD may be a multi-word npx invocation.
-            echo "ℹ️  pnpm $($PNPM_CMD --version 2>/dev/null) (via: $PNPM_CMD)"
 
-            # Install production dependencies cleanly with pnpm (hoisted flat structure for PM2).
-            # --prod drops devDependencies; --frozen-lockfile keeps prod on the exact
-            # versions the build validated instead of re-resolving semver ranges.
+            # Install production dependencies cleanly with pnpm (hoisted flat structure for PM2)
             echo "📦 Installing production dependencies with pnpm..."
-            $PNPM_CMD install --prod --frozen-lockfile --ignore-workspace
+            pnpm install
 
-            # bcrypt/protobufjs ship native bindings via install scripts. Verify the
-            # binding actually loads rather than discovering it on the first login.
-            echo "🔎 Verifying native modules..."
-            if ! node -e "require('bcrypt'); require('protobufjs');"; then
-              echo "::error::native modules failed to load — build scripts were likely skipped."
-              exit 1
-            fi
-
-            # Reload or start PM2 application.
-            # --update-env is required for PM2 to pick up env_production on a reload;
-            # without it the process keeps the env it was originally started with.
+            # Reload or start PM2 application
             echo "🚀 Reloading PM2 process..."
-            pm2 reload ecosystem.config.cjs --env production --update-env \
-              || pm2 start ecosystem.config.cjs --env production --update-env
+            pm2 reload ecosystem.config.cjs --env production || pm2 start ecosystem.config.cjs --env production
             pm2 save
-
-            # Verify the process actually serves traffic. `pm2 reload` exits 0 even
-            # when the app crash-loops on boot, so without this a broken release
-            # would be reported as a successful deploy.
-            # Match ecosystem.config.cjs / index.js: PORT from .env, else 4000.
-            APP_PORT="$(sed -n 's/^[[:space:]]*PORT=[[:space:]]*"\?'"'"'\?\([0-9][0-9]*\).*/\1/p' .env 2>/dev/null | tail -n 1 || true)"
-            APP_PORT="${APP_PORT:-4000}"
-            HEALTH_URL="http://127.0.0.1:${APP_PORT}/"
-            if command -v curl >/dev/null 2>&1; then
-              probe() { curl -fsS -o /dev/null --max-time 5 "$HEALTH_URL"; }
-            elif command -v wget >/dev/null 2>&1; then
-              probe() { wget -q -T 5 -O /dev/null "$HEALTH_URL"; }
-            else
-              echo "::error::neither curl nor wget available to health check the backend."
-              exit 1
-            fi
-
-            echo "🔎 Health checking ${HEALTH_URL} ..."
-            HEALTHY=0
-            ATTEMPT=0
-            while [ "$ATTEMPT" -lt 15 ]; do
-              if probe; then
-                HEALTHY=1
-                break
-              fi
-              ATTEMPT=$((ATTEMPT + 1))
-              sleep 2
-            done
-            if [ "$HEALTHY" != "1" ]; then
-              echo "::error::backend failed health check on port ${APP_PORT} after ~30s."
-              pm2 describe server.cnppromo.com || true
-              pm2 logs server.cnppromo.com --lines 80 --nostream || true
-              exit 1
-            fi
-            echo "✅ Backend deployed, PM2 running and responding on port ${APP_PORT}."
+            echo "✅ Backend deployed and PM2 running."

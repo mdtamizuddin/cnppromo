@@ -1,3 +1,13 @@
 packages:
-  - 'backend'
-  - 'frontend'
+  - "backend"
+  - "frontend"
+
+# Native-binding packages that must have their install/postinstall scripts run.
+# Modern pnpm (>=10) only reads allowed-builds from pnpm-workspace.yaml and
+# ignores the legacy `pnpm.onlyBuiltDependencies` field in package.json and the
+# per-package .npmrc. Without this, bcrypt loses its native binding and auth
+# breaks at runtime. (The backend release tarball still carries the pnpm 9
+# variant in backend/package.json for the standalone pnpm 9 VPS install.)
+onlyBuiltDependencies:
+  - bcrypt
+  - protobufjs
