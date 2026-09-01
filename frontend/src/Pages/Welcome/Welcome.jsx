@@ -129,7 +129,7 @@ const recommendedCategories = [
 ];
 
 const Welcome = () => {
-  const { user } = useSelector((state) => state.user);
+  const { user, settings } = useSelector((state) => state.user);
   const [showBalance, setShowBalance] = useState(true);
   const [claimedBonus, setClaimedBonus] = useState(false);
 
@@ -799,7 +799,7 @@ const Welcome = () => {
             </Card>
           </Link>
 
-          <a href="https://m.me/1151649641374328" target="_blank"
+          <a href={settings?.links?.supportMessanger || "https://m.me/1151649641374328"} target="_blank"
             rel="noopener noreferrer">
             <Card className="p-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center shrink-0">

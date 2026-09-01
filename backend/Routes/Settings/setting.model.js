@@ -80,6 +80,9 @@ const settingSchema = new mongoose.Schema({
         },
         video: {
             type: String
+        },
+        supportMessanger: {
+            type: String
         }
     },
     register: {

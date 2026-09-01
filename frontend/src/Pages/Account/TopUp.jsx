@@ -444,7 +444,7 @@ const TopUp = () => {
                 </div>
                 <div className="pt-2 flex justify-center">
                   <a
-                    href="https://m.me/1151649641374328"
+                    href={settings?.links?.supportMessanger || "https://m.me/1151649641374328"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20 hover:scale-[1.02] transition-transform"

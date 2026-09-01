@@ -1,6 +1,9 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { Button } from "@material-tailwind/react";
+import { faFacebookMessenger } from "@fortawesome/free-brands-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   EnvelopeIcon,
   BellIcon,
@@ -14,6 +17,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 const RequierActive = () => {
+  const { settings } = useSelector((state) => state.user);
+  const supportMessanger = settings?.links?.supportMessanger;
 
   const benefits = [
     {
@@ -155,6 +160,19 @@ const RequierActive = () => {
                   <span>হোমে ফিরে যান</span>
                 </Button>
               </Link>
+
+              {/* Messenger Support Button */}
+              {supportMessanger && (
+                <a
+                  href={supportMessanger}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full bg-[#0b0c2a] hover:bg-[#1e2048] text-white normal-case text-xs sm:text-sm font-bold py-3.5 rounded-2xl shadow-lg transition-all duration-200 cursor-pointer"
+                >
+                  <FontAwesomeIcon icon={faFacebookMessenger} className="text-lg" />
+                  <span>Messenger এ মেসেজ করুন</span>
+                </a>
+              )}
 
             </div>
           </div>

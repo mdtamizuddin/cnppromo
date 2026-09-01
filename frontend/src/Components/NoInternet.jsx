@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import {
   ServerStackIcon,
@@ -12,6 +13,10 @@ import { api, localUrl, serverUrl } from "../util/axios";
 const NoInternet = () => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryFailed, setRetryFailed] = useState(false);
+  const { settings } = useSelector((state) => state.user);
+
+  const supportLink =
+    settings?.links?.supportMessanger || "https://wa.me/+8801731686679";
 
   const handleRetry = async () => {
     setIsRetrying(true);
@@ -123,13 +128,13 @@ const NoInternet = () => {
           </button>
 
           <a
-            href="https://wa.me/+8801731686679"
+            href={supportLink}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-gray-300 hover:text-white font-medium text-sm transition-all duration-200 cursor-pointer"
           >
             <ChatBubbleLeftRightIcon className="w-4 h-4 text-emerald-400" />
-            Contact Developer
+            Contact Support
           </a>
         </div>
 

@@ -345,6 +345,8 @@ const Settings = () => {
                 onChange={(e) => setNested("links", "whatsapp", e.target.value)} variant="outlined" />
               <InputFeild label="Promo Video Link" type="text" value={settings?.links?.video}
                 onChange={(e) => setNested("links", "video", e.target.value)} variant="outlined" />
+              <InputFeild label="Support Messenger" type="text" value={settings?.links?.supportMessanger}
+                onChange={(e) => setNested("links", "supportMessanger", e.target.value)} variant="outlined" />
             </div>
           </div>
         </TableCard>

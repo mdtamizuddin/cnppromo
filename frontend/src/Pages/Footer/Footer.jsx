@@ -146,16 +146,31 @@ const Footer = () => {
           <div>
             <h3 className="text-white text-lg font-medium mb-6">যোগাযোগ করুন</h3>
             <div className="space-y-6">
-              <Link
-                to="/user/message"
-                className="flex items-center justify-between w-full max-w-[260px] bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-md transition-colors text-[15px] font-medium shadow-lg shadow-teal-500/20"
-              >
-                <div className="flex items-center gap-3">
-                  <FontAwesomeIcon icon={faFacebookMessenger} className="text-xl" />
-                  <span>Messenger এ মেসেজ করুন</span>
-                </div>
-                <span className="text-lg font-light">&gt;</span>
-              </Link>
+              {settings?.links?.supportMessanger ? (
+                <a
+                  href={settings.links.supportMessanger}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between w-full max-w-[260px] bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-md transition-colors text-[15px] font-medium shadow-lg shadow-teal-500/20"
+                >
+                  <div className="flex items-center gap-3">
+                    <FontAwesomeIcon icon={faFacebookMessenger} className="text-xl" />
+                    <span>Messenger এ মেসেজ করুন</span>
+                  </div>
+                  <span className="text-lg font-light">&gt;</span>
+                </a>
+              ) : (
+                <Link
+                  to="/user/message"
+                  className="flex items-center justify-between w-full max-w-[260px] bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-md transition-colors text-[15px] font-medium shadow-lg shadow-teal-500/20"
+                >
+                  <div className="flex items-center gap-3">
+                    <FontAwesomeIcon icon={faFacebookMessenger} className="text-xl" />
+                    <span>Messenger এ মেসেজ করুন</span>
+                  </div>
+                  <span className="text-lg font-light">&gt;</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>

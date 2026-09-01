@@ -16,7 +16,7 @@ const SAFE_BOOL_FIELDS = [
 
 const SAFE_NESTED = {
     accounts: ["phone", "whatsapp", "email", "bkash", "nagad", "rocket", "upay", "payeer"],
-    links: ["whatsapp", "telegram", "facebook", "page", "video"],
+    links: ["whatsapp", "telegram", "facebook", "page", "video", "supportMessanger"],
     ref_comm: ["gen1", "gen2", "gen3", "gen4", "gen5", "gen6"],
 };
 
@@ -41,15 +41,27 @@ const sanitize = (input = {}) => {
         const src = input[parent];
         if (src && typeof src === "object") {
             const nested = {};
+            let total = 0;
             for (const key of SAFE_NESTED[parent]) {
                 if (src[key] !== undefined) {
                     if (parent === "ref_comm") {
                         const n = Number(src[key]);
-                        nested[key] = Number.isFinite(n) ? n : undefined;
+                        if (!Number.isFinite(n)) {
+                            nested[key] = undefined;
+                            continue;
+                        }
+                        if (n < 0) {
+                            throw new Error("Referral commission values cannot be negative");
+                        }
+                        total += n;
+                        nested[key] = n;
                     } else {
                         nested[key] = pickString(src[key]);
                     }
                 }
+            }
+            if (parent === "ref_comm" && total > 100) {
+                throw new Error("Referral commission total cannot exceed 100%");
             }
             if (Object.keys(nested).length) {
                 clean[parent] = nested;
@@ -77,6 +89,9 @@ const sanitize = (input = {}) => {
         }
         if (input.bonus.active !== undefined) {
             bonus.active = Boolean(input.bonus.active);
+        }
+        if (bonus.startDate && bonus.endDate && bonus.endDate <= bonus.startDate) {
+            throw new Error("Bonus startDate must be before endDate");
         }
         if (Object.keys(bonus).length) {
             clean.bonus = bonus;

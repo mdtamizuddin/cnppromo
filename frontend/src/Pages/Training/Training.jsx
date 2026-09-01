@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useQuery } from "react-query";
 import { api } from "../../util/axios";
@@ -190,6 +191,7 @@ const QUICK_ICONS = {
 const Training = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [showTrainerList, setShowTrainerList] = useState(false);
+  const { settings } = useSelector((state) => state.user);
 
   const { data } = useQuery(
     ["user-training"],
@@ -287,15 +289,24 @@ const Training = () => {
             </div>
 
             <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-              <Link
-                to="/user/message"
-                className="w-full"
-              >
-                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 normal-case text-white text-xs font-bold py-3 rounded-xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2">
-                  <span>মেসেজ পাঠান</span>
-                  <ArrowRightIcon className="w-3.5 h-3.5" />
-                </Button>
-              </Link>
+              {settings?.links?.supportMessanger ? (
+                <a href={settings.links.supportMessanger} target="_blank" rel="noopener noreferrer" className="w-full">
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 normal-case text-white text-xs font-bold py-3 rounded-xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2">
+                    <span>মেসেজ পাঠান</span>
+                    <ArrowRightIcon className="w-3.5 h-3.5" />
+                  </Button>
+                </a>
+              ) : (
+                <Link
+                  to="/user/message"
+                  className="w-full"
+                >
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 normal-case text-white text-xs font-bold py-3 rounded-xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2">
+                    <span>মেসেজ পাঠান</span>
+                    <ArrowRightIcon className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+              )}
             </div>
           </Card>
         </div>
@@ -380,12 +391,21 @@ const Training = () => {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-            <Link to="/user/message" className="w-full md:w-auto">
-              <Button className="w-full md:w-auto bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md shadow-teal-500/20 flex items-center justify-center gap-2">
-                <ChatBubbleLeftRightIcon className="w-4 h-4" />
-                <span>মেসেঞ্জারে মেসেজ করুন</span>
-              </Button>
-            </Link>
+            {settings?.links?.supportMessanger ? (
+              <a href={settings.links.supportMessanger} target="_blank" rel="noopener noreferrer" className="w-full md:w-auto">
+                <Button className="w-full md:w-auto bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md shadow-teal-500/20 flex items-center justify-center gap-2">
+                  <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                  <span>মেসেঞ্জারে মেসেজ করুন</span>
+                </Button>
+              </a>
+            ) : (
+              <Link to="/user/message" className="w-full md:w-auto">
+                <Button className="w-full md:w-auto bg-primary hover:bg-primary-hover normal-case text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md shadow-teal-500/20 flex items-center justify-center gap-2">
+                  <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                  <span>মেসেঞ্জারে মেসেজ করুন</span>
+                </Button>
+              </Link>
+            )}
             
             <Button
               variant="outlined"
