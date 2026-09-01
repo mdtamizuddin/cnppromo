@@ -18,6 +18,7 @@ import {
   BuildingLibraryIcon,
   CreditCardIcon,
   ChatBubbleLeftRightIcon,
+  PencilIcon,
 } from "@heroicons/react/24/outline";
 import { useQuery } from "react-query";
 import toast from "react-hot-toast";
@@ -47,6 +48,7 @@ const Withdraw = () => {
   const [selectedMethod, setSelectedMethod] = useState("");
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("");
+  const [editingAccount, setEditingAccount] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -133,6 +135,7 @@ const Withdraw = () => {
 
         return {
           id: g.name,
+          gatewayId: g._id,
           name: g.name,
           subtitle: g.subName || "ক্যাশআউট",
           logo: g.icon || logo,
@@ -162,12 +165,20 @@ const Withdraw = () => {
     }
   }, [paymentMethods, user?.paymentMethod]);
 
-  // Auto-fill account number from user profile if available
-  useEffect(() => {
-    if (user?.account && user.account !== "0000000" && !account) {
-      setAccount(user.account);
-    }
-  }, [user?.account]);
+  // User's own saved accounts per gateway (set on Payment Gateway page)
+  const { data: myPaymentAccounts = [] } = useQuery({
+    queryKey: ["my-payment-accounts"],
+    queryFn: async () => {
+      try {
+        const res = await api.get("/user/payment-accounts");
+        return res.data?.accounts || [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!user?._id,
+    staleTime: 30000,
+  });
 
   // Fetch user's pending withdrawals to show accurate pending balance
   const { data: pendingData, refetch: refetchPending } = useQuery({
@@ -198,6 +209,23 @@ const Withdraw = () => {
       accentColor: "#6b7280",
       bgActive: "",
     };
+
+  // When the selected gateway changes, auto-fill its saved account (and lock
+  // the field), or empty it and enable typing if no account is saved for it.
+  useEffect(() => {
+    if (!currentMethod?.gatewayId) return;
+    const mine = myPaymentAccounts.find(
+      (a) => String(a.gatewayId) === String(currentMethod.gatewayId)
+    );
+    const saved = mine?.accountNumber || "";
+    if (saved) {
+      setAccount(saved);
+      setEditingAccount(false);
+    } else {
+      setAccount("");
+      setEditingAccount(true);
+    }
+  }, [currentMethod?.gatewayId, myPaymentAccounts]);
 
   const userBalance = Number(user?.balance || 0);
   const numAmount = Number(amount || 0);
@@ -510,17 +538,52 @@ const Withdraw = () => {
 
                   {/* Account Number Input */}
                   <div className="pt-2 space-y-2">
-                    <label className="block text-xs font-bold text-gray-700">
-                      আপনার {currentMethod.name} অ্যাকাউন্ট নম্বর লিখুন:
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-gray-700">
+                        আপনার {currentMethod.name} অ্যাকাউন্ট নম্বর লিখুন:
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setEditingAccount((v) => !v)}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors cursor-pointer ${
+                          editingAccount
+                            ? "bg-teal-100 text-teal-700 hover:bg-teal-200"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                        title={
+                          editingAccount
+                            ? "এডিট শেষ করে লক করুন"
+                            : "অ্যাকাউন্ট কাস্টমাইজ করুন"
+                        }
+                      >
+                        {editingAccount ? (
+                          <>
+                            <CheckIcon className="w-3.5 h-3.5" />
+                            লক করুন
+                          </>
+                        ) : (
+                          <>
+                            <PencilIcon className="w-3.5 h-3.5" />
+                            কাস্টমাইজ
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <div className="relative">
                       <input
                         type="tel"
                         value={account}
-                        onChange={(e) => setAccount(e.target.value.replace(/[^0-9]/g, ""))}
+                        disabled={!editingAccount}
+                        readOnly={!editingAccount}
                         placeholder="01XXXXXXXXX"
-                        maxLength={11}
-                        className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-mono font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                        onChange={(e) =>
+                          setAccount(e.target.value.replace(/[^0-9]/g, ""))
+                        }
+                        className={`w-full px-4 py-3.5 border rounded-2xl text-sm font-mono font-bold text-gray-900 placeholder-gray-400 focus:outline-none transition-all ${
+                          editingAccount
+                            ? "bg-white border-purple-300 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 pr-11"
+                            : "bg-gray-100 border-gray-200 cursor-not-allowed pr-11"
+                        }`}
                       />
                       {account.length === 11 && (
                         <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500 flex items-center gap-1">

@@ -42,6 +42,15 @@ router.put('/notification-settings', authChecker, userService.updateNotification
 // Set how many devices this user may be signed in on at once
 router.put('/device-limit', authChecker, userService.updateDeviceLimit)
 
+// Get the logged-in user's saved withdrawal payment accounts
+router.get('/payment-accounts', authChecker, userService.getMyPaymentAccounts)
+
+// Save (upsert) the logged-in user's account number for a gateway
+router.post('/payment-accounts', authChecker, userService.saveMyPaymentAccount)
+
+// Remove the logged-in user's saved account for a gateway
+router.delete('/payment-accounts/:gatewayId', authChecker, userService.deleteMyPaymentAccount)
+
 // Platform statistics
 router.get('/statistic', userService.getStatistic)
 

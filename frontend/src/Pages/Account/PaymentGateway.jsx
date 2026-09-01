@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import toast from "react-hot-toast";
 import {
   MagnifyingGlassIcon,
@@ -15,6 +15,10 @@ import {
   BuildingLibraryIcon,
   UserIcon,
   ExclamationTriangleIcon,
+  PencilIcon,
+  TrashIcon,
+  PlusIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { api } from "../../util/axios";
 import logoProvider from "../Admin/Users/_Ui/logoProvider";
@@ -81,16 +85,34 @@ const CopyButton = ({ value, label = "কপি করুন" }) => {
 };
 
 const PaymentGateway = () => {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
-  const [selected, setSelected] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [accountNumber, setAccountNumber] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const { data: gateways = [], isLoading } = useQuery({
+  // Admin-configured gateways (deposit accounts shown for reference)
+  const { data: gateways = [], isLoading: gatewaysLoading } = useQuery({
     queryKey: ["user-payment-gateways"],
     queryFn: async () => {
       try {
         const res = await api.get("/gateway?status=Active");
         return Array.isArray(res.data) ? res.data : [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30000,
+  });
+
+  // The user's own saved withdrawal accounts
+  const { data: myAccounts = [], refetch: refetchMyAccounts } = useQuery({
+    queryKey: ["my-payment-accounts"],
+    queryFn: async () => {
+      try {
+        const res = await api.get("/user/payment-accounts");
+        return res.data?.accounts || [];
       } catch {
         return [];
       }
@@ -116,13 +138,62 @@ const PaymentGateway = () => {
     });
   }, [gateways, search, typeFilter]);
 
-  if (isLoading) {
+  const getMyAccount = (gatewayId) =>
+    myAccounts.find((a) => a.gatewayId === gatewayId);
+
+  const startEdit = (g) => {
+    const mine = getMyAccount(g._id);
+    setEditing(g);
+    setAccountNumber(mine?.accountNumber || "");
+  };
+
+  const handleSave = async () => {
+    if (!editing) return;
+    const number = accountNumber.trim();
+    if (number.length < 6) {
+      toast.error("সঠিক অ্যাকাউন্ট নম্বর দিন (কমপক্ষে ৬ ডিজিট)");
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post("/user/payment-accounts", {
+        gatewayId: editing._id,
+        gatewayName: editing.name,
+        accountNumber: number,
+      });
+      toast.success("আপনার পেমেন্ট একাউন্ট সংরক্ষিত হয়েছে");
+      setEditing(null);
+      setAccountNumber("");
+      queryClient.invalidateQueries("my-payment-accounts");
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || error?.message || "সংরক্ষণ ব্যর্থ হয়েছে"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (gatewayId) => {
+    if (!window.confirm("আপনার সংরক্ষিত এই অ্যাকাউন্টটি মুছে ফেলবেন?")) return;
+    try {
+      await api.delete(`/user/payment-accounts/${gatewayId}`);
+      toast.success("অ্যাকাউন্ট মুছে ফেলা হয়েছে");
+      queryClient.invalidateQueries("my-payment-accounts");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error?.message || "মুছে ফেলা যায়নি");
+    }
+  };
+
+  if (gatewaysLoading) {
     return (
       <div className="bg-[#f8faff] min-h-screen pt-10">
         <Loader />
       </div>
     );
   }
+
+  const savedCount = myAccounts.length;
 
   return (
     <div className="bg-[#f8faff] min-h-screen pb-24 pt-4 sm:pt-6">
@@ -141,7 +212,7 @@ const PaymentGateway = () => {
                 পেমেন্ট গেটওয়ে
               </h1>
               <p className="text-[11px] sm:text-xs text-gray-400">
-                টপ-আপ ও উইথড্রয়ালের জন্য অ্যাকাউন্ট নম্বর ও নিয়মাবলি
+                উইথড্রয়ালের জন্য আপনার নিজস্ব অ্যাকাউন্ট সেট করুন
               </p>
             </div>
           </div>
@@ -174,9 +245,11 @@ const PaymentGateway = () => {
             </div>
             <div className="bg-white/[0.06] border border-white/10 rounded-2xl p-3.5">
               <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider flex items-center gap-1">
-                <ShieldCheckIcon className="w-3 h-3" /> নিরাপদ
+                <CheckCircleIcon className="w-3 h-3" /> সংরক্ষিত
               </p>
-              <p className="text-xl font-black text-amber-300 mt-0.5">100%</p>
+              <p className="text-xl font-black text-amber-300 mt-0.5">
+                {savedCount}
+              </p>
             </div>
           </div>
         </div>
@@ -243,16 +316,12 @@ const PaymentGateway = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((g) => {
-              const isSelected = selected?._id === g._id;
+              const mine = getMyAccount(g._id);
+              const supportsWithdraw = g.isWithdrawSupported !== false;
               return (
                 <div
                   key={g._id}
-                  onClick={() => setSelected(isSelected ? null : g)}
-                  className={`bg-white rounded-3xl border p-5 shadow-sm hover:shadow-lg transition-all cursor-pointer space-y-4 ${
-                    isSelected
-                      ? "border-primary ring-2 ring-primary/20"
-                      : "border-gray-100"
-                  }`}
+                  className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm hover:shadow-lg transition-all space-y-4 flex flex-col"
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between gap-3">
@@ -281,21 +350,75 @@ const PaymentGateway = () => {
                     </span>
                   </div>
 
-                  {/* Account Number */}
-                  <div className="rounded-2xl bg-gray-50 border border-gray-100 p-3 space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                        <UserIcon className="w-3 h-3" />
-                        {g.accountName || "Account"}
+                  {/* Deposit account (site account for top-up) */}
+                  {g.isDepositSupported !== false && (
+                    <div className="rounded-2xl bg-gray-50 border border-gray-100 p-3 space-y-1">
+                      <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider flex items-center gap-1">
+                        <ArrowDownTrayIcon className="w-3 h-3" />
+                        টপ-আপ অ্যাকাউন্ট (সাইটের)
                       </span>
-                      <CopyButton value={g.accountNumber || ""} />
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-black font-mono text-[#0b0c2a] tracking-wide truncate">
+                          {g.accountNumber || "—"}
+                        </p>
+                        <CopyButton value={g.accountNumber || ""} />
+                      </div>
                     </div>
-                    <p className="text-sm font-black font-mono text-[#0b0c2a] tracking-wide">
-                      {g.accountNumber || "—"}
-                    </p>
-                    {g.branchName && (
-                      <p className="text-[10px] text-gray-400">
-                        শাখা: {g.branchName}
+                  )}
+
+                  {/* My personal withdraw account */}
+                  <div className={`rounded-2xl p-3 space-y-1 flex-1 relative overflow-hidden border ${
+                    mine
+                      ? "bg-emerald-50/70 border-emerald-100"
+                      : "bg-gray-50 border-dashed border-gray-200"
+                  }`}>
+                    {supportsWithdraw && (
+                      <>
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1 ${
+                          mine ? "text-emerald-600" : "text-gray-400"
+                        }`}>
+                          <ArrowUpTrayIcon className="w-3 h-3" />
+                          আমার উইথড্র অ্যাকাউন্ট
+                        </span>
+                        {mine ? (
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-black font-mono text-[#0b0c2a] tracking-wide truncate">
+                              {mine.accountNumber}
+                            </p>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => startEdit(g)}
+                                className="p-1.5 rounded-lg bg-white border border-gray-200 text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer"
+                                title="সম্পাদনা করুন"
+                              >
+                                <PencilIcon className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(g._id)}
+                                className="p-1.5 rounded-lg bg-white border border-gray-200 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer"
+                                title="মুছে ফেলুন"
+                              >
+                                <TrashIcon className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => startEdit(g)}
+                            className="w-full flex items-center justify-center gap-1.5 py-2 mt-1 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-primary hover:text-white hover:border-primary transition-colors text-[11px] font-bold cursor-pointer"
+                          >
+                            <PlusIcon className="w-4 h-4" />
+                            আমার অ্যাকাউন্ট যোগ করুন
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {!supportsWithdraw && (
+                      <p className="text-[11px] text-gray-400 font-medium">
+                        এই মেথডে উইথড্র সুবিধা নেই
                       </p>
                     )}
                   </div>
@@ -323,7 +446,7 @@ const PaymentGateway = () => {
                         টপ-আপ
                       </span>
                     )}
-                    {g.isWithdrawSupported !== false && (
+                    {supportsWithdraw && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold border border-rose-100">
                         <ArrowUpTrayIcon className="w-3 h-3" />
                         উইথড্র
@@ -342,130 +465,69 @@ const PaymentGateway = () => {
           </div>
         )}
 
-        {/* 🔎 Selected Gateway Detail Panel */}
-        {selected && (
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 sm:p-6 space-y-5 animate-fadeIn">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <GatewayLogo name={selected.name} icon={selected.icon} className="w-12 h-12" />
-                <div>
-                  <h3 className="text-base font-black text-[#0b0c2a]">
-                    {selected.name}
-                  </h3>
-                  <p className="text-[11px] text-gray-400">
-                    {selected.subName || "Payment Method"}
-                  </p>
+        {/* ✏️ Edit / Add My Account Modal */}
+        {editing && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+              <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <GatewayLogo name={editing.name} icon={editing.icon} className="w-10 h-10" />
+                  <div>
+                    <h3 className="text-sm font-black text-[#0b0c2a]">
+                      {editing.name} - আমার অ্যাকাউন্ট
+                    </h3>
+                    <p className="text-[10px] text-gray-400">
+                      উইথড্রয়াল পেতে এই অ্যাকাউন্টে টাকা যাবে
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="text-[11px] font-bold text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
-              >
-                বন্ধ করুন ✕
-              </button>
-            </div>
-
-            {/* Account Info */}
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 space-y-2">
-                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
-                  অ্যাকাউন্ট নম্বর
-                </p>
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-lg font-black font-mono text-[#0b0c2a] tracking-wide">
-                    {selected.accountNumber}
-                  </p>
-                  <CopyButton value={selected.accountNumber || ""} />
-                </div>
-                <p className="text-[11px] text-gray-500 font-medium">
-                  {selected.accountName || "Account"}
-                </p>
-                <p className="text-[10px] text-gray-400">
-                  {selected.accountType} {selected.accountType === "Agent" ? "এজেন্ট" : ""}
-                </p>
-              </div>
-
-              <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 space-y-2">
-                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
-                  লিমিট ও ফি
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-bold text-gray-700">
-                  <span>ন্যূনতম: ৳{Number(selected.minAmount) || 10}</span>
-                  <span>সর্বোচ্চ: ৳{Number(selected.maxAmount) || 50000}</span>
-                  <span>দৈনিক: ৳{Number(selected.dailyLimit) || 200000}</span>
-                  <span>ফি: {selected.fee || "0%"}</span>
-                </div>
-                <p className="text-[10px] text-gray-400 flex items-center gap-1 pt-1">
-                  <ClockIcon className="w-3 h-3" />
-                  প্রসেসিং: {selected.processingTime || "5-15 Minutes"}
-                </p>
-              </div>
-            </div>
-
-            {/* QR Code */}
-            {selected.qrCode && (
-              <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 flex items-center gap-4">
-                <img
-                  src={selected.qrCode}
-                  alt={`${selected.name} QR`}
-                  className="w-24 h-24 rounded-xl object-contain bg-white border border-gray-200 shadow-sm"
-                />
-                <div>
-                  <p className="text-xs font-bold text-[#0b0c2a] flex items-center gap-1">
-                    <QrCodeIcon className="w-4 h-4 text-primary" />
-                    QR কোড
-                  </p>
-                  <p className="text-[11px] text-gray-500 mt-1">
-                    বিকাশ/নগদ অ্যাপ দিয়ে QR স্ক্যান করে সরাসরি টাকা পাঠাতে পারবেন।
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Instructions */}
-            {selected.instructions && (
-              <div className="rounded-2xl bg-teal-50/60 border border-teal-100 p-4">
-                <p className="text-xs font-bold text-[#0b0c2a] flex items-center gap-1.5 mb-2">
-                  <InformationCircleIcon className="w-4 h-4 text-teal-600" />
-                  নির্দেশনা
-                </p>
-                <p className="text-[11px] text-gray-600 leading-relaxed whitespace-pre-line">
-                  {selected.instructions}
-                </p>
-              </div>
-            )}
-
-            {/* Notice */}
-            {selected.notice && (
-              <div className="rounded-2xl bg-amber-50/70 border border-amber-100 p-4 flex items-start gap-2.5">
-                <ExclamationTriangleIcon className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-amber-800 leading-relaxed">
-                  {selected.notice}
-                </p>
-              </div>
-            )}
-
-            {/* CTA Links */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-1">
-              {selected.isDepositSupported !== false && (
-                <a
-                  href="/user/account"
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-md shadow-teal-500/25 transition-all text-center cursor-pointer"
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  className="text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 w-8 h-8 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
                 >
-                  <ArrowDownTrayIcon className="w-4 h-4" />
-                  এই মেথডে টপ-আপ করুন
-                </a>
-              )}
-              {selected.isWithdrawSupported !== false && (
-                <a
-                  href="/user/account/withdraw"
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#d9176c] via-[#b81da8] to-[#6d25d9] text-white text-xs font-bold shadow-md shadow-pink-500/25 transition-all text-center cursor-pointer"
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-gray-700">
+                    আপনার {editing.name} একাউন্ট নম্বর
+                  </label>
+                  <input
+                    type="text"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    placeholder="01XXXXXXXXX"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono font-bold text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-primary"
+                  />
+                </div>
+                <p className="text-[11px] text-gray-400 flex items-start gap-1.5">
+                  <InformationCircleIcon className="w-4 h-4 text-teal-500 shrink-0 mt-0.5" />
+                  <span>
+                    উইথড্রয়ালের সময় এই অ্যাকাউন্ট নম্বরে টাকা যাবে। নিশ্চিত করুন নম্বরটি সঠিক, কারণ ভুল নম্বরে পাঠানো টাকা ফেরত পাওয়া যাবে না।
+                  </span>
+                </p>
+              </div>
+
+              <div className="p-5 pt-0 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  className="flex-1 py-3 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
                 >
-                  <ArrowUpTrayIcon className="w-4 h-4" />
-                  এই মেথডে উইথড্র করুন
-                </a>
-              )}
+                  বাতিল
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-md shadow-teal-500/25 transition-all disabled:opacity-60 cursor-pointer"
+                >
+                  {saving ? "সংরক্ষণ হচ্ছে..." : "সংরক্ষণ করুন"}
+                </button>
+              </div>
             </div>
           </div>
         )}

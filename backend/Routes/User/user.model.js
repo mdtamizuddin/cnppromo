@@ -64,6 +64,20 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "0000000"
     },
+    paymentAccounts: [{
+        gatewayId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Gateway",
+        },
+        gatewayName: {
+            type: String,
+            trim: true,
+        },
+        accountNumber: {
+            type: String,
+            trim: true,
+        },
+    }],
     trx: {
         type: String,
         default: "ERROR"

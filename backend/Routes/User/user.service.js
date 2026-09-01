@@ -651,6 +651,88 @@ const updateDeviceLimit = async (req, res) => {
     }
 }
 
+// ── User's own withdrawal payment accounts ──────────────────────────────────
+// Each member saves a personal account number per admin-configured (withdraw)
+// gateway. These are used by the withdrawal form to pre-fill the target number.
+
+const getMyPaymentAccounts = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select("paymentAccounts");
+        res.send({
+            accounts: user?.paymentAccounts || [],
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
+// Upsert a user's account number for a given gateway. Uses atomic update
+// operators so the full-user validation (username etc.) is not re-run.
+const saveMyPaymentAccount = async (req, res) => {
+    try {
+        const { gatewayId, gatewayName, accountNumber } = req.body;
+        if (!gatewayId) {
+            return res.status(400).send({ message: "gatewayId is required" });
+        }
+        if (!accountNumber || typeof accountNumber !== "string") {
+            return res.status(400).send({ message: "Account number is required" });
+        }
+        const number = accountNumber.trim();
+        if (number.length < 6) {
+            return res.status(400).send({ message: "Please enter a valid account number" });
+        }
+        const name = (gatewayName || "").trim();
+
+        const existing = await User.findOne({
+            _id: req.user._id,
+            "paymentAccounts.gatewayId": gatewayId,
+        });
+        if (existing) {
+            await User.updateOne(
+                { _id: req.user._id, "paymentAccounts.gatewayId": gatewayId },
+                {
+                    $set: {
+                        "paymentAccounts.$.gatewayName": name,
+                        "paymentAccounts.$.accountNumber": number,
+                    },
+                }
+            );
+        } else {
+            await User.updateOne(
+                { _id: req.user._id },
+                { $push: { paymentAccounts: { gatewayId, gatewayName: name, accountNumber: number } } }
+            );
+        }
+
+        const user = await User.findById(req.user._id).select("paymentAccounts");
+        res.send({
+            message: "Payment account saved successfully",
+            accounts: user.paymentAccounts,
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
+// Remove a saved account for a gateway.
+const deleteMyPaymentAccount = async (req, res) => {
+    try {
+        const gatewayId = req.params.gatewayId;
+        await User.updateOne(
+            { _id: req.user._id },
+            { $pull: { paymentAccounts: { gatewayId } } }
+        );
+
+        const user = await User.findById(req.user._id).select("paymentAccounts");
+        res.send({
+            message: "Payment account removed",
+            accounts: user.paymentAccounts,
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
 const checkUser = async (req, res) => {
     try {
         const userCheck = validateUsername(req.params.id);
@@ -1045,5 +1127,8 @@ module.exports = {
     giveAccess,
     getAdmins,
     updateNotificationSettings,
-    updateDeviceLimit
+    updateDeviceLimit,
+    getMyPaymentAccounts,
+    saveMyPaymentAccount,
+    deleteMyPaymentAccount
 }
