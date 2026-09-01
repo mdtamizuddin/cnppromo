@@ -166,26 +166,50 @@ jobs:
               echo "✅ .env created from GitHub Secret."
             fi
 
-            # Ensure pnpm is available
-            if ! command -v pnpm >/dev/null 2>&1; then
-              echo "ℹ️  pnpm not found, bootstrapping..."
+            # Resolve a PINNED pnpm 9, matching the root packageManager field and CI.
+            # Do not trust whatever pnpm is on the box: pnpm 10+ refuses to run
+            # dependency build scripts (ERR_PNPM_IGNORED_BUILDS) unless they are
+            # approved via onlyBuiltDependencies, which pnpm 11 reads only from
+            # pnpm-workspace.yaml — a file this standalone release does not ship.
+            # That leaves bcrypt without its native binding and breaks auth at runtime.
+            PNPM_PIN=9.0.0
+            export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+            PNPM_CMD=""
+            if pnpm --version 2>/dev/null | grep -q '^9\.'; then
+              PNPM_CMD="pnpm"
+            else
+              echo "ℹ️  pinning pnpm to $PNPM_PIN (found: $(pnpm --version 2>/dev/null || echo none))"
               if command -v corepack >/dev/null 2>&1; then
-                corepack enable
-                corepack prepare pnpm@9 --activate
-              else
-                npm install -g pnpm@9
+                corepack enable >/dev/null 2>&1 || true
+                corepack prepare "pnpm@$PNPM_PIN" --activate >/dev/null 2>&1 || true
+              fi
+              if pnpm --version 2>/dev/null | grep -q '^9\.'; then
+                PNPM_CMD="pnpm"
+              elif command -v npx >/dev/null 2>&1; then
+                # Bypasses PATH entirely, so a global pnpm 10+ cannot win.
+                PNPM_CMD="npx --yes pnpm@$PNPM_PIN"
               fi
             fi
-            if ! command -v pnpm >/dev/null 2>&1; then
-              echo "::error::failed to make pnpm available."
+            if [ -z "$PNPM_CMD" ]; then
+              echo "::error::could not obtain pnpm $PNPM_PIN on the VPS."
               exit 1
             fi
+            # Unquoted on purpose: PNPM_CMD may be a multi-word npx invocation.
+            echo "ℹ️  pnpm $($PNPM_CMD --version 2>/dev/null) (via: $PNPM_CMD)"
 
             # Install production dependencies cleanly with pnpm (hoisted flat structure for PM2).
             # --prod drops devDependencies; --frozen-lockfile keeps prod on the exact
             # versions the build validated instead of re-resolving semver ranges.
             echo "📦 Installing production dependencies with pnpm..."
-            pnpm install --prod --frozen-lockfile --ignore-workspace
+            $PNPM_CMD install --prod --frozen-lockfile --ignore-workspace
+
+            # bcrypt/protobufjs ship native bindings via install scripts. Verify the
+            # binding actually loads rather than discovering it on the first login.
+            echo "🔎 Verifying native modules..."
+            if ! node -e "require('bcrypt'); require('protobufjs');"; then
+              echo "::error::native modules failed to load — build scripts were likely skipped."
+              exit 1
+            fi
 
             # Reload or start PM2 application.
             # --update-env is required for PM2 to pick up env_production on a reload;
