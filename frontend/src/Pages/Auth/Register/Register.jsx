@@ -81,13 +81,25 @@ const ClipboardIllustration = () => (
   </div>
 );
 
-const FormInput = ({ label, icon, ...props }) => (
+const FormInput = ({ label, icon, availabilityStatus, ...props }) => (
     <div>
         <label className="block text-gray-800 text-[14px] font-bold mb-1.5">
             {label} <span className="text-red-500">*</span>
-            {props.availability !== undefined && (
-                <span className={`ml-2 text-[11px] font-normal ${props.availability ? 'text-green-500' : 'text-red-500'}`}>
-                    ({props.availability ? 'Available' : 'Not Available'})
+            {availabilityStatus && availabilityStatus.available !== null && (
+                <span className={`ml-2 text-[11px] font-medium ${
+                    availabilityStatus.checking 
+                        ? 'text-gray-400' 
+                        : availabilityStatus.available 
+                            ? 'text-green-600' 
+                            : 'text-red-500'
+                }`}>
+                    {availabilityStatus.checking 
+                        ? '(Checking...)' 
+                        : availabilityStatus.available 
+                            ? '(Available)' 
+                            : availabilityStatus.message 
+                                ? `(${availabilityStatus.message})` 
+                                : '(Not Available)'}
                 </span>
             )}
         </label>
@@ -182,7 +194,11 @@ const Register = () => {
 
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(true);
+    const [usernameStatus, setUsernameStatus] = useState({
+        checking: false,
+        available: null,
+        message: "",
+    });
     const [referer, setReferer] = useState(true);
     const [agree, setAgree] = useState(false);
 
@@ -208,7 +224,12 @@ const Register = () => {
     }, [queryParamValue]);
 
     const updateState = (e) => {
-        setData({ ...data, [e.target.name]: e.target.value });
+        let value = e.target.value;
+        const noSpaceFields = ["username", "email", "phone", "reffer"];
+        if (noSpaceFields.includes(e.target.name)) {
+            value = value.replace(/\s+/g, "");
+        }
+        setData({ ...data, [e.target.name]: value });
     };
 
     const getMissingValues = (obj, requiredFields) => {
@@ -248,28 +269,45 @@ const Register = () => {
         return { valid: true, username: uname };
     };
 
-    const checkUser = async (e) => {
-        e.preventDefault();
-        const clientVal = validateUsernameClient(data.username);
-        if (!clientVal.valid) {
-            if (data.username) {
-                setMessage(false);
-                setError(clientVal.message);
-            }
+    // Live debounced check for username availability
+    useEffect(() => {
+        const raw = data.username;
+        if (!raw || raw.trim() === "") {
+            setUsernameStatus({ checking: false, available: null, message: "" });
             return;
         }
-        try {
-            const res = await api.get(`/user/check/${clientVal.username}`);
-            setMessage(res.data.status);
-            if (!res.data.status) {
-                setError(res.data.message || "Username Not Available");
-            } else {
-                setError("");
-            }
-        } catch (error) {
-            setError(error?.response?.data?.message || error?.message || "Something went wrong");
+
+        const clientVal = validateUsernameClient(raw);
+        if (!clientVal.valid) {
+            setUsernameStatus({ checking: false, available: false, message: clientVal.message });
+            return;
         }
-    };
+
+        setUsernameStatus({ checking: true, available: null, message: "" });
+
+        const timeout = setTimeout(async () => {
+            try {
+                const res = await api.get(`/user/check/${clientVal.username}`);
+                if (res.data.status) {
+                    setUsernameStatus({ checking: false, available: true, message: "" });
+                } else {
+                    setUsernameStatus({
+                        checking: false,
+                        available: false,
+                        message: res.data.message || "This username is not available",
+                    });
+                }
+            } catch (err) {
+                setUsernameStatus({
+                    checking: false,
+                    available: false,
+                    message: err?.response?.data?.message || "Username check failed",
+                });
+            }
+        }, 400);
+
+        return () => clearTimeout(timeout);
+    }, [data.username]);
 
     const SubmitHandler = async (e) => {
         e.preventDefault();
@@ -287,8 +325,11 @@ const Register = () => {
         if (!clientVal.valid) {
             return toast.error(clientVal.message || "একটি সঠিক ইউজারনেম দিন");
         }
-        if (!message) {
-            return toast.error("Enter a valid unique username");
+        if (usernameStatus.checking) {
+            return toast.error("ইউজারনেম যাচাই করা হচ্ছে, অনুগ্রহ করে একটু অপেক্ষা করুন");
+        }
+        if (usernameStatus.available !== true) {
+            return toast.error(usernameStatus.message || "Enter a valid unique username");
         }
 
         try {
@@ -306,7 +347,13 @@ const Register = () => {
             }
             
             setError("");
-            const submitData = { ...data, username: data.username.toLowerCase() };
+            const submitData = {
+                ...data,
+                username: (data.username || "").trim().toLowerCase().replace(/\s+/g, ""),
+                email: (data.email || "").trim().toLowerCase().replace(/\s+/g, ""),
+                phone: (data.phone || "").trim().replace(/\s+/g, ""),
+                reffer: (data.reffer || "").trim().toLowerCase().replace(/\s+/g, ""),
+            };
             const res = await api.post('/user', submitData);
             Cookie.set("token-you", res.data.token, { expires: 30 });
             toast.success("Registration Successful");
@@ -358,17 +405,11 @@ const Register = () => {
                             name="username"
                             placeholder="যেমন: shuvo_123"
                             value={data.username}
-                            onChange={(e) => {
-                                updateState(e);
-                                const check = validateUsernameClient(e.target.value);
-                                if (!check.valid && e.target.value.length > 0) {
-                                    setMessage(false);
-                                }
-                            }}
-                            onBlur={checkUser}
+                            onChange={updateState}
+                            onKeyDown={(e) => { if (e.key === " ") e.preventDefault(); }}
                             required
-                            error={!validateUsernameClient(data.username).valid && data.username.length > 0}
-                            availability={data.username ? (validateUsernameClient(data.username).valid ? message : false) : undefined}
+                            error={usernameStatus.available === false && Boolean(data.username)}
+                            availabilityStatus={data.username ? usernameStatus : undefined}
                         />
 
                         <FormInput
@@ -379,6 +420,7 @@ const Register = () => {
                             placeholder="ইমেইল অ্যাড্রেস লিখুন"
                             value={data.email}
                             onChange={updateState}
+                            onKeyDown={(e) => { if (e.key === " ") e.preventDefault(); }}
                             required
                         />
 
@@ -409,6 +451,7 @@ const Register = () => {
                             placeholder="মোবাইল নাম্বার লিখুন"
                             value={data.phone}
                             onChange={updateState}
+                            onKeyDown={(e) => { if (e.key === " ") e.preventDefault(); }}
                             required
                         />
 
@@ -420,6 +463,7 @@ const Register = () => {
                             placeholder="রেফারেন্স আইডি দিন"
                             value={data.reffer}
                             onChange={updateState}
+                            onKeyDown={(e) => { if (e.key === " ") e.preventDefault(); }}
                             required
                             error={queryParamValue && !referer}
                         />

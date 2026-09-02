@@ -23,6 +23,15 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, "Please Enter Your Email"],
         unique: true,
+        trim: true,
+        lowercase: true,
+        validate: {
+            validator: function (v) {
+                if (!v) return false;
+                return !v.includes(" ") && !/\s/.test(v);
+            },
+            message: "Email cannot contain spaces."
+        }
     },
     role: {
         type: String,
@@ -50,6 +59,14 @@ const userSchema = new mongoose.Schema({
     phone: {
         type: String,
         required: [true, "Please enter your phone number"],
+        trim: true,
+        validate: {
+            validator: function (v) {
+                if (!v) return false;
+                return !v.includes(" ") && !/\s/.test(v);
+            },
+            message: "Phone number cannot contain spaces."
+        }
     },
     password: {
         type: String,

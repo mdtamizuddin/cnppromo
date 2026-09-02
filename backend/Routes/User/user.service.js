@@ -26,7 +26,18 @@ const createUser = async (req, res) => {
         for (const field of REGISTRATION_BLOCKED_FIELDS) {
             delete req.body[field];
         }
-        req.body.email = req.body.email.toLowerCase();
+        if (req.body.username) {
+            req.body.username = String(req.body.username).trim().toLowerCase().replace(/\s+/g, "");
+        }
+        if (req.body.email) {
+            req.body.email = String(req.body.email).trim().toLowerCase().replace(/\s+/g, "");
+        }
+        if (req.body.phone) {
+            req.body.phone = String(req.body.phone).trim().replace(/\s+/g, "");
+        }
+        if (req.body.reffer) {
+            req.body.reffer = String(req.body.reffer).trim().toLowerCase().replace(/\s+/g, "");
+        }
         
         // Validate username against standard rules
         const userCheck = validateUsername(req.body.username);
@@ -49,7 +60,7 @@ const createUser = async (req, res) => {
                 message: "User already exist"
             });
         }
-        if (req.body.reffer !== "") {
+        if (req.body.reffer && req.body.reffer !== "") {
             const refferUser = await User.findOne({ username: req.body.reffer });
             if (!refferUser) {
                 return res.status(404).send({
@@ -66,10 +77,7 @@ const createUser = async (req, res) => {
         else {
             delete req.body.reffer;
         }
-        // check is username includes space 
-        if (req.body.username.includes(" ")) {
-            req.body.username = req.body.username.split(" ").join("");
-        }
+
         req.body.password = await saltGenerator(req.body.password);
         req.body.time = new Date(req.body.time);
         const user = new User(req.body);
@@ -101,7 +109,7 @@ const createUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
     try {
-        req.body.email = req.body.email.toLowerCase();
+        req.body.email = (req.body.email || "").trim().toLowerCase().replace(/\s+/g, "");
         const user = await User.findOne({
             $or: [
                 {
@@ -746,7 +754,12 @@ const checkUser = async (req, res) => {
 
         // Opt out of the soft-delete hook: a deleted user still reserves
         // their username/email, so availability must reflect that.
-        const user = await User.findOne({ username }).setOptions({ withDeleted: true });
+        const user = await User.findOne({
+            $or: [
+                { username: username },
+                { username: { $regex: new RegExp(`^${username}$`, "i") } }
+            ]
+        }).setOptions({ withDeleted: true });
         if (!user) {
             res.send({
                 message: "Username Available",
@@ -755,7 +768,7 @@ const checkUser = async (req, res) => {
         }
         else {
             res.send({
-                message: "Username Not Available",
+                message: "This username is not available",
                 status: false
             })
         }

@@ -96,14 +96,22 @@ const Login = () => {
     const totalPayments = ((statsData?.total_withdraw || 734598) + 7000000).toLocaleString() + "+";
 
     const updateState = (e) => {
-        setData({ ...data, [e.target.name]: e.target.value });
+        let value = e.target.value;
+        if (e.target.name === "email") {
+            value = value.replace(/\s+/g, "");
+        }
+        setData({ ...data, [e.target.name]: value });
     };
 
     const SubmitHandler = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await api.post('/user/login', data);
+            const submitData = {
+                ...data,
+                email: (data.email || "").trim().toLowerCase().replace(/\s+/g, ""),
+            };
+            const res = await api.post('/user/login', submitData);
             setError("");
             Cookie.set("token-you", res.data.token, { expires: 30 });
             toast.success("Login Successful");
