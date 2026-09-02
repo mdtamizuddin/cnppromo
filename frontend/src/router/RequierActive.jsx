@@ -14,11 +14,13 @@ import {
   ChartBarIcon,
   UserGroupIcon,
   ChatBubbleLeftRightIcon,
+  LifebuoyIcon,
 } from "@heroicons/react/24/outline";
 
 const RequierActive = () => {
   const { settings } = useSelector((state) => state.user);
-  const supportMessanger = settings?.links?.supportMessanger;
+  const supportMessanger =
+    settings?.links?.supportMessanger || "https://m.me/1151649641374328";
 
   const benefits = [
     {
@@ -153,26 +155,34 @@ const RequierActive = () => {
                 </p>
               </div>
 
-              {/* Return to Home CTA Button */}
-              <Link to="/" className="block pt-1">
-                <Button className="w-full bg-primary hover:bg-primary-hover text-white normal-case text-xs sm:text-sm font-bold py-3.5 rounded-2xl shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2">
-                  <HomeIcon className="w-4 h-4" />
-                  <span>হোমে ফিরে যান</span>
-                </Button>
-              </Link>
+              {/* Support CTA — the only action available while approval is pending */}
+              <div className="pt-1 space-y-2.5">
+                <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold text-gray-500">
+                  <LifebuoyIcon className="w-4 h-4 text-primary" />
+                  <span>কোনো সমস্যা হলে সাপোর্টে যোগাযোগ করুন</span>
+                </div>
 
-              {/* Messenger Support Button */}
-              {supportMessanger && (
                 <a
                   href={supportMessanger}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full bg-[#0b0c2a] hover:bg-[#1e2048] text-white normal-case text-xs sm:text-sm font-bold py-3.5 rounded-2xl shadow-lg transition-all duration-200 cursor-pointer"
+                  className="flex items-center justify-center gap-2 w-full bg-[#0084ff] hover:bg-[#0072dd] text-white normal-case text-xs sm:text-sm font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-500/25 transition-all duration-200 cursor-pointer"
                 >
                   <FontAwesomeIcon icon={faFacebookMessenger} className="text-lg" />
-                  <span>Messenger এ মেসেজ করুন</span>
+                  <span>সাপোর্টে মেসেজ করুন</span>
                 </a>
-              )}
+
+                {/* Return to Home CTA Button */}
+                <Link to="/" className="block">
+                  <Button
+                    variant="outlined"
+                    className="w-full border-gray-200 text-gray-700 hover:bg-gray-50 normal-case text-xs sm:text-sm font-bold py-3.5 rounded-2xl shadow-none flex items-center justify-center gap-2"
+                  >
+                    <HomeIcon className="w-4 h-4" />
+                    <span>হোমে ফিরে যান</span>
+                  </Button>
+                </Link>
+              </div>
 
             </div>
           </div>
