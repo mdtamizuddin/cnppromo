@@ -413,15 +413,17 @@ const getSingle = async (req, res) => {
 // form actually renders are returned — never contact details or balances.
 const searchUser = async (req, res) => {
     try {
-        const user = await User.findOne({ username: req.params.id })
-            .select("name username");
+        const query = (req.params.id || "").trim().toLowerCase();
+        const user = await User.findOne({
+            $or: [
+                { username: query },
+                { username: { $regex: new RegExp(`^${query}$`, "i") } }
+            ]
+        }).select("name username");
         const data = {
             user,
-            success: false
-        }
-        if (user) {
-            data.success = true
-        }
+            success: Boolean(user)
+        };
         res.send(data);
     } catch (error) {
         res.status(400).send({

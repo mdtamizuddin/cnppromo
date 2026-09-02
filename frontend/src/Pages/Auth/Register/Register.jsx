@@ -90,13 +90,13 @@ const FormInput = ({ label, icon, availabilityStatus, ...props }) => (
                     availabilityStatus.checking 
                         ? 'text-gray-400' 
                         : availabilityStatus.available 
-                            ? 'text-green-600' 
-                            : 'text-red-500'
+                            ? 'text-green-600 font-semibold' 
+                            : 'text-red-500 font-medium'
                 }`}>
                     {availabilityStatus.checking 
                         ? '(Checking...)' 
                         : availabilityStatus.available 
-                            ? '(Available)' 
+                            ? (availabilityStatus.message ? `(${availabilityStatus.message})` : '(Available)') 
                             : availabilityStatus.message 
                                 ? `(${availabilityStatus.message})` 
                                 : '(Not Available)'}
@@ -199,7 +199,12 @@ const Register = () => {
         available: null,
         message: "",
     });
-    const [referer, setReferer] = useState(true);
+    const [refererStatus, setRefererStatus] = useState({
+        checking: false,
+        available: null,
+        user: null,
+        message: "",
+    });
     const [agree, setAgree] = useState(false);
 
     // Fetch dynamic statistics for the bottom bar
@@ -216,10 +221,7 @@ const Register = () => {
 
     useEffect(() => {
         if (queryParamValue) {
-            api.get(`/user/search/${queryParamValue}`).then((res) => {
-                setReferer(res.data.success);
-            });
-            setData({ ...data, reffer: queryParamValue });
+            setData((prev) => ({ ...prev, reffer: queryParamValue.trim() }));
         }
     }, [queryParamValue]);
 
@@ -309,6 +311,53 @@ const Register = () => {
         return () => clearTimeout(timeout);
     }, [data.username]);
 
+    // Live debounced check for reference ID validation
+    useEffect(() => {
+        const raw = data.reffer;
+        if (!raw || raw.trim() === "") {
+            setRefererStatus({ checking: false, available: null, user: null, message: "" });
+            return;
+        }
+
+        const clean = raw.trim().toLowerCase();
+        if (clean.length < 3) {
+            setRefererStatus({ checking: false, available: false, user: null, message: "Invalid Reference ID" });
+            return;
+        }
+
+        setRefererStatus({ checking: true, available: null, user: null, message: "" });
+
+        const timeout = setTimeout(async () => {
+            try {
+                const res = await api.get(`/user/search/${encodeURIComponent(clean)}`);
+                if (res.data.success && res.data.user) {
+                    setRefererStatus({
+                        checking: false,
+                        available: true,
+                        user: res.data.user,
+                        message: res.data.user.name ? `Valid: ${res.data.user.name}` : "Valid",
+                    });
+                } else {
+                    setRefererStatus({
+                        checking: false,
+                        available: false,
+                        user: null,
+                        message: "Reference ID not found",
+                    });
+                }
+            } catch (err) {
+                setRefererStatus({
+                    checking: false,
+                    available: false,
+                    user: null,
+                    message: err?.response?.data?.message || "Invalid Reference ID",
+                });
+            }
+        }, 400);
+
+        return () => clearTimeout(timeout);
+    }, [data.reffer]);
+
     const SubmitHandler = async (e) => {
         e.preventDefault();
         
@@ -318,8 +367,11 @@ const Register = () => {
         if (!data.reffer) {
             return toast.error("Reference ID is required!");
         }
-        if (!referer && data.reffer) {
-            return toast.error("Please enter a valid reference ID");
+        if (refererStatus.checking) {
+            return toast.error("রেফারেন্স আইডি যাচাই করা হচ্ছে, অনুগ্রহ করে একটু অপেক্ষা করুন");
+        }
+        if (refererStatus.available !== true) {
+            return toast.error(refererStatus.message || "একটি সঠিক রেফারেন্স আইডি দিন");
         }
         const clientVal = validateUsernameClient(data.username);
         if (!clientVal.valid) {
@@ -465,7 +517,8 @@ const Register = () => {
                             onChange={updateState}
                             onKeyDown={(e) => { if (e.key === " ") e.preventDefault(); }}
                             required
-                            error={queryParamValue && !referer}
+                            error={refererStatus.available === false && Boolean(data.reffer)}
+                            availabilityStatus={data.reffer ? refererStatus : undefined}
                         />
 
                         <div className="flex items-center gap-3 bg-amber-50/80 border border-amber-200/80 py-3.5 px-4 rounded-xl mt-6 shadow-sm">
