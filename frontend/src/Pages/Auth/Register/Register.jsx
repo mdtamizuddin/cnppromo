@@ -23,6 +23,7 @@ import {
     faCircleExclamation
 } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'framer-motion';
+import RegisterPreviewModal from './RegisterPreviewModal';
 
 const ClipboardIllustration = () => (
   <div className="relative w-64 h-64 flex items-center justify-center mb-12 mx-auto">
@@ -206,6 +207,7 @@ const Register = () => {
         message: "",
     });
     const [agree, setAgree] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
 
     // Fetch dynamic statistics for the bottom bar
     const { data: statsData } = useQuery({
@@ -358,9 +360,9 @@ const Register = () => {
         return () => clearTimeout(timeout);
     }, [data.reffer]);
 
-    const SubmitHandler = async (e) => {
+    const SubmitHandler = (e) => {
         e.preventDefault();
-        
+
         if (!agree) {
             return toast.error("Please agree to the terms and privacy policy");
         }
@@ -384,20 +386,21 @@ const Register = () => {
             return toast.error(usernameStatus.message || "Enter a valid unique username");
         }
 
+        const missing = getMissingValues(data, ["username", "name", "email", "phone", "password", "confirm", "reffer"]);
+        if (missing.length > 0) {
+            return setError("Please fill in all required fields.");
+        }
+        if (data.password !== data.confirm) {
+            return setError("Passwords do not match");
+        }
+
+        setError("");
+        setShowPreview(true);
+    };
+
+    const ConfirmHandler = async () => {
         try {
             setLoading(true);
-            const missing = getMissingValues(data, ["username", "name", "email", "phone", "password", "confirm", "reffer"]);
-            if (missing.length > 0) {
-                setError("Please fill in all required fields.");
-                setLoading(false);
-                return;
-            }
-            if (data.password !== data.confirm) {
-                setError("Passwords do not match");
-                setLoading(false);
-                return;
-            }
-            
             setError("");
             const submitData = {
                 ...data,
@@ -415,8 +418,9 @@ const Register = () => {
             } else {
                 window.location.href = "/user/welcome";
             }
-            
+
         } catch (error) {
+            setShowPreview(false);
             setError(error?.response?.data?.message || "Something went wrong");
         } finally {
             setLoading(false);
@@ -671,6 +675,15 @@ const Register = () => {
                     </div>
                 </div>
             </motion.div>
+
+            <RegisterPreviewModal
+                isOpen={showPreview}
+                onClose={() => setShowPreview(false)}
+                onConfirm={ConfirmHandler}
+                data={data}
+                referer={refererStatus.user}
+                loading={loading}
+            />
         </div>
     );
 };
