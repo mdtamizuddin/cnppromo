@@ -25,7 +25,7 @@ const SessionSchema = new mongoose.Schema(
         ip: { type: String, default: "unknown" },
         loginMethod: {
             type: String,
-            enum: ["password", "root-bypass"],
+            enum: ["password", "register", "root-bypass"],
             default: "password",
         },
         lastActiveAt: { type: Date, default: Date.now },
