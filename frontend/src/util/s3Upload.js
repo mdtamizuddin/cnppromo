@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { api } from './axios';
+import { optimizeImage } from './imageOptimizer';
+
+export { optimizeImage };
 
 /**
  * Upload any kind of file directly to AWS S3 using a Presigned PUT URL.
@@ -50,10 +53,12 @@ export async function uploadDirectToS3(file, folder = 'uploads', onProgress) {
 }
 
 /**
- * Convenience helper for all image uploads (JPG, PNG, WebP, GIF, SVG, AVIF, HEIC, etc.)
+ * Helper for all image uploads with automatic client-side resizing and WebP compression.
  */
-export async function uploadImageToS3(file, onProgress, folder = 'images') {
-  return uploadDirectToS3(file, folder, onProgress);
+export async function uploadImageToS3(file, onProgress, folder = 'images', optimizeOptions) {
+  // Compress and resize image client-side before uploading to S3
+  const optimizedFile = await optimizeImage(file, optimizeOptions);
+  return uploadDirectToS3(optimizedFile, folder, onProgress);
 }
 
 /**
