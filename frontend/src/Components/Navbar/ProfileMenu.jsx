@@ -34,9 +34,9 @@ const ProfileMenu = ({ user }) => {
           <Avatar
             variant="circular"
             size="sm"
-            alt="avatar"
-            className="border border-gray-900 p-0.5"
-            src="/avater.avif"
+            alt={user?.name || "avatar"}
+            className="border border-gray-900 p-0.5 object-cover"
+            src={user?.avatar || "/avater.avif"}
           />
           <ChevronDownIcon
             strokeWidth={2.5}

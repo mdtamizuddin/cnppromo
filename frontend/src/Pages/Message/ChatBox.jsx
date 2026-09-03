@@ -217,7 +217,12 @@ const ChatBox = ({ chatId, onBack }) => {
           onClick={() => user?.role === "admin" && setShowProfile(true)}
           className="flex items-center gap-3 min-w-0 flex-1 text-left rounded-xl px-1 py-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
         >
-          <PresenceAvatar name={chatUser?.name} active={isOnline} size={40} />
+          <PresenceAvatar
+            src={chatUser?.avatar}
+            name={chatUser?.name}
+            active={isOnline}
+            size={40}
+          />
           <span className="min-w-0">
             <span className="block text-sm font-bold text-gray-900 truncate">
               {chatUser?.name || "Loading…"}

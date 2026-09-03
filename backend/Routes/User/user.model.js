@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, "Please Enter Your Name"],
     },
+    avatar: {
+        type: String,
+        default: "",
+    },
     gender: {
         type: String,
         enum: ["Male", "Female", "Other"],

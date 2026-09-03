@@ -39,6 +39,9 @@ router.get('/admins', authChecker, userService.getAdmins)
 // Toggle the logged-in user's notifications on/off
 router.put('/notification-settings', authChecker, userService.updateNotificationSettings)
 
+// Update the logged-in user's profile picture / avatar
+router.put('/avatar', authChecker, userService.updateAvatar)
+
 // Set how many devices this user may be signed in on at once
 router.put('/device-limit', authChecker, userService.updateDeviceLimit)
 

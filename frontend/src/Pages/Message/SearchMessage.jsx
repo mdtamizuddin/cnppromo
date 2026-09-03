@@ -138,6 +138,7 @@ const SearchMessage = ({ open, setOpen }) => {
                     transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                 >
                   <PresenceAvatar
+                    src={other?.avatar}
                     name={other?.name}
                     active={other?.active}
                     size={40}

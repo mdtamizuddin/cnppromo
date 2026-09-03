@@ -72,7 +72,12 @@ const ChatRow = React.memo(({ chat, currentUserId, activeId, onOpen, onToggleSta
         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 rounded-full bg-brand" />
       )}
 
-      <PresenceAvatar name={chat?.user?.name} active={chat?.user?.active} size={44} />
+      <PresenceAvatar
+        src={chat?.user?.avatar}
+        name={chat?.user?.name}
+        active={chat?.user?.active}
+        size={44}
+      />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">

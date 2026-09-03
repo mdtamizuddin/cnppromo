@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useState, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { Card, Button } from "@material-tailwind/react";
 import {
@@ -13,16 +13,25 @@ import {
   EyeIcon,
   EyeSlashIcon,
   DevicePhoneMobileIcon,
+  CameraIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import Cookie from "js-cookie";
 import { api } from "../../util/axios";
+import { uploadImageToS3 } from "../../util/s3Upload";
+import { setCurrentUser } from "../../redux/features/user/userSlice";
 import Loader from "../../Components/Loader";
+import ImageCropModal from "../../Components/ImageCropModal";
 
 const UserSettings = () => {
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.user);
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Profile Form State
   const [formData, setFormData] = useState({
@@ -50,6 +59,44 @@ const UserSettings = () => {
   // Device Limit
   const [deviceLimit, setDeviceLimit] = useState(user?.maxActiveSessions ?? 5);
   const [deviceLimitSaving, setDeviceLimitSaving] = useState(false);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+    setSelectedFile(file);
+    setCropModalOpen(true);
+  };
+
+  const handleCropComplete = async (croppedBlob) => {
+    try {
+      setUploadingAvatar(true);
+      // Automatically optimize to 512x512 WebP and upload directly to S3
+      const avatarUrl = await uploadImageToS3(
+        croppedBlob,
+        null,
+        "user/avatar",
+        { maxWidth: 512, maxHeight: 512, quality: 0.85 }
+      );
+
+      // Save to user profile in backend
+      const res = await api.put("/user/avatar", { avatar: avatarUrl });
+      if (res.data?.user) {
+        dispatch(setCurrentUser(res.data.user));
+      }
+      toast.success("Profile photo updated successfully!");
+      setCropModalOpen(false);
+      setSelectedFile(null);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to update profile photo");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleToggleNotifications = async (checked) => {
     setPushEnabled(checked);
@@ -190,8 +237,28 @@ const handleDeviceLimitSubmit = async (e) => {
           </div>
 
           <div className="relative mt-4 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center font-black text-base">
-              {user?.name?.[0]?.toUpperCase() || "U"}
+            {/* Clickable Profile Avatar with hover camera badge */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="relative group w-14 h-14 rounded-2xl cursor-pointer overflow-hidden border-2 border-white/40 shadow-lg bg-white/10 backdrop-blur flex items-center justify-center shrink-0 transition-transform active:scale-95"
+              title="Change Profile Picture"
+            >
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user?.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="font-black text-xl text-white">
+                  {user?.name?.[0]?.toUpperCase() || "U"}
+                </span>
+              )}
+              {/* Camera Icon Overlay on Hover */}
+              <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                <CameraIcon className="w-5 h-5" />
+                <span className="text-[9px] font-bold mt-0.5">Edit</span>
+              </div>
             </div>
             <div>
               <p className="text-sm font-bold flex items-center gap-1">
@@ -241,6 +308,31 @@ const handleDeviceLimitSubmit = async (e) => {
                   আপনার ব্যক্তিগত তথ্য সম্পাদনা করুন
                 </p>
               </div>
+            </div>
+
+            {/* Avatar Row */}
+            <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-2xl border border-gray-150/80">
+              <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-gray-200 border border-gray-200 flex items-center justify-center shrink-0">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl font-bold text-gray-500">
+                    {user?.name?.[0]?.toUpperCase() || "U"}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-xs font-bold text-gray-800">Profile Photo</h4>
+                <p className="text-[11px] text-gray-500">Crop and upload your custom avatar photo.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-all shadow-xs flex items-center gap-1.5"
+              >
+                <CameraIcon className="w-4 h-4 text-primary" />
+                <span>Change Photo</span>
+              </button>
             </div>
 
             <form onSubmit={handleProfileSubmit} className="space-y-3.5">
@@ -547,6 +639,27 @@ const handleDeviceLimitSubmit = async (e) => {
         </div>
 
       </div>
+
+      {/* Hidden File Picker */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+
+      {/* Interactive 1:1 Image Crop Modal */}
+      <ImageCropModal
+        isOpen={cropModalOpen}
+        imageSource={selectedFile}
+        loading={uploadingAvatar}
+        onClose={() => {
+          setCropModalOpen(false);
+          setSelectedFile(null);
+        }}
+        onCropComplete={handleCropComplete}
+      />
     </div>
   );
 };

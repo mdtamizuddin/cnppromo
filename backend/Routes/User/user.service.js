@@ -14,6 +14,7 @@ const mailerService = require("../mailer/mailer");
 const sessionService = require("../Session/session.service");
 const { notifyUser } = require("../Notification/notification.service");
 const validateUsername = require("../../util/validateUsername");
+const { deleteFromS3 } = require("../../util/s3");
 // Fields a self-registering user is never allowed to set on themselves.
 // `new User(req.body)` would otherwise happily accept role:"admin" or balance:1e9.
 const REGISTRATION_BLOCKED_FIELDS = [
@@ -398,7 +399,7 @@ const getSingle = async (req, res) => {
         }
         const user = await User.findById(req.params.id)
             .select("-password")
-            .populate("reffer", "name username");
+            .populate("reffer", "name username avatar");
         if (!user) {
             return res.status(404).send({ message: "User not found" });
         }
@@ -436,7 +437,7 @@ const searchUser = async (req, res) => {
 // role or balance, so the payload is filtered down to a known-safe set.
 const ADMIN_UPDATABLE_FIELDS = [
     "name", "username", "email", "phone", "gender", "fb",
-    "role", "status", "level", "lock", "balance", "reffer"
+    "role", "status", "level", "lock", "balance", "reffer", "avatar"
 ];
 
 const updateUser = async (req, res) => {
@@ -611,6 +612,40 @@ const deleteUser = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
     res.send(req.user);
+}
+
+// Update logged-in user's profile avatar
+const updateAvatar = async (req, res) => {
+    try {
+        const { avatar } = req.body;
+        if (!avatar || typeof avatar !== "string") {
+            return res.status(400).send({ message: "Avatar URL is required" });
+        }
+
+        const prevUser = await User.findById(req.user._id);
+        if (!prevUser) {
+            return res.status(404).send({ message: "User not found" });
+        }
+
+        // Delete old avatar from S3 if it exists and changed
+        if (prevUser.avatar && prevUser.avatar !== avatar) {
+            await deleteFromS3(prevUser.avatar);
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { avatar },
+            { new: true }
+        ).select("-password");
+
+        res.status(200).send({
+            success: true,
+            message: "Profile photo updated successfully",
+            user: updatedUser,
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
 }
 
 // Turn the logged-in user's notifications on/off. When off, the notify
@@ -1112,7 +1147,7 @@ const getAdmins = async (req, res) => {
             role: "admin",
             lock: { $ne: true }
         })
-            .select("name username role image active lastActive")
+            .select("name username role avatar image active lastActive")
             .sort({ active: -1, createdAt: -1 })
             .lean();
 
@@ -1150,5 +1185,6 @@ module.exports = {
     updateDeviceLimit,
     getMyPaymentAccounts,
     saveMyPaymentAccount,
-    deleteMyPaymentAccount
+    deleteMyPaymentAccount,
+    updateAvatar
 }

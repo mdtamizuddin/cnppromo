@@ -55,8 +55,8 @@ const createNewChat = async (data) => {
 
         // Populate the chat before returning
         if (chatToReturn) {
-            await chatToReturn.populate('owner', 'name username active lastActive');
-            await chatToReturn.populate('user', 'name username active lastActive');
+            await chatToReturn.populate('owner', 'name username avatar active lastActive');
+            await chatToReturn.populate('user', 'name username avatar active lastActive');
             await chatToReturn.populate('message');
         }
 
@@ -71,8 +71,8 @@ const getChats = async (filter = {}) => {
     try {
         // Fetch chats without population
         const chats = await Chat.find(filter)
-            .populate('owner', 'name username active lastActive')
-            .populate('user', 'name username active lastActive')
+            .populate('owner', 'name username avatar active lastActive')
+            .populate('user', 'name username avatar active lastActive')
             .sort({ updatedAt: -1 })
         return chats;
     } catch (error) {
@@ -86,7 +86,7 @@ const getChats = async (filter = {}) => {
 
 //         // Fetch chats
 //         const chats = await Chat.find({ owner: id })
-//             .populate('user', 'name username active lastActive')
+//             .populate('user', 'name username avatar active lastActive')
 //             .populate('message')
 //             .sort({ updatedAt: -1 })
 //             .lean(); // Use lean for faster query
@@ -169,7 +169,7 @@ const chatByUser = async (id, query = {}) => {
 
         // Fetch limited chats using the compound index { owner: 1, updatedAt: -1, _id: -1 }
         const chats = await Chat.find(filter)
-            .populate('user', 'name username active lastActive')
+            .populate('user', 'name username avatar active lastActive')
             .populate('message')
             .sort({ updatedAt: -1, _id: -1 })
             .limit(parsedLimit + 1);
@@ -255,8 +255,8 @@ const searchMessages = async (query) => {
                 { receiver: user }
             ],
             message: { $regex: escapeRegex(text.trim()), $options: 'i' }
-        }).populate('sender', 'name username active lastActive')
-            .populate('receiver', 'name username active lastActive')
+        }).populate('sender', 'name username avatar active lastActive')
+            .populate('receiver', 'name username avatar active lastActive')
             .sort({ _id: -1 })
             .limit(SEARCH_LIMIT)
 
@@ -274,8 +274,8 @@ const getAChat = async (id) => {
     try {
 
         const chat = await Chat.findById(id)
-            .populate('owner', 'name username active lastActive')
-            .populate('user', 'name username active lastActive')
+            .populate('owner', 'name username avatar active lastActive')
+            .populate('user', 'name username avatar active lastActive')
         if (!chat) {
             throw new Error('Chat not found');
         }

@@ -36,7 +36,12 @@ const UserCard = ({ user, setOpen }) => {
         hover:bg-gray-50 disabled:opacity-60 transition-colors
         focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
     >
-      <PresenceAvatar name={user?.name} active={user?.active} size={44} />
+      <PresenceAvatar
+        src={user?.avatar}
+        name={user?.name}
+        active={user?.active}
+        size={44}
+      />
       <span className="flex-1 min-w-0">
         <span className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold text-gray-800 truncate">{user?.name}</span>

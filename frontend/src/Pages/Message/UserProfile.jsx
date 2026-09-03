@@ -74,8 +74,19 @@ const UserProfile = ({ uid, onClose }) => {
         )}
 
         <div className="relative mb-3">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-brand-soft to-brand/10 border-2 border-brand/20 flex items-center justify-center text-brand font-black text-2xl shadow-sm">
-            {initial}
+          <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-tr from-brand-soft to-brand/10 border-2 border-brand/20 flex items-center justify-center text-brand font-black text-2xl shadow-sm">
+            {data?.avatar ? (
+              <img
+                src={data.avatar}
+                alt={data?.name || "Avatar"}
+                className="w-full h-full object-cover select-none"
+                onError={(e) => {
+                  e.target.style.display = "none";
+                  if (e.target.nextSibling) e.target.nextSibling.style.display = "flex";
+                }}
+              />
+            ) : null}
+            <span className={data?.avatar ? "hidden" : "block"}>{initial}</span>
           </div>
           <span
             className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center ${

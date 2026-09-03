@@ -12,13 +12,26 @@ import React from "react";
 
 // A ring reads better than a floating dot once the avatar drops to 32px, and it
 // never collides with the bubble beside it.
-export const PresenceAvatar = ({ name, active, size = 44, showPresence = true }) => {
+export const PresenceAvatar = ({ src, name, active, size = 44, showPresence = true }) => {
   const initial = name?.trim()?.slice(0, 1)?.toUpperCase() || "?";
   const dot = Math.max(8, Math.round(size * 0.24));
   return (
     <span className="relative inline-flex shrink-0" style={{ width: size, height: size }}>
+      {src ? (
+        <img
+          src={src}
+          alt={name || "Avatar"}
+          className="w-full h-full rounded-full object-cover select-none"
+          onError={(e) => {
+            e.target.style.display = "none";
+            if (e.target.nextSibling) e.target.nextSibling.style.display = "flex";
+          }}
+        />
+      ) : null}
       <span
-        className="flex items-center justify-center w-full h-full rounded-full bg-brand-soft text-brand font-bold select-none"
+        className={`flex items-center justify-center w-full h-full rounded-full bg-brand-soft text-brand font-bold select-none ${
+          src ? "hidden" : ""
+        }`}
         style={{ fontSize: Math.round(size * 0.4) }}
       >
         {initial}

@@ -229,6 +229,7 @@ const MessageBubble = memo(
         <div className="w-8 shrink-0">
           {runEnd && (
             <PresenceAvatar
+              src={own ? currentUser?.avatar : chatUser?.avatar}
               name={own ? currentUser?.name : chatUser?.name}
               active={own ? true : chatUser?.active}
               size={32}

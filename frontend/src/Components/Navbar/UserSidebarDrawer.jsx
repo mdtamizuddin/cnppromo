@@ -105,12 +105,13 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
           <div className="flex items-center gap-3 pt-1">
             <div className="relative">
               <img
-                src={
-                  user?.avatar ||
-                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-                }
-                alt={user?.name}
-                className="w-12 h-12 rounded-full object-cover border-2 border-primary shadow-md"
+                src={user?.avatar || "/default-avater.png"}
+                alt={user?.name || "Profile"}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/default-avater.png";
+                }}
+                className="w-12 h-12 rounded-full object-cover border-2 border-primary shadow-md bg-white/10"
               />
               <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-[#0e0f24] rounded-full"></span>
             </div>
