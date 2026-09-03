@@ -172,6 +172,7 @@ const MessageBubble = memo(
 
     const hasText = !!msg?.message;
     const mediaOnly = !hasText && (msg?.image || msg?.video || msg?.audio);
+    const visualMediaOnly = !hasText && !msg?.reply && (msg?.image || msg?.video);
 
     const menu = (
       <div className="flex flex-col min-w-[190px] py-1 text-xs">
@@ -240,19 +241,21 @@ const MessageBubble = memo(
           <div className={`flex items-center gap-1 ${own ? "flex-row-reverse" : ""}`}>
             <div
               id={msg?._id}
-              className={`relative px-4 py-2.5 transition-all select-text ${
+              className={`relative transition-all select-text ${
                 pending ? "opacity-65" : ""
               } ${
-                own
-                  ? `bg-gradient-to-br from-[#0D9488] to-[#0F766E] text-white shadow-md shadow-teal-500/15 ${
+                visualMediaOnly
+                  ? "p-0 bg-transparent shadow-none border-0"
+                  : own
+                  ? `px-4 py-2.5 bg-gradient-to-br from-[#0D9488] to-[#0F766E] text-white shadow-md shadow-teal-500/15 ${
                       runEnd ? "rounded-[20px] rounded-br-[4px]" : "rounded-[20px]"
-                    }`
-                  : `bg-white text-gray-800 border border-gray-150/80 shadow-xs ${
+                    } ${mediaOnly ? "p-1.5" : ""}`
+                  : `px-4 py-2.5 bg-white text-gray-800 border border-gray-150/80 shadow-xs ${
                       runEnd ? "rounded-[20px] rounded-bl-[4px]" : "rounded-[20px]"
-                    }`
+                    } ${mediaOnly ? "p-1.5" : ""}`
               } ${highlighted ? "ring-2 ring-amber-400 ring-offset-1" : ""} ${
                 failed ? "ring-2 ring-rose-400" : ""
-              } ${mediaOnly ? "p-1.5" : ""}`}
+              }`}
             >
               {/* Quoted message */}
               {msg?.reply && (

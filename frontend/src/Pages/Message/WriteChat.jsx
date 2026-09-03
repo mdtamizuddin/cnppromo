@@ -201,17 +201,69 @@ const Composer = ({ socket, chat, reply, setReply }) => {
 
   /* ── Voice ──────────────────────────────────────────────────────────── */
   const startRecording = async () => {
+    if (!navigator?.mediaDevices?.getUserMedia) {
+      toast.error("Audio recording is not supported in this browser or over insecure HTTP.");
+      return;
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (initialErr) {
+        // Fallback: If generic audio:true throws NotFoundError (common in Chrome on Linux when old USB mic was unplugged),
+        // query all connected audio inputs and request the first available hardware microphone device directly.
+        if (initialErr.name === "NotFoundError" && navigator.mediaDevices?.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const audioInputs = devices.filter((d) => d.kind === "audioinput" && d.deviceId);
+          if (audioInputs.length > 0) {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: { deviceId: { exact: audioInputs[0].deviceId } },
+            });
+          } else {
+            throw initialErr;
+          }
+        } else {
+          throw initialErr;
+        }
+      }
+
       streamRef.current = stream;
-      const recorder = new MediaRecorder(stream);
+
+      // Choose supported audio MIME type
+      let options = {};
+      if (typeof MediaRecorder !== "undefined" && typeof MediaRecorder.isTypeSupported === "function") {
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          options = { mimeType: "audio/webm;codecs=opus" };
+        } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+          options = { mimeType: "audio/webm" };
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          options = { mimeType: "audio/mp4" };
+        }
+      }
+
+      const recorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = recorder;
-      recorder.ondataavailable = (ev) => setAudioBlob(ev.data);
+      recorder.ondataavailable = (ev) => {
+        if (ev.data && ev.data.size > 0) {
+          setAudioBlob(ev.data);
+        }
+      };
       recorder.start();
       setRecordLength(0);
       setIsRecording(true);
-    } catch {
-      toast.error("Microphone access was blocked");
+    } catch (err) {
+      console.error("Microphone capture error:", err);
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        toast.error("Microphone permission is blocked. Click the site settings icon in your browser address bar to allow it.", {
+          duration: 5000,
+        });
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        toast.error("Microphone not found in Chrome. Go to chrome://settings/content/microphone to select your microphone.");
+      } else if (err.name === "NotReadableError") {
+        toast.error("Microphone is currently in use by another application.");
+      } else {
+        toast.error(err.message || "Microphone access failed.");
+      }
     }
   };
 

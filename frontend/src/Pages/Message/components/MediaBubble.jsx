@@ -12,12 +12,12 @@ import { PlayIcon } from "@heroicons/react/24/solid";
 export const ImageBubble = ({ src }) => {
   const [loaded, setLoaded] = useState(false);
   return (
-    <div className="relative mt-1 overflow-hidden rounded-xl bg-gray-100 max-w-[260px]">
-      {!loaded && <div className="absolute inset-0 animate-pulse bg-gray-200/70" />}
+    <div className="relative overflow-hidden rounded-2xl max-w-[280px] sm:max-w-[320px]">
+      {!loaded && <div className="absolute inset-0 animate-pulse bg-gray-200/70 rounded-2xl" />}
       <Image
         src={src}
         rootClassName="block"
-        className="rounded-xl"
+        className="rounded-2xl"
         style={{ maxWidth: "100%", display: "block" }}
         onLoad={() => setLoaded(true)}
         preview={{ mask: null }}
@@ -33,7 +33,7 @@ export const VideoBubble = ({ src }) => {
 
   if (error) {
     return (
-      <div className="mt-1 p-3 rounded-xl bg-gray-900 text-white text-xs max-w-[280px] space-y-1">
+      <div className="p-3 rounded-2xl bg-gray-900 text-white text-xs max-w-[280px] space-y-1">
         <p className="text-gray-300">ভিডিও লোড করা যায়নি</p>
         <a
           href={src}
@@ -48,13 +48,13 @@ export const VideoBubble = ({ src }) => {
   }
 
   return (
-    <div className="relative mt-1 overflow-hidden rounded-2xl bg-black max-w-[320px] shadow-md border border-black/10">
+    <div className="relative overflow-hidden rounded-2xl max-w-[280px] sm:max-w-[320px]">
       <video
         src={src}
         controls
         playsInline
         preload="metadata"
-        className="w-full h-auto max-h-[320px] rounded-2xl object-contain bg-black"
+        className="w-full h-auto max-h-[380px] rounded-2xl block"
         onError={() => setError(true)}
       >
         <source src={src} />
