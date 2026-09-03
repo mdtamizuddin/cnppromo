@@ -40,10 +40,10 @@ const Update = ({ show, setShow, data: oldData, refetch }) => {
       let video;
       let imageLink;
       if (file) {
-        video = await uploadVideoToS3(file);
+        video = await uploadVideoToS3(file, null, "external-withdraw/video");
       }
       if (image) {
-        imageLink = await uploadImageToS3(image);
+        imageLink = await uploadImageToS3(image, null, "external-withdraw/image");
       }
       const data = {
         video: video || oldData?.video,

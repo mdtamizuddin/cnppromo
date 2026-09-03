@@ -123,7 +123,7 @@ const Composer = ({ socket, chat, reply, setReply }) => {
     if (!file || !connected) return;
     try {
       setUploading("image");
-      const url = await uploadImageToS3(file);
+      const url = await uploadImageToS3(file, null, "message/image");
       emit({ image: url });
     } catch (err) {
       toast.error(err?.message || "Could not send the photo");
@@ -138,7 +138,7 @@ const Composer = ({ socket, chat, reply, setReply }) => {
     if (!file) return;
     try {
       setUploading("video");
-      const url = await uploadVideoToS3(file);
+      const url = await uploadVideoToS3(file, null, "message/video");
       emit({ video: url });
     } catch (err) {
       toast.error(err?.message || "Could not send the video");
@@ -180,7 +180,7 @@ const Composer = ({ socket, chat, reply, setReply }) => {
     if (!audioBlob) return;
     try {
       setUploading("audio");
-      const url = await uploadAudioToS3(audioBlob);
+      const url = await uploadAudioToS3(audioBlob, null, "message/voice");
       emit({ audio: url });
       setAudioBlob(null);
       setRecordLength(0);

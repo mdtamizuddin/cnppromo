@@ -52,29 +52,29 @@ export async function uploadDirectToS3(file, folder = 'uploads', onProgress) {
 /**
  * Convenience helper for all image uploads (JPG, PNG, WebP, GIF, SVG, AVIF, HEIC, etc.)
  */
-export async function uploadImageToS3(file, onProgress) {
-  return uploadDirectToS3(file, 'images', onProgress);
+export async function uploadImageToS3(file, onProgress, folder = 'images') {
+  return uploadDirectToS3(file, folder, onProgress);
 }
 
 /**
  * Convenience helper for all video uploads (MP4, WebM, MKV, MOV, AVI, etc.)
  */
-export async function uploadVideoToS3(file, onProgress) {
-  return uploadDirectToS3(file, 'videos', onProgress);
+export async function uploadVideoToS3(file, onProgress, folder = 'videos') {
+  return uploadDirectToS3(file, folder, onProgress);
 }
 
 /**
  * Convenience helper for all audio uploads (MP3, WAV, WebM, OGG, AAC, voice recordings, etc.)
  */
-export async function uploadAudioToS3(file, onProgress) {
-  return uploadDirectToS3(file, 'audio', onProgress);
+export async function uploadAudioToS3(file, onProgress, folder = 'audio') {
+  return uploadDirectToS3(file, folder, onProgress);
 }
 
 /**
  * Convenience helper for all document uploads (PDF, DOCX, XLSX, TXT, ZIP, etc.)
  */
-export async function uploadDocumentToS3(file, onProgress) {
-  return uploadDirectToS3(file, 'documents', onProgress);
+export async function uploadDocumentToS3(file, onProgress, folder = 'documents') {
+  return uploadDirectToS3(file, folder, onProgress);
 }
 
 /**

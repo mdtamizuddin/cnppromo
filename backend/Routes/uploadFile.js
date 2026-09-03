@@ -200,10 +200,22 @@ const handleUpload = (multerMiddleware) => (req, res, next) => {
   });
 };
 
+// Helper to build dynamic time-partitioned folder: e.g. "message/image/september-2026"
+function getDynamicFolderPath(folder = 'uploads') {
+  const now = new Date();
+  const monthName = now.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+  const year = now.getFullYear();
+  const monthYear = `${monthName}-${year}`;
+
+  const cleanFolder = (folder || 'uploads').replace(/^\/+|\/+$/g, '');
+  return `${cleanFolder}/${monthYear}`;
+}
+
 // Upload file to S3 helper with cleanup
 async function uploadToS3(file, folder = '') {
+  const dynamicFolder = getDynamicFolderPath(folder);
   const sanitizedName = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
-  const key = `${folder}/${uuidv4()}_${sanitizedName}`;
+  const key = `${dynamicFolder}/${uuidv4()}_${sanitizedName}`;
   const buffer = await fs.promises.readFile(file.path);
 
   // Resolve accurate ContentType if browser sent application/octet-stream or empty
@@ -316,8 +328,9 @@ router.post('/presign', async (req, res) => {
       contentType = MIME_BY_EXT[ext] || fileType || 'application/octet-stream';
     }
 
+    const dynamicFolder = getDynamicFolderPath(folder);
     const sanitizedName = path.basename(fileName).replace(/[^a-zA-Z0-9._-]/g, '_');
-    const key = `${folder}/${uuidv4()}_${sanitizedName}`;
+    const key = `${dynamicFolder}/${uuidv4()}_${sanitizedName}`;
 
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
@@ -334,6 +347,7 @@ router.post('/presign', async (req, res) => {
       uploadUrl,
       fileUrl,
       key,
+      folder: dynamicFolder,
       contentType
     });
   } catch (error) {

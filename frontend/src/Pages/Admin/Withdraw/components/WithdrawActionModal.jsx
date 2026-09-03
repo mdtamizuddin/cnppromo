@@ -51,7 +51,7 @@ const WithdrawActionModal = ({ withdraw, onClose, refetch }) => {
     if (image) {
       setLoading(true);
       try {
-        const imageUrl = await uploadImageToS3(image);
+        const imageUrl = await uploadImageToS3(image, null, "withdraw/receipt");
         await actionHandler("completed", imageUrl);
       } catch (error) {
         toast.error(error?.message || "Image upload failed");

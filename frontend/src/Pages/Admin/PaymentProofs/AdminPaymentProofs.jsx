@@ -69,7 +69,7 @@ const AdminPaymentProofs = () => {
     const loadingToast = toast.loading("Uploading screenshot to S3...");
 
     try {
-      const url = await uploadImageToS3(file);
+      const url = await uploadImageToS3(file, null, "payment-proof");
       setImageUrl(url);
       toast.success("Image uploaded to S3 successfully!", { id: loadingToast });
     } catch (err) {
