@@ -19,7 +19,6 @@ const lazyRetry = (componentImport) =>
 
 const AdminDashboard = lazyRetry(() => import("../Pages/Admin/Dashboard/AdminDashboard"));
 const Admins = lazyRetry(() => import("../Pages/Admin/Admins/Users"));
-const AddWork = lazyRetry(() => import("../Pages/SocialWork/AddWork"));
 const ReferHistory = lazyRetry(() => import("../Pages/Admin/RefHistory/RefHistory"));
 const Check = lazyRetry(() => import("../Pages/Admin/Check/Check"));
 const Users = lazyRetry(() => import("../Pages/Admin/Users/Users"));
@@ -33,7 +32,11 @@ const Notifications = lazyRetry(() => import("../Pages/Notifications/Notificatio
 const Withdrawals = lazyRetry(() => import("../Pages/Admin/Withdraw/Withdraw"));
 const ExternalWithdrawals = lazyRetry(() => import("../Pages/Admin/ExternalWithdrawals/ExternalWithdrawals"));
 const AdminWorks = lazyRetry(() => import("../Pages/Admin/ManageWorks/AdminWorks"));
-const AdminSocialWorks = lazyRetry(() => import("../Pages/Admin/ManageSocialWorks/AdminSocialWorks"));
+const AdminTasks = lazyRetry(() => import("../Pages/Admin/Marketplace/AdminTasks"));
+const AdminTaskDetail = lazyRetry(() => import("../Pages/Admin/Marketplace/AdminTaskDetail"));
+const AdminMarketplaceSubmissions = lazyRetry(() => import("../Pages/Admin/Marketplace/AdminSubmissions"));
+const AdminReports = lazyRetry(() => import("../Pages/Admin/Marketplace/AdminReports"));
+const AdminRevenue = lazyRetry(() => import("../Pages/Admin/Marketplace/AdminRevenue"));
 const AdminTraining = lazyRetry(() => import("../Pages/Admin/Training/AdminTraining"));
 const PaymentGateway = lazyRetry(() => import("../Pages/Admin/PaymentGateway/PaymentGateway"));
 const Message = lazyRetry(() => import("../Pages/Message/Message"));
@@ -88,14 +91,6 @@ export const adminRoutes = [
     element: <AdminChecker><Lazy><Admins moderator={true} /></Lazy></AdminChecker>,
   },
   {
-    path: "add-work",
-    element: <AdminChecker><Lazy><AddWork /></Lazy></AdminChecker>,
-  },
-  {
-    path: "update-works/:id",
-    element: <AdminChecker><Lazy><AddWork /></Lazy></AdminChecker>,
-  },
-  {
     path: "refers",
     element: <AdminChecker><Lazy><ReferHistory /></Lazy></AdminChecker>,
   },
@@ -144,8 +139,24 @@ export const adminRoutes = [
     element: <AdminChecker><Lazy><AdminWorks /></Lazy></AdminChecker>,
   },
   {
-    path: "social-works",
-    element: <AdminChecker><Lazy><AdminSocialWorks /></Lazy></AdminChecker>,
+    path: "marketplace",
+    element: <AdminChecker><Lazy><AdminTasks /></Lazy></AdminChecker>,
+  },
+  {
+    path: "marketplace/submissions",
+    element: <AdminChecker><Lazy><AdminMarketplaceSubmissions /></Lazy></AdminChecker>,
+  },
+  {
+    path: "marketplace/reports",
+    element: <AdminChecker><Lazy><AdminReports /></Lazy></AdminChecker>,
+  },
+  {
+    path: "marketplace/revenue",
+    element: <AdminChecker><Lazy><AdminRevenue /></Lazy></AdminChecker>,
+  },
+  {
+    path: "marketplace/:id",
+    element: <AdminChecker><Lazy><AdminTaskDetail /></Lazy></AdminChecker>,
   },
   {
     path: "training",

@@ -7,7 +7,7 @@ Welcome to the definitive full-stack reference manual for **CNP-PROMO**. This un
 ## 📌 1. Monorepo & Project Overview
 
 - **Monorepo Engine**: `pnpm workspace`
-- **Application Type**: Multi-tier micro-task earning platform, multi-level referral commission system (MLM), interactive YouTube video monetization ("Watch to Earn"), multi-gateway digital wallet, real-time messaging, and comprehensive admin dashboard.
+- **Application Type**: Multi-tier micro-task earning platform, multi-level referral commission system (MLM), a two-sided **Task Marketplace** (providers fund tasks from escrow, workers complete them for a platform-commissioned net rate), multi-gateway digital wallet, real-time messaging, and comprehensive admin dashboard.
 - **Language & Locale**: 
   - **Frontend**: React 18 with JSX (`.jsx`), Tailwind CSS, Material Tailwind, DaisyUI, Ant Design. User copy is primarily in Bengali (বাংলা).
   - **Backend**: Node.js + Express 4, MongoDB + Mongoose 8, Socket.IO v4, AWS S3.
@@ -135,7 +135,7 @@ cnppromo/
 │       ├── WithDraw/              # Balance withdrawal requests & admin approval/refunds
 │       ├── TopUp/                 # Balance deposit requests & admin approval credits
 │       ├── Works/                 # External micro-tasks (TikTok, YouTube, WorkerCash, etc.)
-│       ├── social-works/          # "Watch to Earn" interactive YouTube video tasks
+│       ├── Marketplace/           # Task Marketplace: escrow-funded provider tasks, worker submissions, ledger, sweep
 │       ├── external-withdraw/     # Dollar/External withdraw requests with video/screenshot proofs
 │       ├── message/               # Chat thread pairing, messages, search, unseen counts
 │       ├── Settings/              # Site configuration, notices, wallet accounts, commission rates
@@ -170,7 +170,7 @@ cnppromo/
         │   ├── NoInternet.jsx     # Network / API disconnected fallback screen
         │   ├── SocketContext.jsx  # Socket.IO provider & useSocketContext hook
         │   └── Navbar/            # Topbar, desktop/mobile drawer, AdminDropdown, ProfileMenu
-        └── Pages/                 # All feature views (Auth, Home, Account, Refer, SocialWork, Admin...)
+        └── Pages/                 # All feature views (Auth, Home, Account, Refer, Marketplace, Admin...)
 ```
 
 ---
@@ -227,9 +227,16 @@ cnppromo/
 
 ---
 
-### 6.5 `SocialWork` & `WorkSubmit` Models (`backend/Routes/social-works/work.model.js`)
-- **`SocialWork`**: `title`, `description`, `duration` (seconds), `url` (YouTube video URL), `price` (Reward in BDT), `questions` (`[String]`), `status` (`"active" | "inactive"`), `workers` (`[ObjectId]` $\to$ `User` who finished).
-- **`WorkSubmit`**: `workId` (ObjectId $\to$ `SocialWork`), `answers` (`[String]`), `duration` (Watched seconds), `status` (`"pending" | "completed" | "rejected"`), `userId` (ObjectId $\to$ `User`).
+### 6.5 Task Marketplace Models (`backend/Routes/Marketplace/`)
+
+A two-sided marketplace replacing the old admin-only "Watch to Earn" feature. Any active user can be a **Provider** (funds a task from escrow) or a **Worker** (completes it for a net rate). The platform commission is invisible to both sides — see §10.3.
+
+- **`MarketTask`** (`task.model.js`): `provider`, `title`, `description`, `taskType` (enum — `WATCH VISIT LIKE FOLLOW SUBSCRIBE SHARE COMMENT POST REVIEW SIGNUP INSTALL SURVEY CUSTOM`, defined in `taskTypes.js`), `platform`, `typeConfig` (e.g. `{ minDurationSeconds }`), `targetUrl`, proof requirements (`accountLabel`, `requiresScreenshot`, `requiresProofUrl`, `proofQuestions`), `targetQuantity`, **`costPerUnit`** (gross, Provider-facing), **`netPerUnit`** (Worker-facing), **`feePerUnit`**, `commissionRate` (snapshot at creation), `totalBudget`, `escrowFunded`/`escrowHeld`/`escrowReleased`, `slotsRemaining`/`pendingCount`/`approvedCount`, `status` (`PENDING_APPROVAL ACTIVE REJECTED PAUSED COMPLETED CANCELLED`), `mediaPurgedAt`.
+- **`TaskSubmission`** (`task.model.js`): `task`, `worker`, `provider`, `status` (`PENDING APPROVED AUTO_APPROVED REJECTED REPORTED ADMIN_APPROVED`), `autoApproveAt` (auto-pays the worker if the Provider never reviews — default 72h), `grossAmount`/`netAmount`/`feeAmount` (snapshotted at submit time, never re-derived from the live task), `creditedSeconds` (server-verified watch/dwell time), `proof` (`account`, `accountKey`, `url`, `note`, `screenshots[]`, `answers[]`), `attempt`/`attempts[]` (one retry after rejection), report fields (`reportReason`, `reportResolution`, `fineAmount`). Unique index on `{ task, worker }` (one submission per task) and a partial-unique index on `{ task, proof.accountKey }` (stops two accounts claiming the same social handle on one task).
+- **`WatchSession`** (`watch.model.js`): backs the server-verified timer for gated task types. The client cannot self-report watch/dwell duration — the server credits at most real elapsed time between heartbeat pings.
+- **`PlatformLedger`** (`ledger.model.js`): append-only audit rows — `ESCROW_HOLD ESCROW_REFUND WORKER_PAYOUT PLATFORM_FEE PROVIDER_FINE`. Platform revenue = `sum(PLATFORM_FEE) + sum(PROVIDER_FINE)`.
+
+The commission rate and marketplace timing knobs live under `Setting.marketplace` but are **never returned by public `GET /setting`** — see §10.3.
 
 ---
 
@@ -255,7 +262,7 @@ Base URL: `/api/v1`
 | `/user/:id` | `PUT` | `authChecker` + `roleChecker(['admin'])` | Update user. Payload is filtered to `ADMIN_UPDATABLE_FIELDS`. |
 | `/user/active/:id` | `PUT` | `authChecker` + `roleChecker(['admin'])` | **Activate user** & run the 6-generation commission cascade. Rejects already-active users. |
 | `/user/:id` | `DELETE` | `authChecker` + `roleChecker(['admin'])` | Soft-delete user (`deletedAt: new Date()`). |
-| `/setting` | `GET` | Public | Fetch site configuration, notices, wallet accounts, commissions. |
+| `/setting` | `GET` | Public | Fetch site configuration, notices, wallet accounts, referral commissions. **Never includes `marketplace`** — the task commission rate must stay invisible to workers; use `/tasks/admin/config` instead. |
 | `/setting` | `PUT` | `authChecker` + Admin | Update site settings, notices, and commission rates. |
 | `/statistic` | `GET` | Public | Platform-wide stats (total users, active, total payouts). |
 | `/topup` | `POST` | `authChecker` (User) | Submit balance deposit request (forces `user: req.user._id`). |
@@ -265,16 +272,21 @@ Base URL: `/api/v1`
 | `/withdraw` | `GET` | `authChecker` (Scoped) | User gets their own; Admin/Mod gets all. |
 | `/withdraw/reject/:id`| `PUT` | `authChecker` + Admin | Reject withdrawal: refunds balance (`$inc`) and marks rejected. |
 | `/withdraw/:id` | `PUT` | `authChecker` + Admin | Complete withdrawal: attaches payment slip & marks completed. |
-| `/social-works/all` | `GET` | `authChecker` (User) | Get available YouTube tasks for authenticated user. |
-| `/social-works/submit` | `POST` | `authChecker` (User) | Submit completed interactive video task answers & watch duration. |
-| `/social-works/create` | `POST` | `authChecker` + Admin | Create a new interactive YouTube task. |
-| `/social-works/complete/:id`| `PUT` | `authChecker` + Admin | Approve video task: credits user balance with `price`. |
+| `/tasks/feed` | `GET` | `authChecker` + `activeChecker` | Browse ACTIVE, funded tasks with open slots. **Worker view** — never exposes `costPerUnit`/fee/escrow fields. |
+| `/tasks/feed/:id/submit` | `POST` | `authChecker` + `activeChecker` | Submit proof (or a retry). Duration is never taken from the request body — see `WatchSession`. |
+| `/tasks` | `POST` | `authChecker` + `activeChecker` | Provider creates a task; debits the total budget into escrow. |
+| `/tasks/mine` | `GET` | `authChecker` + `activeChecker` | Provider's own tasks. **Provider view** — never exposes `netPerUnit`. |
+| `/tasks/mine/submissions/:id/approve` \| `/reject` | `PUT` | Owner (in the update filter) | Pays the worker from escrow, or returns the slot to the pool. |
+| `/tasks/admin/all` | `GET` | `roleChecker(['admin','moderator'])` | Every task, any status — the moderation + drill-down view. |
+| `/tasks/admin/:id/approve` \| `/reject` | `PUT` | `roleChecker(['admin'])` | Moderate a `PENDING_APPROVAL` task; reject refunds escrow. |
+| `/tasks/admin/reports/:id/resolve` | `PUT` | `roleChecker(['admin'])` | Dismiss, or force-approve + optionally fine the provider. |
+| `/tasks/admin/config` | `GET` / `PUT` | `roleChecker(['admin'])` | The **only** place the commission rate is readable/writable. |
 | `/works` | `POST` / `PUT` / `DELETE` | `authChecker` + Admin | External micro-tasks CRUD. |
 | `/external-withdraw` | `POST` | `authChecker` (User) | Submit dollar/external withdrawal request. |
 | `/external-withdraw` | `GET` / `PUT` | `authChecker` + Admin | Manage and review external withdrawal requests. |
 | `/refer/statistic` | `GET` | `authChecker` (User) | Get 6-generation referral counts for authenticated user. |
 | `/refer/board` | `PATCH` | Public / Admin | Monthly referral leaderboard aggregation. |
-| `/upload` | `POST` | Public / Auth (10MB max)| Upload image to AWS S3 (`images/`). |
+| `/upload` | `POST` | Public / Auth (10MB max)| Upload image to AWS S3. `folder` field picks the S3 prefix from a whitelist (`images` default, plus `task-proofs`, `payment-proofs`) — never taken verbatim from the client. |
 | `/upload/file` | `POST` | Public / Auth (20MB max)| Upload audio voice note to AWS S3 (`audio/`). |
 | `/upload/video` | `POST` | Public / Auth (100MB max)| Upload video file to AWS S3 (`videos/`). |
 | `/message/chats` | `GET` | `authChecker` + Admin/Mod | **Every** conversation on the platform - support tooling only. |
@@ -360,6 +372,18 @@ For each tier:
   await user.save();
   ```
 
+### 10.3 Task Marketplace: Escrow & the Hidden-Fee Contract (`backend/Routes/Marketplace/`)
+
+The marketplace is a two-sided escrow system with **no Mongo transactions anywhere in this codebase** — every money flow instead uses a guarded `findOneAndUpdate` whose *filter* enforces the constraint (e.g. `{ balance: { $gte: amount } }`), the same pattern as `createWithDraw` (§10.2's sibling). See `task.service.js` for the full set of flows: create (escrow debit), admin moderation (approve/reject), submit (slot reservation), approve (worker payout + platform fee — one shared function used by the provider's button, the admin override, *and* the auto-approve sweep), reject, report/resolve, and cancel.
+
+**The hidden-fee contract is the security-critical part.** A Provider must never see `netPerUnit`; a Worker must never see `costPerUnit`, `feePerUnit`, `commissionRate`, or any escrow field. This is enforced by three whitelist serialisers in `task.service.js` (`toWorkerTaskView`, `toProviderTaskView`, and the admin path returning everything) — **the route decides the serialiser, never a role branch inside one function.** Two corollaries:
+- `GET /api/v1/setting` is **public**, so `Setting.marketplace` (which holds `commissionRate`) is stripped from its response in `getSetting.js`. Admins read/write it only through authenticated `GET`/`PUT /tasks/admin/config`.
+- Notification copy is built per-audience — a worker's broadcast interpolates `netPerUnit`, a provider's interpolates `costPerUnit`. Never reuse one message string for both.
+
+**Server-verified timers.** For `WATCH`/dwell-gated task types, the client never self-reports duration. A `WatchSession` document accrues via periodic heartbeat pings, and each ping credits **at most the real wall-clock time elapsed since the previous ping** — this clamp, not client trust, is what makes the timer unforgeable.
+
+**One 15-minute sweep** (`Routes/Marketplace/sweep.js`, started in `backend/index.js`) does two things: auto-approves any submission a Provider left unreviewed past `marketplace.autoApproveHours`, and purges a completed/cancelled task's proof screenshots from S3 once nothing about it is still contestable (no `PENDING`/`REPORTED` submission, none `REJECTED` within `marketplace.reportWindowHours`).
+
 ---
 
 ## 🧩 11. End-to-End AI Agent Developer Recipes
@@ -404,7 +428,9 @@ router.put("/mod-action/:id", authChecker, roleChecker(["admin", "moderator"]), 
 10. **Authorize, don't just authenticate**: `authChecker` only proves *who* the caller is. Every admin route also needs `roleChecker([...])`, and every user-scoped route must confirm the record actually belongs to `req.user._id`.
 11. **Express route order**: literal paths (`/statistic`, `/me`) must be registered **before** same-depth wildcards (`/:id`), or the wildcard swallows them.
 12. **Validate money amounts**: reject non-positive values before any `$inc`. A negative withdrawal amount passes an `amount > balance` check and then *credits* the account.
+13. **Never let the marketplace commission rate reach a worker**: it lives in `Setting.marketplace`, which is deliberately stripped from the public `GET /setting` response. Read/write it only via `/tasks/admin/config`. If you add a field to `MarketTask`/`TaskSubmission`, it is invisible to every audience until explicitly added to the matching whitelist serialiser in `task.service.js` — don't widen those serialisers to a blanket spread.
+14. **S3 deletes are scoped to one prefix**: `backend/util/s3.js`'s `deleteObjectsByUrl` refuses any key not under `task-proofs/`. Do not relax that guard — it is what stops a malformed stored URL from deleting a permanent asset like the site logo.
 
 ---
 
-*Last Updated: 2026-08-26 | CNP-PROMO Monorepo Master Documentation*
+*Last Updated: 2026-09-02 | CNP-PROMO Monorepo Master Documentation*

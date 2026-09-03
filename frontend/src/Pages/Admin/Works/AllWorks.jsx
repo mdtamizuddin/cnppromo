@@ -130,11 +130,11 @@ const AllWorks = () => {
         </div>
 
         <Link
-          to="/user/social-works"
+          to="/user/tasks"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-bold transition-all border border-teal-200"
         >
           <PlayCircleIcon className="w-4 h-4 text-teal-600" />
-          <span>Watch to Earn Tasks →</span>
+          <span>Task Marketplace →</span>
         </Link>
       </div>
 

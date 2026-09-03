@@ -23,3 +23,28 @@ ROOT_BYPASS_KEY=optional_root_secret_key
 ```bash
 pnpm dev:backend
 ```
+
+## S3 bucket setup — Task Marketplace proof media
+
+The Task Marketplace uploads worker proof screenshots under the `task-proofs/`
+prefix in `AWS_BUCKET_NAME` (see `backend/Routes/uploadFile.js`'s folder
+whitelist). Two S3-side settings this app depends on but does not configure
+itself:
+
+1. **`DeleteObject`/`DeleteObjects` permission** on the bucket for the IAM
+   user in `AWS_ACCESS_KEY_ID` — required for the active media purge in
+   `backend/util/s3.js` (fires when a task completes/cancels and is
+   dispute-free; see PROJECT_GUIDE.md §10.3).
+2. **A Lifecycle Expiration rule scoped to the `task-proofs/` prefix only**,
+   set to expire objects after **90 days**. This is a backstop, not the
+   primary cleanup path — the app actively deletes a task's proofs once it is
+   terminal and nothing about it is still contestable. The rule exists to
+   catch two things the active purge structurally cannot reach: orphaned
+   uploads from an abandoned submission form, and any task whose purge
+   permanently failed. 90 days is chosen to sit well above
+   `Setting.marketplace.reportWindowHours` (default 72h), so the rule can
+   never delete evidence that is still disputable.
+
+   **Do not** apply this rule bucket-wide — `images/` and `payment-proofs/`
+   hold permanent assets (site logo, gateway icons, payment receipts) that
+   must never expire.

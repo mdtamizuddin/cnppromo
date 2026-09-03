@@ -313,8 +313,8 @@ const AdminDashboard = () => {
         />
         <StatCard
           title="Pending Submissions"
-          value={(stats?.socialWorks?.pendingSubmissions ?? 0).toLocaleString()}
-          hint={`${stats?.socialWorks?.active || 0} active works`}
+          value={(stats?.marketplace?.pendingSubmissions ?? 0).toLocaleString()}
+          hint={`${stats?.marketplace?.active || 0} active tasks`}
           icon={ClipboardDocumentCheckIcon}
           colorClass="text-teal-600"
           bgClass="bg-teal-50"
@@ -555,15 +555,15 @@ const AdminDashboard = () => {
             accentBorder="hover:border-amber-200 hover:bg-amber-50/20"
           />
 
-          {/* 2. Social Works */}
+          {/* 2. Task Marketplace */}
           <QuickActionCard
-            to="/admin/social-works"
+            to="/admin/marketplace"
             icon={ClipboardDocumentCheckIcon}
-            title="Social Works"
-            subtitle="Proof submissions & review"
+            title="Marketplace"
+            subtitle="Task moderation & submissions"
             gradient="bg-gradient-to-br from-teal-400 to-emerald-500"
             shadow="shadow-md shadow-teal-500/25"
-            badgeText={stats?.socialWorks?.pendingSubmissions > 0 ? `${stats.socialWorks.pendingSubmissions} Pending` : null}
+            badgeText={stats?.marketplace?.pendingSubmissions > 0 ? `${stats.marketplace.pendingSubmissions} Pending` : null}
             badgeTone="teal"
             accentBorder="hover:border-teal-200 hover:bg-teal-50/20"
           />

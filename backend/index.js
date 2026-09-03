@@ -171,6 +171,10 @@ app.use((req, res, next) => {
 // Connect MongoDB
 connectDB();
 
+// Marketplace: auto-approve overdue submissions + media-purge backstop,
+// on one shared 15-minute tick (see Routes/Marketplace/sweep.js).
+require("./Routes/Marketplace/sweep").startSweep();
+
 // Routes
 app.use("/api/v1", require("./Routes/index"));
 

@@ -6,6 +6,8 @@ import {
   XMarkIcon,
   HomeIcon,
   ClipboardDocumentListIcon,
+  ClipboardDocumentCheckIcon,
+  BriefcaseIcon,
   BanknotesIcon,
   CreditCardIcon,
   UserGroupIcon,
@@ -38,6 +40,9 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
   const navMenuItems = [
     { label: "ড্যাশবোর্ড", to: "/user/home", icon: HomeIcon },
     { label: "আমার টাস্ক", to: "/user/works", icon: ClipboardDocumentListIcon },
+    { label: "টাস্ক মার্কেটপ্লেস", to: "/user/tasks", icon: ClipboardDocumentCheckIcon },
+    { label: "আমার সাবমিশন", to: "/user/my-submissions", icon: ClipboardDocumentCheckIcon },
+    { label: "প্রোভাইডার টাস্ক", to: "/user/provider/tasks", icon: BriefcaseIcon },
     { label: "আমার আয়", to: "/user/earnings", icon: BanknotesIcon },
     { label: "উইথড্র", to: "/user/account/withdraw", icon: CreditCardIcon },
     { label: "পেমেন্ট গেটওয়ে", to: "/user/payment-gateway", icon: BanknotesIcon },

@@ -89,11 +89,11 @@ const Earnings = () => {
     enabled: !!user?._id,
   });
 
-  // 4. Fetch Social Work Submissions API
+  // 4. Fetch Task Marketplace Submissions API
   const { data: workSubmitsData } = useQuery({
     queryKey: ["user-work-submits", user?._id],
     queryFn: async () => {
-      const res = await api.get(`/social-works/submit/${user?._id}`);
+      const res = await api.get(`/tasks/my-submissions`);
       return Array.isArray(res.data) ? res.data : res.data?.data || [];
     },
     enabled: !!user?._id,
@@ -197,26 +197,27 @@ const Earnings = () => {
       });
     }
 
-    // Map submitted social works
+    // Map task marketplace submissions. `amount` is the worker's own net
+    // reward, snapshotted server-side at submit time — not looked through to
+    // the (possibly since-edited) task price.
     if (workSubmitsData && Array.isArray(workSubmitsData)) {
       workSubmitsData.forEach((ws) => {
-        const isCompleted = ws.status === "completed" || ws.status === "approved";
-        const isPending = ws.status === "pending";
-        const taskReward = Number(ws.amount || ws.workId?.reward || ws.workId?.amount || 20);
+        const isCompleted = ["APPROVED", "AUTO_APPROVED", "ADMIN_APPROVED"].includes(ws.status);
+        const isPending = ws.status === "PENDING" || ws.status === "REPORTED";
 
         list.push({
           id: ws._id,
           trxId: `TRX${String(ws._id).slice(-7).toUpperCase()}`,
           rawType: "task",
-          title: ws.workId?.title || "Task Completed",
-          amount: taskReward,
+          title: ws.task?.title || "Task Completed",
+          amount: Number(ws.amount || 0),
           flow: "credit",
           status: isCompleted ? "Credit" : isPending ? "Pending" : "Rejected",
           statusCode: isCompleted ? "success" : isPending ? "pending" : "rejected",
           createdAt: ws.createdAt,
-          updatedAt: ws.updatedAt,
-          taskTitle: ws.workId?.title,
-          image: ws.proofImage || ws.image,
+          updatedAt: ws.reviewedAt || ws.createdAt,
+          taskTitle: ws.task?.title,
+          image: ws.proof?.screenshots?.[0],
           user: user,
         });
       });

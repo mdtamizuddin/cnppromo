@@ -106,10 +106,10 @@ const trainingCourses = [
 const TRAINING_QUICK_ACTIONS = [
   {
     id: 1,
-    title: "ভিডিও লেসন",
-    subtitle: "দেখুন ও শিখুন",
+    title: "টাস্ক মার্কেটপ্লেস",
+    subtitle: "কাজ করুন ও আয় করুন",
     icon: PlayIcon,
-    to: "/user/social-works",
+    to: "/user/tasks",
     color: "#0D9488",
     bg: "bg-teal-50",
   },

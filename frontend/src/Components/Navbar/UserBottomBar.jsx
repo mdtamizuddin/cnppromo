@@ -16,7 +16,11 @@ const UserBottomBar = ({ onOpenMenu }) => {
     pathname === "/user/welcome" ||
     pathname === "/user" ||
     pathname === "/";
-  const isWorks = pathname.startsWith("/user/works");
+  const isWorks =
+    pathname.startsWith("/user/works") ||
+    pathname.startsWith("/user/tasks") ||
+    pathname.startsWith("/user/my-submissions") ||
+    pathname.startsWith("/user/provider");
   const isMessage =
     pathname === "/user/message" ||
     pathname === "/message" ||
@@ -71,9 +75,9 @@ const UserBottomBar = ({ onOpenMenu }) => {
       {/* 3. Center Earn Button (Raised gradient circular button) */}
       <div className="flex-1 flex justify-center -mt-6">
         <Link
-          to="/user/social-works"
+          to="/user/tasks"
           className="w-12 h-12 rounded-full bg-brand-gradient text-white flex items-center justify-center shadow-lg shadow-teal-500/40 hover:scale-110 active:scale-95 transition-all border-[3px] border-white"
-          title="Watch & Earn"
+          title="Task Marketplace"
         >
           <PlusIcon className="w-6 h-6 stroke-[2.8]" />
         </Link>

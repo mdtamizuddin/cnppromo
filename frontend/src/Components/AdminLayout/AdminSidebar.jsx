@@ -65,8 +65,16 @@ const sidebarData = [
     category: "WORK MANAGEMENT",
     items: [
       { label: "Works", icon: BriefcaseIcon, to: "/admin/works", color: "text-amber-500" },
-      { label: "Social Works", icon: ClipboardDocumentCheckIcon, to: "/admin/social-works", color: "text-teal-500" },
       { label: "Training", icon: AcademicCapIcon, to: "/admin/training", color: "text-violet-500" },
+    ]
+  },
+  {
+    category: "MARKETPLACE",
+    items: [
+      { label: "Tasks", icon: ClipboardDocumentCheckIcon, to: "/admin/marketplace", color: "text-teal-500" },
+      { label: "Submissions", icon: ClipboardDocumentCheckIcon, to: "/admin/marketplace/submissions", color: "text-blue-500" },
+      { label: "Reports", icon: NoSymbolIcon, to: "/admin/marketplace/reports", color: "text-red-500" },
+      { label: "Revenue", icon: ChartBarIcon, to: "/admin/marketplace/revenue", color: "text-emerald-500" },
     ]
   },
   {

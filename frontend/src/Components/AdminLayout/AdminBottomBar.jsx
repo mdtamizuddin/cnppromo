@@ -20,7 +20,7 @@ const AdminBottomBar = ({ toggleSidebar }) => {
     pathname.startsWith("/admin/banned-users");
   const isWorks =
     pathname.startsWith("/admin/works") ||
-    pathname.startsWith("/admin/social-works");
+    pathname.startsWith("/admin/marketplace");
   const isMessage = pathname.startsWith("/admin/message");
 
   return (

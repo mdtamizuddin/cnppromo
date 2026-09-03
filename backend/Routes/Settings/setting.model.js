@@ -95,7 +95,7 @@ const settingSchema = new mongoose.Schema({
     acAmm:{
         type: String
     },
-    
+
     withdraw: {
         type: Boolean,
         default: true
@@ -123,6 +123,36 @@ const settingSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         }
+    },
+    // Task marketplace config. NEVER returned by the public GET /setting
+    // endpoint (see getSetting.js) — commissionRate must stay invisible to
+    // workers. Read/written by admins through /tasks/admin/config instead.
+    marketplace: {
+        enabled: {
+            type: Boolean,
+            default: true
+        },
+        commissionRate: {
+            type: Number,
+            default: 10,
+            min: 0,
+            max: 90
+        },
+        autoApproveHours: {
+            type: Number,
+            default: 72,
+            min: 1
+        },
+        reportWindowHours: {
+            type: Number,
+            default: 72,
+            min: 0
+        },
+        maxAttempts: {
+            type: Number,
+            default: 2,
+            min: 1
+        },
     },
 }, {
     timestamps: true

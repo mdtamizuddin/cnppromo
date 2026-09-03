@@ -6,7 +6,8 @@ const User = require("../User/user.model");
 const Withdraw = require("../WithDraw/withdraw.model");
 const Topup = require("../TopUp/topup.model");
 const External = require("../external-withdraw/external.model");
-const { Work: SocialWork, WorkSubmit } = require("../social-works/work.model");
+const { MarketTask, TaskSubmission } = require("../Marketplace/task.model");
+const PlatformLedger = require("../Marketplace/ledger.model");
 
 // ─── In-memory TTL cache ──────────────────────────────────────────────────────
 // No external dependency (no Redis) needed — a single admin dashboard endpoint
@@ -85,7 +86,7 @@ async function _fetchStats() {
         withdrawFacet,
         topupFacet,
         externalCount,
-        socialFacet,
+        marketplaceFacet,
         recentWithdrawals,
         recentTopups,
         recentUsers,
@@ -189,11 +190,21 @@ async function _fetchStats() {
         // 4. External withdrawals pending count
         External.countDocuments({ status: "pending" }),
 
-        // 5. Social works — active count + pending submissions (run together)
+        // 5. Marketplace — pending moderation, active tasks, pending
+        //    submissions, open reports + platform revenue (run together)
         Promise.all([
-            SocialWork.countDocuments({ status: "active" }),
-            WorkSubmit.countDocuments({ status: "pending" }),
-        ]).then(([active, pendingSubmissions]) => ({ active, pendingSubmissions })),
+            MarketTask.countDocuments({ status: "PENDING_APPROVAL" }),
+            MarketTask.countDocuments({ status: "ACTIVE" }),
+            TaskSubmission.countDocuments({ status: "PENDING" }),
+            TaskSubmission.countDocuments({ status: "REPORTED" }),
+            PlatformLedger.aggregate([
+                { $match: { type: { $in: ["PLATFORM_FEE", "PROVIDER_FINE"] } } },
+                { $group: { _id: null, v: { $sum: "$amount" } } },
+            ]),
+        ]).then(([pendingApproval, active, pendingSubmissions, openReports, revenueFacet]) => ({
+            pendingApproval, active, pendingSubmissions, openReports,
+            revenue: revenueFacet[0]?.v || 0,
+        })),
 
         // 6. Recent withdrawals (with user info)  — .lean() avoids Mongoose hydration overhead
         Withdraw.find()
@@ -301,9 +312,12 @@ async function _fetchStats() {
             totalOutflow: totalWithdrawAmount,
             netBalance,
         },
-        socialWorks: {
-            active: socialFacet.active,
-            pendingSubmissions: socialFacet.pendingSubmissions,
+        marketplace: {
+            pendingApproval: marketplaceFacet.pendingApproval,
+            active: marketplaceFacet.active,
+            pendingSubmissions: marketplaceFacet.pendingSubmissions,
+            openReports: marketplaceFacet.openReports,
+            revenue: marketplaceFacet.revenue,
         },
         charts: {
             dailyEarnings,  // [{date, amount}] — last 15 days, no gaps (withdrawals)

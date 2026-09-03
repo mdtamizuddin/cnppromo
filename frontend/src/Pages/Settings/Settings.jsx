@@ -13,6 +13,7 @@ import {
   ArrowPathIcon,
   GiftIcon,
   ClockIcon,
+  ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
 import { api } from '../../util/axios';
 import toast from 'react-hot-toast';
@@ -40,6 +41,14 @@ const Settings = () => {
   const [notifyMsg, setNotifyMsg] = useState("");
   const [notifying, setNotifying] = useState(false);
 
+  // Marketplace config lives on a SEPARATE authenticated endpoint
+  // (/tasks/admin/config), never on the public /setting response — that is
+  // what keeps the commission rate from ever reaching a worker's browser.
+  // It therefore gets its own load/save cycle, independent of the tabs above.
+  const [marketplace, setMarketplaceState] = useState(null);
+  const [marketplaceInitial, setMarketplaceInitial] = useState(null);
+  const [marketplaceSaving, setMarketplaceSaving] = useState(false);
+
   useEffect(() => {
     (async () => {
       try {
@@ -53,7 +62,37 @@ const Settings = () => {
         setLoading(false);
       }
     })();
+    (async () => {
+      try {
+        const res = await api.get('tasks/admin/config');
+        setMarketplaceState(res.data || {});
+        setMarketplaceInitial(res.data || {});
+      } catch (error) {
+        // Non-fatal — the rest of the settings page still works.
+      }
+    })();
   }, []);
+
+  const marketplaceDirty = useMemo(
+    () => JSON.stringify(marketplace) !== JSON.stringify(marketplaceInitial),
+    [marketplace, marketplaceInitial]
+  );
+  const setMarketplace = (key, value) => setMarketplaceState((m) => ({ ...m, [key]: value }));
+
+  const saveMarketplace = async () => {
+    if (!marketplaceDirty) return;
+    try {
+      setMarketplaceSaving(true);
+      const res = await api.put('tasks/admin/config', marketplace);
+      setMarketplaceState(res.data);
+      setMarketplaceInitial(res.data);
+      toast.success("Marketplace settings updated");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error?.message || "Something went wrong");
+    } finally {
+      setMarketplaceSaving(false);
+    }
+  };
 
   const dirty = useMemo(
     () => JSON.stringify(settings) !== JSON.stringify(initial),
@@ -159,6 +198,7 @@ const Settings = () => {
     { key: "accounts", label: "Support Accounts", icon: PhoneIcon },
     { key: "links", label: "Community Links", icon: LinkIcon },
     { key: "bonus", label: "Bonus", icon: GiftIcon },
+    { key: "marketplace", label: "Marketplace", icon: ClipboardDocumentCheckIcon },
   ];
 
   return (
@@ -512,6 +552,57 @@ const Settings = () => {
                 </div>
               )}
             </div>
+          </div>
+        </TableCard>
+      )}
+
+      {/* ── MARKETPLACE ────────────────────────────────── */}
+      {activeTab === "marketplace" && (
+        <TableCard>
+          <div className="p-5 sm:p-6 space-y-5">
+            <SectionTitle icon={ClipboardDocumentCheckIcon} title="Task Marketplace"
+              subtitle="Commission rate and timing rules. Never exposed to the public /setting endpoint — workers and providers cannot see the rate." />
+
+            {!marketplace ? (
+              <p className="text-xs text-gray-400">Loading…</p>
+            ) : (
+              <>
+                <ToggleRow id="mp-enabled" label="Marketplace Enabled" checked={marketplace.enabled}
+                  onChange={(c) => setMarketplace("enabled", c)} />
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <InputFeild label="Commission Rate (%)" type="number" value={marketplace.commissionRate ?? ""}
+                    onChange={(e) => setMarketplace("commissionRate", Number(e.target.value))} variant="outlined" />
+                  <InputFeild label="Auto-Approve After (hours)" type="number" value={marketplace.autoApproveHours ?? ""}
+                    onChange={(e) => setMarketplace("autoApproveHours", Number(e.target.value))} variant="outlined" />
+                  <InputFeild label="Report Window (hours)" type="number" value={marketplace.reportWindowHours ?? ""}
+                    onChange={(e) => setMarketplace("reportWindowHours", Number(e.target.value))} variant="outlined" />
+                  <InputFeild label="Max Submission Attempts" type="number" value={marketplace.maxAttempts ?? ""}
+                    onChange={(e) => setMarketplace("maxAttempts", Number(e.target.value))} variant="outlined" />
+                </div>
+
+                <p className="text-[11px] text-gray-400">
+                  <ShieldCheckIcon className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
+                  Changing the commission rate only affects tasks created after the change — in-flight tasks keep the rate they were created with.
+                </p>
+
+                <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+                  <Button
+                    size="sm"
+                    onClick={saveMarketplace}
+                    disabled={!marketplaceDirty || marketplaceSaving}
+                    className={`normal-case text-xs font-bold px-5 py-2.5 rounded-xl shadow-md ${ACCENT.solid} ${ACCENT.shadow} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {marketplaceSaving ? "Saving…" : "Save Marketplace Settings"}
+                  </Button>
+                  {marketplaceDirty && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600">
+                      <ExclamationCircleIcon className="w-4 h-4" /> Unsaved changes
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </TableCard>
       )}

@@ -95,13 +95,13 @@ const WorksPage = () => {
               </Button>
             </Link>
 
-            <Link to="/user/social-works">
+            <Link to="/user/tasks">
               <Button
                 size="sm"
                 className="bg-gradient-to-r from-[#5a32fa] to-[#7c3aed] hover:from-[#4b26e0] hover:to-[#6d28d9] normal-case text-xs font-bold flex items-center gap-1.5 rounded-xl shadow-md shadow-indigo-500/25 text-white"
               >
                 <PlayCircleIcon className="w-4 h-4 text-white" />
-                <span>Watch to Earn</span>
+                <span>Task Marketplace</span>
               </Button>
             </Link>
           </div>
@@ -209,9 +209,9 @@ const WorksPage = () => {
                   অন্যান্য ক্যাটাগরি দেখুন
                 </Button>
               </Link>
-              <Link to="/user/social-works">
+              <Link to="/user/tasks">
                 <Button variant="outlined" className="border-gray-200 text-gray-700 normal-case text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-gray-50">
-                  Watch to Earn দেখুন
+                  টাস্ক মার্কেটপ্লেস দেখুন
                 </Button>
               </Link>
             </div>

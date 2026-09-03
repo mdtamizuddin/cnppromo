@@ -1,6 +1,6 @@
 /**
- * Pull the video id out of the common YouTube URL shapes so the admin tables can
- * show a thumbnail without loading the player.
+ * Pull the video id out of the common YouTube URL shapes. Used by the
+ * marketplace's WATCH gate player and by admin/feed thumbnails.
  */
 export const youtubeId = (url) => {
   if (!url) return null;

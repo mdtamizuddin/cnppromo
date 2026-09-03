@@ -8,7 +8,11 @@ const Withdraw = require("../WithDraw/withdraw.model");
 const User = require("./user.model");
 const Topup = require("../TopUp/topup.model");
 const Refer = require("../Refer/refer.model");
-const { WorkSubmit } = require("../social-works/work.model");
+const { TaskSubmission } = require("../Marketplace/task.model");
+
+// Statuses that represent a paid-out marketplace submission — used wherever
+// the old code checked WorkSubmit.status === "completed".
+const PAID_SUBMISSION_STATUSES = ["APPROVED", "AUTO_APPROVED", "ADMIN_APPROVED"];
 const bcrypt = require("bcrypt");
 const mailerService = require("../mailer/mailer");
 const sessionService = require("../Session/session.service");
@@ -898,28 +902,25 @@ const getMemberDashboard = async (req, res) => {
         chartStart.setDate(startOfToday.getDate() - 13); // 14-day window incl. today
 
         // ── Earnings (task rewards + referral commissions) ─────────────────────
-        // Task rewards: completed WorkSubmit → join SocialWork.price
+        // Task rewards: paid-out TaskSubmission.netAmount. This is a snapshot
+        // taken at submit time (see task.model.js), not a live join into the
+        // task's price — editing a task after the fact can never rewrite a
+        // worker's already-earned history the way the old SocialWork did.
         const [taskToday, taskMonth, taskChart, referToday, referMonth, referChart] = await Promise.all([
-            WorkSubmit.aggregate([
-                { $match: { userId, status: "completed", createdAt: { $gte: startOfToday } } },
-                { $lookup: { from: "socialworks", localField: "workId", foreignField: "_id", as: "w" } },
-                { $unwind: { path: "$w", preserveNullAndEmptyArrays: true } },
-                { $group: { _id: null, v: { $sum: { $ifNull: ["$w.price", 0] } } } }
+            TaskSubmission.aggregate([
+                { $match: { worker: userId, status: { $in: PAID_SUBMISSION_STATUSES }, createdAt: { $gte: startOfToday } } },
+                { $group: { _id: null, v: { $sum: "$netAmount" } } }
             ]),
-            WorkSubmit.aggregate([
-                { $match: { userId, status: "completed", createdAt: { $gte: startOfThisMonth } } },
-                { $lookup: { from: "socialworks", localField: "workId", foreignField: "_id", as: "w" } },
-                { $unwind: { path: "$w", preserveNullAndEmptyArrays: true } },
-                { $group: { _id: null, v: { $sum: { $ifNull: ["$w.price", 0] } } } }
+            TaskSubmission.aggregate([
+                { $match: { worker: userId, status: { $in: PAID_SUBMISSION_STATUSES }, createdAt: { $gte: startOfThisMonth } } },
+                { $group: { _id: null, v: { $sum: "$netAmount" } } }
             ]),
-            WorkSubmit.aggregate([
-                { $match: { userId, status: "completed", createdAt: { $gte: chartStart } } },
-                { $lookup: { from: "socialworks", localField: "workId", foreignField: "_id", as: "w" } },
-                { $unwind: { path: "$w", preserveNullAndEmptyArrays: true } },
+            TaskSubmission.aggregate([
+                { $match: { worker: userId, status: { $in: PAID_SUBMISSION_STATUSES }, createdAt: { $gte: chartStart } } },
                 {
                     $group: {
                         _id: { y: { $year: "$createdAt" }, m: { $month: "$createdAt" }, d: { $dayOfMonth: "$createdAt" } },
-                        v: { $sum: { $ifNull: ["$w.price", 0] } }
+                        v: { $sum: "$netAmount" }
                     }
                 },
                 { $sort: { "_id.y": 1, "_id.m": 1, "_id.d": 1 } }
@@ -978,8 +979,8 @@ const getMemberDashboard = async (req, res) => {
                     }
                 }
             ]),
-            WorkSubmit.aggregate([
-                { $match: { userId } },
+            TaskSubmission.aggregate([
+                { $match: { worker: userId } },
                 { $group: { _id: "$status", n: { $sum: 1 } } }
             ]),
             Withdraw.find({ user: userId }).sort({ createdAt: -1 }).limit(4).lean(),
@@ -996,11 +997,14 @@ const getMemberDashboard = async (req, res) => {
             : 100;
 
         const taskMap = Object.fromEntries(taskCounts.map(c => [c._id, c.n]));
+        const taskCompleted = PAID_SUBMISSION_STATUSES.reduce((sum, s) => sum + (taskMap[s] || 0), 0);
+        const taskPending = taskMap.PENDING || 0;
+        const taskRejected = taskMap.REJECTED || 0;
         const tasks = {
-            total: (taskMap.pending || 0) + (taskMap.completed || 0) + (taskMap.rejected || 0),
-            completed: taskMap.completed || 0,
-            pending: taskMap.pending || 0,
-            rejected: taskMap.rejected || 0,
+            total: taskPending + taskCompleted + taskRejected,
+            completed: taskCompleted,
+            pending: taskPending,
+            rejected: taskRejected,
         };
 
         // ── Bonus (global from Settings) ──────────────────────────────────────
@@ -1043,7 +1047,7 @@ const getMemberDashboard = async (req, res) => {
                 totalWithdrawn: wFacet.completedTotal[0]?.v || 0,
                 pendingWithdraw: wFacet.pendingTotal[0]?.v || 0,
                 successRate,
-                activeSubmissions: taskMap.pending || 0,
+                activeSubmissions: taskPending,
             },
             tasks,
             chart,

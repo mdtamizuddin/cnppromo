@@ -98,6 +98,51 @@ const sanitize = (input = {}) => {
         }
     }
 
+    // Marketplace: its own explicit block, like `bonus` above. The generic
+    // SAFE_NESTED loop coerces everything except ref_comm to String, which
+    // would silently destroy these numbers. Note this is defense-in-depth —
+    // the admin UI actually talks to the authenticated /tasks/admin/config
+    // endpoint, not this one, but PUT /setting is admin-only too, so a
+    // marketplace key sent here must not corrupt the document.
+    if (input.marketplace && typeof input.marketplace === "object") {
+        const m = input.marketplace;
+        const marketplace = {};
+        if (m.enabled !== undefined) {
+            marketplace.enabled = Boolean(m.enabled);
+        }
+        if (m.commissionRate !== undefined) {
+            const n = Number(m.commissionRate);
+            if (!Number.isFinite(n) || n < 0 || n > 90) {
+                throw new Error("Commission rate must be a number between 0 and 90");
+            }
+            marketplace.commissionRate = n;
+        }
+        if (m.autoApproveHours !== undefined) {
+            const n = Number(m.autoApproveHours);
+            if (!Number.isFinite(n) || n < 1) {
+                throw new Error("Auto-approve hours must be a positive number");
+            }
+            marketplace.autoApproveHours = n;
+        }
+        if (m.reportWindowHours !== undefined) {
+            const n = Number(m.reportWindowHours);
+            if (!Number.isFinite(n) || n < 0) {
+                throw new Error("Report window hours must be a non-negative number");
+            }
+            marketplace.reportWindowHours = n;
+        }
+        if (m.maxAttempts !== undefined) {
+            const n = Number(m.maxAttempts);
+            if (!Number.isFinite(n) || n < 1) {
+                throw new Error("Max attempts must be a positive number");
+            }
+            marketplace.maxAttempts = n;
+        }
+        if (Object.keys(marketplace).length) {
+            clean.marketplace = marketplace;
+        }
+    }
+
     return clean;
 };
 

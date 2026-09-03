@@ -116,6 +116,17 @@ async function uploadToS3(file, folder = '') {
   }
 }
 
+// Folders application code is allowed to upload into. Resolved through this
+// whitelist rather than interpolating the client's string into the S3 key —
+// a raw value there would be an arbitrary-prefix write. Task proofs get
+// their own prefix so an S3 retention/purge rule can target them without
+// touching permanent assets (site logo, gateway icons) that share this route.
+const ALLOWED_FOLDERS = new Set(['images', 'task-proofs', 'payment-proofs']);
+const resolveFolder = (req) => {
+  const requested = typeof req.body?.folder === 'string' ? req.body.folder : '';
+  return ALLOWED_FOLDERS.has(requested) ? requested : 'images';
+};
+
 // Upload Image to S3
 router.post('/', uploadImage.single('image'), async (req, res) => {
   try {
@@ -126,7 +137,7 @@ router.post('/', uploadImage.single('image'), async (req, res) => {
         message: 'No file uploaded',
       });
     }
-    const url = await uploadToS3(file, 'images');
+    const url = await uploadToS3(file, resolveFolder(req));
     res.json({
       success: true,
       message: 'Image uploaded successfully!',

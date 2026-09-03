@@ -33,11 +33,14 @@ const TopUp = lazyRetry(() => import("../Pages/Account/TopUp"));
 const Withdraw = lazyRetry(() => import("../Pages/Account/Withdraw"));
 const PaymentGateway = lazyRetry(() => import("../Pages/Account/PaymentGateway"));
 const Works = lazyRetry(() => import("../Pages/Admin/Works/Works"));
-const SocialWork = lazyRetry(() => import("../Pages/SocialWork/SocialWork"));
-const SocialWorkDetails = lazyRetry(() => import("../Pages/SocialWork/WorkDetails"));
 const WorkDetails = lazyRetry(() => import("../Pages/Admin/Works/WorkDetails"));
 const WorksPage = lazyRetry(() => import("../Pages/Admin/Works/WorksPage"));
-const WorkHistory = lazyRetry(() => import("../Pages/SocialWork/WorkHistory"));
+const TaskFeed = lazyRetry(() => import("../Pages/Marketplace/TaskFeed"));
+const TaskDetails = lazyRetry(() => import("../Pages/Marketplace/TaskDetails"));
+const MySubmissions = lazyRetry(() => import("../Pages/Marketplace/MySubmissions"));
+const CreateTask = lazyRetry(() => import("../Pages/Marketplace/CreateTask"));
+const ProviderTasks = lazyRetry(() => import("../Pages/Marketplace/ProviderTasks"));
+const ProviderSubmissions = lazyRetry(() => import("../Pages/Marketplace/ProviderSubmissions"));
 const UserSettings = lazyRetry(() => import("../Pages/Settings/UserSettings"));
 const Training = lazyRetry(() => import("../Pages/Training/Training"));
 const LoginDevices = lazyRetry(() => import("../Pages/Account/LoginDevices"));
@@ -124,12 +127,28 @@ export const userRoutes = [
     element: <AuthChecker><Lazy><Works /></Lazy></AuthChecker>,
   },
   {
-    path: "social-works",
-    element: <AuthChecker><Lazy><SocialWork /></Lazy></AuthChecker>,
+    path: "tasks",
+    element: <AuthChecker requireActive={true}><Lazy><TaskFeed /></Lazy></AuthChecker>,
   },
   {
-    path: "social-works/:id",
-    element: <AuthChecker><Lazy><SocialWorkDetails /></Lazy></AuthChecker>,
+    path: "tasks/:id",
+    element: <AuthChecker requireActive={true}><Lazy><TaskDetails /></Lazy></AuthChecker>,
+  },
+  {
+    path: "my-submissions",
+    element: <AuthChecker requireActive={true}><Lazy><MySubmissions /></Lazy></AuthChecker>,
+  },
+  {
+    path: "provider/tasks",
+    element: <AuthChecker requireActive={true}><Lazy><ProviderTasks /></Lazy></AuthChecker>,
+  },
+  {
+    path: "provider/tasks/new",
+    element: <AuthChecker requireActive={true}><Lazy><CreateTask /></Lazy></AuthChecker>,
+  },
+  {
+    path: "provider/tasks/:id",
+    element: <AuthChecker requireActive={true}><Lazy><ProviderSubmissions /></Lazy></AuthChecker>,
   },
   {
     path: "works/:id",
@@ -138,10 +157,6 @@ export const userRoutes = [
   {
     path: "works/category/:id",
     element: <AuthChecker><Lazy><WorksPage /></Lazy></AuthChecker>,
-  },
-  {
-    path: "work-history",
-    element: <AuthChecker><Lazy><WorkHistory /></Lazy></AuthChecker>,
   },
   {
     path: "settings",

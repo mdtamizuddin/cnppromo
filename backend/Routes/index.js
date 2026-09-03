@@ -12,7 +12,7 @@ router.use('/refer', authChecker, activeChecker, require('./Refer/refer.controll
 router.use('/message', authChecker, activeChecker, require('./message/message.controller'))
 router.use('/upload', authChecker, activeChecker, require('./uploadFile'))
 router.use('/external-withdraw', authChecker, activeChecker, require('./external-withdraw/external.controllar'))
-router.use("/social-works", authChecker, activeChecker, require("./social-works/work.controller"));
+router.use("/tasks", authChecker, activeChecker, require("./Marketplace/task.controller"));
 router.use("/training", authChecker, activeChecker, require("./Training/training.controller"));
 router.use("/dashboard", authChecker, activeChecker, require("./Dashboard/dashboard.controller"));
 router.use("/session", require("./Session/session.controller"));

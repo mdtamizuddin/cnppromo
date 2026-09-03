@@ -16,7 +16,7 @@ const items = [
   { label: "Account", icon: CurrencyBangladeshiIcon, to: "/user/account" },
   { label: "Message", icon: EnvelopeIcon, to: "/user/message" },
   { label: "Settings", icon: Cog6ToothIcon, to: "/user/settings" },
-  { label: "Work History", icon: UserCircleIcon, to: "/user/work-history" },
+  { label: "My Submissions", icon: UserCircleIcon, to: "/user/my-submissions" },
 ];
 
 const ProfileMenu = ({ user }) => {

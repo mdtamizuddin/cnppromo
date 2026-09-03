@@ -312,7 +312,7 @@ const QuickActionFormModal = ({ editData, onClose, onSuccess }) => {
           <Field label="Title" required value={form.title} onChange={set("title")} placeholder="Video Lessons" />
           <Field label="Subtitle" value={form.subtitle} onChange={set("subtitle")} placeholder="Watch & learn" />
         </div>
-        <Field label="Link (to)" value={form.to} onChange={set("to")} placeholder="/user/social-works" />
+        <Field label="Link (to)" value={form.to} onChange={set("to")} placeholder="/user/tasks" />
         <Field label="Icon key" value={form.icon} onChange={set("icon")} placeholder="play | document | lightbulb | chat | shield | sparkles | video" />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
           <Field label="Color (hex)" value={form.color} onChange={set("color")} placeholder="#5a32fa" />
