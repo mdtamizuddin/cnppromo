@@ -71,13 +71,6 @@ export async function uploadAudioToS3(file, onProgress, folder = 'audio') {
 }
 
 /**
- * Convenience helper for all document uploads (PDF, DOCX, XLSX, TXT, ZIP, etc.)
- */
-export async function uploadDocumentToS3(file, onProgress, folder = 'documents') {
-  return uploadDirectToS3(file, folder, onProgress);
-}
-
-/**
- * Alias for universal file uploads
+ * Alias for media uploads
  */
 export const uploadFileToS3 = uploadDirectToS3;

@@ -104,25 +104,6 @@ const MIME_BY_EXT = {
   aiff: 'audio/aiff',
   alac: 'audio/alac',
   amr: 'audio/amr',
-  // Documents & PDFs
-  pdf: 'application/pdf',
-  doc: 'application/msword',
-  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  xls: 'application/vnd.ms-excel',
-  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  ppt: 'application/vnd.ms-powerpoint',
-  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  csv: 'text/csv',
-  txt: 'text/plain',
-  rtf: 'application/rtf',
-  // Archives & Data
-  zip: 'application/zip',
-  rar: 'application/x-rar-compressed',
-  '7z': 'application/x-7z-compressed',
-  tar: 'application/x-tar',
-  gz: 'application/gzip',
-  json: 'application/json',
-  xml: 'application/xml',
 };
 
 // Helper to build dynamic time-partitioned folder: e.g. "message/image/september-2026"
@@ -139,6 +120,7 @@ function getDynamicFolderPath(folder = 'uploads') {
 /**
  * POST /api/v1/upload/presign
  * Generates a signed AWS S3 PUT URL for direct frontend uploads.
+ * Allowed: Images, Videos, Audios only.
  * Body: { fileName, fileType, folder }
  */
 router.post('/presign', async (req, res) => {
@@ -157,6 +139,21 @@ router.post('/presign', async (req, res) => {
     if (!contentType || contentType === 'application/octet-stream') {
       const ext = path.extname(fileName).toLowerCase().replace('.', '');
       contentType = MIME_BY_EXT[ext] || fileType || 'application/octet-stream';
+    }
+
+    // Strictly validate that the file is an image, video, or audio
+    const isAllowedMedia = contentType && (
+      contentType.startsWith('image/') ||
+      contentType.startsWith('video/') ||
+      contentType.startsWith('audio/') ||
+      contentType === 'application/x-matroska'
+    );
+
+    if (!isAllowedMedia) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid file type. Only image, video, and audio files are allowed.'
+      });
     }
 
     const dynamicFolder = getDynamicFolderPath(folder);
