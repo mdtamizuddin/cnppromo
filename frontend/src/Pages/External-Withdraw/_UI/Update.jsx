@@ -82,7 +82,12 @@ const Update = ({ show, setShow, data: oldData, refetch }) => {
         >
           <Form.Item label="Submit Video">
             {publicUrl && (
-              <video src={publicUrl} controls width={300} className="mb-2" />
+              <video
+                src={publicUrl}
+                controls
+                className="w-[300px] max-w-full h-auto rounded-lg block mb-2"
+                playsInline
+              />
             )}
             <Input
               type="file"
@@ -93,7 +98,7 @@ const Update = ({ show, setShow, data: oldData, refetch }) => {
           {/* And Screenshoot */}
           <Form.Item label="Submit Screenshot">
             {imageUrl && (
-              <Image src={imageUrl} alt="File" width={300} className="mb-2" />
+              <Image src={imageUrl} alt="File" width={300} className="rounded-lg mb-2" />
             )}
             <Input
               type="file"

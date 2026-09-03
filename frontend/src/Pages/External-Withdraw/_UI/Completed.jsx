@@ -65,9 +65,14 @@ const Pending = () => {
           expandedRowRender: (record) => (
             <div>
               {record?.video && (
-                <video width={300} src={record?.video} controls />
+                <video
+                  src={record?.video}
+                  controls
+                  className="w-[300px] max-w-full h-auto rounded-lg block mb-2"
+                  playsInline
+                />
               )}
-              {record?.image && <Image width={300} src={record?.image} />}
+              {record?.image && <Image width={300} src={record?.image} className="rounded-lg" />}
               {!record?.video && !record?.image && "No Document"}
             </div>
           ),
