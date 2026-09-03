@@ -20,6 +20,7 @@ import {
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import { api } from "../../../util/axios";
+import { uploadImageToS3 } from "../../../util/s3Upload";
 import Loader from "../../../Components/Loader";
 import DeleteConfirmModal from "../../../Components/DeleteConfirmModal";
 
@@ -59,30 +60,21 @@ const AdminPaymentProofs = () => {
     },
   });
 
-  // 2. Upload image to S3
+  // 2. Upload image directly to S3 via Presigned URL
   const handleImageFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const formData = new FormData();
-    formData.append("image", file);
 
     setIsUploading(true);
     const loadingToast = toast.loading("Uploading screenshot to S3...");
 
     try {
-      const res = await api.post("/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      if (res.data?.url) {
-        setImageUrl(res.data.url);
-        toast.success("Image uploaded to S3 successfully!", { id: loadingToast });
-      } else {
-        toast.error("Failed to retrieve uploaded image URL", { id: loadingToast });
-      }
+      const url = await uploadImageToS3(file);
+      setImageUrl(url);
+      toast.success("Image uploaded to S3 successfully!", { id: loadingToast });
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.message || "Error uploading image to S3", {
+      toast.error(err?.message || "Error uploading image to S3", {
         id: loadingToast,
       });
     } finally {

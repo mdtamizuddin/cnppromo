@@ -4,6 +4,9 @@ const EMAIL_FROM = process.env.EMAIL_FROM || process.env.EMAIL_ADDRESS || 'suppo
 const CLIENT_URL = process.env.CLIENT_URL || 'https://cnppromo.com';
 
 const sendResetCode = async (email, code) => {
+    if (!email) {
+        throw new Error("No recipient email address specified");
+    }
     try {
         const mail = await transporter.sendMail({
             from: `"CNP-PROMO Support" <${EMAIL_FROM}>`,

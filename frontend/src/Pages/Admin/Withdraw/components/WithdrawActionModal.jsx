@@ -4,6 +4,7 @@ import { XMarkIcon, DocumentDuplicateIcon, CheckCircleIcon, XCircleIcon, PhotoIc
 import toast from "react-hot-toast";
 import moment from "moment";
 import { api } from "../../../../util/axios";
+import { uploadImageToS3 } from "../../../../util/s3Upload";
 import logoProvider from "../../Users/_Ui/logoProvider";
 import { Image } from "antd"
 const WithdrawActionModal = ({ withdraw, onClose, refetch }) => {
@@ -49,13 +50,11 @@ const WithdrawActionModal = ({ withdraw, onClose, refetch }) => {
   const handleApprove = async () => {
     if (image) {
       setLoading(true);
-      const formData = new FormData();
-      formData.append("image", image);
       try {
-        const res = await api.post("/upload", formData);
-        await actionHandler("completed", res.data.url);
+        const imageUrl = await uploadImageToS3(image);
+        await actionHandler("completed", imageUrl);
       } catch (error) {
-        toast.error(error?.response?.data?.message || error?.message || "Image upload failed");
+        toast.error(error?.message || "Image upload failed");
         setLoading(false);
       }
     } else {

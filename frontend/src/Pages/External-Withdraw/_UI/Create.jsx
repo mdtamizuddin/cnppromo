@@ -8,6 +8,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { api } from "../../../util/axios";
+import { uploadImageToS3, uploadVideoToS3 } from "../../../util/s3Upload";
 import { Spin } from "antd";
 
 const Create = ({ setStep }) => {
@@ -44,16 +45,10 @@ const Create = ({ setStep }) => {
       let video;
       let imageLink;
       if (file) {
-        const data = new FormData();
-        data.append("image", file);
-        const res = await api.post("/upload", data);
-        video = res.data.url;
+        video = await uploadVideoToS3(file);
       }
       if (image) {
-        const data = new FormData();
-        data.append("image", image);
-        const res = await api.post("/upload", data);
-        imageLink = res.data.url;
+        imageLink = await uploadImageToS3(image);
       }
       const data = {
         video,

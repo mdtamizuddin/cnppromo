@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { api } from "../../../util/axios";
+import { uploadImageToS3, uploadVideoToS3 } from "../../../util/s3Upload";
 import toast from "react-hot-toast";
 
 const Update = ({ show, setShow, data: oldData, refetch }) => {
@@ -39,16 +40,10 @@ const Update = ({ show, setShow, data: oldData, refetch }) => {
       let video;
       let imageLink;
       if (file) {
-        const data = new FormData();
-        data.append("image", file);
-        const res = await api.post("/upload", data);
-        video = res.data.url;
+        video = await uploadVideoToS3(file);
       }
       if (image) {
-        const data = new FormData();
-        data.append("image", image);
-        const res = await api.post("/upload", data);
-        imageLink = res.data.url;
+        imageLink = await uploadImageToS3(image);
       }
       const data = {
         video: video || oldData?.video,

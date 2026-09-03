@@ -13,6 +13,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { api } from "../../util/axios";
+import { uploadImageToS3, uploadVideoToS3, uploadAudioToS3 } from "../../util/s3Upload";
 import { useSocketContext } from "../../Components/SocketContext";
 
 const MAX_ROWS_PX = 132; // roughly six lines before the field starts scrolling
@@ -122,12 +123,10 @@ const Composer = ({ socket, chat, reply, setReply }) => {
     if (!file || !connected) return;
     try {
       setUploading("image");
-      const form = new FormData();
-      form.append("image", file);
-      const res = await api.post("/upload", form);
-      emit({ image: res.data.url });
-    } catch {
-      toast.error("Could not send the photo");
+      const url = await uploadImageToS3(file);
+      emit({ image: url });
+    } catch (err) {
+      toast.error(err?.message || "Could not send the photo");
     } finally {
       setUploading(null);
     }
@@ -137,17 +136,12 @@ const Composer = ({ socket, chat, reply, setReply }) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (!file.type.includes("video")) {
-      return toast.error("Pick a video file (MP4, WebM or Ogg)");
-    }
     try {
       setUploading("video");
-      const form = new FormData();
-      form.append("video", file);
-      const res = await api.post("/upload/video", form);
-      emit({ video: res.data.url });
-    } catch {
-      toast.error("Could not send the video");
+      const url = await uploadVideoToS3(file);
+      emit({ video: url });
+    } catch (err) {
+      toast.error(err?.message || "Could not send the video");
     } finally {
       setUploading(null);
     }
@@ -186,16 +180,12 @@ const Composer = ({ socket, chat, reply, setReply }) => {
     if (!audioBlob) return;
     try {
       setUploading("audio");
-      const form = new FormData();
-      form.append("audio", audioBlob, "recording.wav");
-      const res = await api.post("/upload/file", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      emit({ audio: res.data.url });
+      const url = await uploadAudioToS3(audioBlob);
+      emit({ audio: url });
       setAudioBlob(null);
       setRecordLength(0);
-    } catch {
-      toast.error("Could not send the voice message");
+    } catch (err) {
+      toast.error(err?.message || "Could not send the voice message");
     } finally {
       setUploading(null);
     }

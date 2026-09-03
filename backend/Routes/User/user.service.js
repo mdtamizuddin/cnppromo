@@ -1083,6 +1083,11 @@ const resetPassword = async (req, res) => {
                 message: "User not found"
             });
         }
+        if (!user.email) {
+            return res.status(400).send({
+                message: "This account does not have a registered email address. Please contact support."
+            });
+        }
         const code = Math.floor(100000 + Math.random() * 900000);
         const toke = jwt.sign({
             id: user._id,
