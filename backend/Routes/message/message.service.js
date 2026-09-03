@@ -2,6 +2,7 @@ const Chat = require("./chat.model")
 const Message = require("./message.model")
 const mongoose = require('mongoose')
 const fs = require('fs')
+const { deleteFromS3 } = require("../../util/s3")
 const createMessage = async (data) => {
     try {
         const newMessage = new Message({
@@ -383,12 +384,17 @@ const deleteMessage = async (id) => {
             throw new Error("Message not found")
         }
 
-        if (message.audio) {
-            const pathF = message.audio.split('xyz/')[1]
-            if (fs.existsSync(pathF)) {
-                fs.unlinkSync(pathF)
-            }
+        // Clean up any files from AWS S3
+        if (message.image) {
+            await deleteFromS3(message.image);
         }
+        if (message.video) {
+            await deleteFromS3(message.video);
+        }
+        if (message.audio) {
+            await deleteFromS3(message.audio);
+        }
+
         const data = await Message.findByIdAndDelete(id)
         return {
             message: "Message deleted successfully"

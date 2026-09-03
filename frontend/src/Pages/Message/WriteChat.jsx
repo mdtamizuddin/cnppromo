@@ -15,6 +15,7 @@ import {
 import { api } from "../../util/axios";
 import { uploadImageToS3, uploadVideoToS3, uploadAudioToS3 } from "../../util/s3Upload";
 import { useSocketContext } from "../../Components/SocketContext";
+import UploadModal from "../../Components/UploadModal";
 
 const MAX_ROWS_PX = 132; // roughly six lines before the field starts scrolling
 
@@ -22,6 +23,13 @@ const Composer = ({ socket, chat, reply, setReply }) => {
   const { connected } = useSocketContext();
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(null); // 'image' | 'video' | null
+  const [uploadModal, setUploadModal] = useState({
+    isOpen: false,
+    fileName: "",
+    fileType: "image",
+    progress: 0,
+    statusText: "",
+  });
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
   const [recordLength, setRecordLength] = useState(0);
@@ -123,9 +131,31 @@ const Composer = ({ socket, chat, reply, setReply }) => {
     if (!file || !connected) return;
     try {
       setUploading("image");
-      const url = await uploadImageToS3(file, null, "message/image");
+      setUploadModal({
+        isOpen: true,
+        fileName: file.name,
+        fileType: "image",
+        progress: 10,
+        statusText: "Optimizing image...",
+      });
+
+      const url = await uploadImageToS3(
+        file,
+        (percent) => {
+          setUploadModal((prev) => ({
+            ...prev,
+            progress: percent,
+            statusText: percent < 100 ? `Uploading to cloud (${percent}%)...` : "Finalizing...",
+          }));
+        },
+        "message/image"
+      );
+
+      setUploadModal((prev) => ({ ...prev, progress: 100, statusText: "Upload complete!" }));
+      setTimeout(() => setUploadModal((prev) => ({ ...prev, isOpen: false })), 400);
       emit({ image: url });
     } catch (err) {
+      setUploadModal((prev) => ({ ...prev, isOpen: false }));
       toast.error(err?.message || "Could not send the photo");
     } finally {
       setUploading(null);
@@ -138,9 +168,31 @@ const Composer = ({ socket, chat, reply, setReply }) => {
     if (!file) return;
     try {
       setUploading("video");
-      const url = await uploadVideoToS3(file, null, "message/video");
+      setUploadModal({
+        isOpen: true,
+        fileName: file.name,
+        fileType: "video",
+        progress: 5,
+        statusText: "Preparing video...",
+      });
+
+      const url = await uploadVideoToS3(
+        file,
+        (percent) => {
+          setUploadModal((prev) => ({
+            ...prev,
+            progress: percent,
+            statusText: percent < 100 ? `Uploading video (${percent}%)...` : "Finalizing...",
+          }));
+        },
+        "message/video"
+      );
+
+      setUploadModal((prev) => ({ ...prev, progress: 100, statusText: "Upload complete!" }));
+      setTimeout(() => setUploadModal((prev) => ({ ...prev, isOpen: false })), 400);
       emit({ video: url });
     } catch (err) {
+      setUploadModal((prev) => ({ ...prev, isOpen: false }));
       toast.error(err?.message || "Could not send the video");
     } finally {
       setUploading(null);
@@ -180,11 +232,33 @@ const Composer = ({ socket, chat, reply, setReply }) => {
     if (!audioBlob) return;
     try {
       setUploading("audio");
-      const url = await uploadAudioToS3(audioBlob, null, "message/voice");
+      setUploadModal({
+        isOpen: true,
+        fileName: "Voice recording",
+        fileType: "audio",
+        progress: 15,
+        statusText: "Uploading audio note...",
+      });
+
+      const url = await uploadAudioToS3(
+        audioBlob,
+        (percent) => {
+          setUploadModal((prev) => ({
+            ...prev,
+            progress: percent,
+            statusText: `Uploading voice (${percent}%)...`,
+          }));
+        },
+        "message/voice"
+      );
+
+      setUploadModal((prev) => ({ ...prev, progress: 100, statusText: "Upload complete!" }));
+      setTimeout(() => setUploadModal((prev) => ({ ...prev, isOpen: false })), 400);
       emit({ audio: url });
       setAudioBlob(null);
       setRecordLength(0);
     } catch (err) {
+      setUploadModal((prev) => ({ ...prev, isOpen: false }));
       toast.error(err?.message || "Could not send the voice message");
     } finally {
       setUploading(null);
@@ -371,6 +445,9 @@ const Composer = ({ socket, chat, reply, setReply }) => {
           )}
         </button>
       </form>
+
+      {/* Modern Upload Progress Modal */}
+      <UploadModal {...uploadModal} />
     </div>
   );
 };

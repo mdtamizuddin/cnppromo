@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import { api } from "../../../util/axios";
 import { uploadImageToS3, uploadVideoToS3 } from "../../../util/s3Upload";
 import { Spin } from "antd";
+import UploadModal from "../../../Components/UploadModal";
 
 const Create = ({ setStep }) => {
   const { user } = useSelector((state) => state.user);
@@ -18,6 +19,14 @@ const Create = ({ setStep }) => {
   const [image, setImage] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadModal, setUploadModal] = useState({
+    isOpen: false,
+    fileName: "",
+    fileType: "file",
+    progress: 0,
+    statusText: "",
+  });
+
   useEffect(() => {
     if (file) {
       const objectUrl = URL.createObjectURL(file);
@@ -36,6 +45,7 @@ const Create = ({ setStep }) => {
       };
     }
   }, [image]);
+
   const submitHandler = async (e) => {
     if (!image && !file) {
       return toast.error("Please upload a video or screenshot");
@@ -44,12 +54,52 @@ const Create = ({ setStep }) => {
       setIsLoading(true);
       let video;
       let imageLink;
+
       if (file) {
-        video = await uploadVideoToS3(file, null, "external-withdraw/video");
+        setUploadModal({
+          isOpen: true,
+          fileName: file.name,
+          fileType: "video",
+          progress: 5,
+          statusText: "Uploading video proof...",
+        });
+        video = await uploadVideoToS3(
+          file,
+          (percent) => {
+            setUploadModal((prev) => ({
+              ...prev,
+              progress: percent,
+              statusText: `Uploading video (${percent}%)...`,
+            }));
+          },
+          "external-withdraw/video"
+        );
       }
+
       if (image) {
-        imageLink = await uploadImageToS3(image, null, "external-withdraw/image");
+        setUploadModal({
+          isOpen: true,
+          fileName: image.name,
+          fileType: "image",
+          progress: 10,
+          statusText: "Optimizing & uploading screenshot...",
+        });
+        imageLink = await uploadImageToS3(
+          image,
+          (percent) => {
+            setUploadModal((prev) => ({
+              ...prev,
+              progress: percent,
+              statusText: `Uploading image (${percent}%)...`,
+            }));
+          },
+          "external-withdraw/image"
+        );
       }
+
+      setUploadModal((prev) => ({ ...prev, progress: 100, statusText: "Finalizing..." }));
+      setTimeout(() => setUploadModal((prev) => ({ ...prev, isOpen: false })), 400);
+
       const data = {
         video,
         image: imageLink,
@@ -64,6 +114,7 @@ const Create = ({ setStep }) => {
       setIsLoading(false);
       setStep("2");
     } catch (error) {
+      setUploadModal((prev) => ({ ...prev, isOpen: false }));
       setIsLoading(false);
       toast.error(
         error?.response?.data?.message ||
@@ -117,6 +168,7 @@ const Create = ({ setStep }) => {
           <Button htmlType="submit">Submit</Button>
         </Form.Item>
       </Form>
+      <UploadModal {...uploadModal} />
     </div>
   );
 };
