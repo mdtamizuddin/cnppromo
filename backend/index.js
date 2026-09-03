@@ -441,7 +441,7 @@ io.on("connection", async (socket) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  const statusCode = err.status || err.statusCode || (err.name === 'MulterError' ? 400 : 500);
+  const statusCode = err.status || err.statusCode || 500;
   if (statusCode < 500) {
     return res.status(statusCode).json({
       success: false,

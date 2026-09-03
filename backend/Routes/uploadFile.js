@@ -1,18 +1,15 @@
 const { Router } = require('express');
-const multer = require('multer');
 const AWS = require("@aws-sdk/client-s3");
 const { S3Client, PutObjectCommand } = AWS;
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { v4: uuidv4 } = require('uuid');
 const mongoose = require('mongoose');
 const path = require('path');
-const fs = require('fs');
 const https = require('https');
 const { NodeHttpHandler } = require('@aws-sdk/node-http-handler');
-const { tmpdir } = require('os');
 const router = Router();
 
-// MongoDB schema
+// MongoDB File schema for tracking uploaded file records
 const schema = new mongoose.Schema({
   info: {
     type: Object,
@@ -105,6 +102,8 @@ const MIME_BY_EXT = {
   mid: 'audio/midi',
   midi: 'audio/midi',
   aiff: 'audio/aiff',
+  alac: 'audio/alac',
+  amr: 'audio/amr',
   // Documents & PDFs
   pdf: 'application/pdf',
   doc: 'application/msword',
@@ -116,7 +115,7 @@ const MIME_BY_EXT = {
   csv: 'text/csv',
   txt: 'text/plain',
   rtf: 'application/rtf',
-  // Archives
+  // Archives & Data
   zip: 'application/zip',
   rar: 'application/x-rar-compressed',
   '7z': 'application/x-7z-compressed',
@@ -124,80 +123,6 @@ const MIME_BY_EXT = {
   gz: 'application/gzip',
   json: 'application/json',
   xml: 'application/xml',
-};
-
-const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|gif|avif|svg|bmp|tiff?|ico|heic|heif|jfif|pjpeg|pjp|raw|cr2|nef|orf|sr2|eps)$/i;
-const VIDEO_EXTENSIONS = /\.(mp4|webm|mkv|mov|avi|wmv|flv|m4v|3gp|3g2|ogv|ts|mts|m2ts|vob|qt|asf|mpe?g|m2v|rm|rmvb)$/i;
-const AUDIO_EXTENSIONS = /\.(mp3|wav|ogg|m4a|aac|flac|wma|opus|mid|midi|aiff|alac|amr)$/i;
-
-// Multer Storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, tmpdir()),
-  filename: (req, file, cb) => {
-    const sanitized = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
-    cb(null, `${Date.now()}_${uuidv4()}_${sanitized}`);
-  }
-});
-
-// Multer instance for all image uploads
-const uploadImage = multer({
-  storage,
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
-  fileFilter: (req, file, cb) => {
-    const isImageMime = file.mimetype && file.mimetype.startsWith('image/');
-    const isImageExt = IMAGE_EXTENSIONS.test(file.originalname);
-    if (isImageMime || isImageExt) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid image file type. Please upload a valid image file.'));
-    }
-  }
-});
-
-// Multer instance for all audio uploads
-const uploadAudio = multer({
-  storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-  fileFilter: (req, file, cb) => {
-    const isAudioMime = file.mimetype && file.mimetype.startsWith('audio/');
-    const isAudioExt = AUDIO_EXTENSIONS.test(file.originalname);
-    if (isAudioMime || isAudioExt) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid audio file type. Please upload a valid audio file.'));
-    }
-  }
-});
-
-// Multer instance for all video uploads
-const uploadVideo = multer({
-  storage,
-  limits: { fileSize: 200 * 1024 * 1024 }, // 200MB
-  fileFilter: (req, file, cb) => {
-    const isVideoMime = file.mimetype && (file.mimetype.startsWith('video/') || file.mimetype === 'application/x-matroska');
-    const isVideoExt = VIDEO_EXTENSIONS.test(file.originalname);
-    if (isVideoMime || isVideoExt) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid video file type. Please upload a valid video file.'));
-    }
-  }
-});
-
-// Middleware wrapper to catch Multer errors cleanly and return 400
-const handleUpload = (multerMiddleware) => (req, res, next) => {
-  multerMiddleware(req, res, (err) => {
-    if (err) {
-      if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({ success: false, message: 'File is too large.' });
-        }
-        return res.status(400).json({ success: false, message: err.message });
-      }
-      return res.status(400).json({ success: false, message: err.message || 'File upload error' });
-    }
-    next();
-  });
 };
 
 // Helper to build dynamic time-partitioned folder: e.g. "message/image/september-2026"
@@ -211,105 +136,11 @@ function getDynamicFolderPath(folder = 'uploads') {
   return `${cleanFolder}/${monthYear}`;
 }
 
-// Upload file to S3 helper with cleanup
-async function uploadToS3(file, folder = '') {
-  const dynamicFolder = getDynamicFolderPath(folder);
-  const sanitizedName = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
-  const key = `${dynamicFolder}/${uuidv4()}_${sanitizedName}`;
-  const buffer = await fs.promises.readFile(file.path);
-
-  // Resolve accurate ContentType if browser sent application/octet-stream or empty
-  let contentType = file.mimetype;
-  if (!contentType || contentType === 'application/octet-stream') {
-    const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
-    contentType = MIME_BY_EXT[ext] || file.mimetype || 'application/octet-stream';
-  }
-
-  try {
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-        Body: buffer,
-        ContentType: contentType,
-      })
-    );
-    return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${key}`;
-  } finally {
-    // Clean up temporary file from disk
-    fs.promises.unlink(file.path).catch(() => {});
-  }
-}
-
-// Upload Image to S3
-router.post('/', handleUpload(uploadImage.single('image')), async (req, res) => {
-  try {
-    const file = req.file;
-    if (!file) {
-      return res.status(400).send({
-        success: false,
-        message: 'No file uploaded',
-      });
-    }
-    const url = await uploadToS3(file, 'images');
-    res.json({
-      success: true,
-      message: 'Image uploaded successfully!',
-      url,
-    });
-  } catch (error) {
-    console.error("Image upload error:", error);
-    res.status(500).send({
-      success: false,
-      message: 'Error uploading image',
-      error: error.message
-    });
-  }
-});
-
-// Upload Audio to S3
-router.post('/file', handleUpload(uploadAudio.single('audio')), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).send({ message: 'No audio file provided' });
-    }
-    const url = await uploadToS3(req.file, 'audio');
-
-    await File.create({
-      info: req.file,
-      path: url,
-      type: req.file.fieldname
-    });
-
-    res.status(200).send({ message: 'Audio uploaded successfully', url });
-  } catch (error) {
-    console.error("Audio upload error:", error);
-    res.status(500).send({ message: 'Upload failed', error: error.message });
-  }
-});
-
-// Upload Video to S3
-router.post('/video', handleUpload(uploadVideo.single('video')), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).send({ message: 'No video file provided' });
-    }
-    const url = await uploadToS3(req.file, 'videos');
-
-    await File.create({
-      info: req.file,
-      path: url,
-      type: req.file.fieldname
-    });
-
-    res.status(200).send({ message: 'Video uploaded successfully', url });
-  } catch (error) {
-    console.error("Video upload error:", error);
-    res.status(500).send({ message: 'Upload failed', error: error.message });
-  }
-});
-
-// Generate Presigned S3 Upload URL for direct frontend uploads
+/**
+ * POST /api/v1/upload/presign
+ * Generates a signed AWS S3 PUT URL for direct frontend uploads.
+ * Body: { fileName, fileType, folder }
+ */
 router.post('/presign', async (req, res) => {
   try {
     const { fileName, fileType, folder = 'uploads' } = req.body;
@@ -360,7 +191,11 @@ router.post('/presign', async (req, res) => {
   }
 });
 
-// Optional record creation after direct S3 upload
+/**
+ * POST /api/v1/upload/record
+ * Optional helper to persist uploaded file metadata in MongoDB.
+ * Body: { path, type, info }
+ */
 router.post('/record', async (req, res) => {
   try {
     const { path: fileUrl, type = 'file', info = {} } = req.body;
