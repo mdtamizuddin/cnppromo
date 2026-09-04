@@ -94,12 +94,12 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
   const handleApprove = async () => {
     try {
       setLoading(true);
-      await api.put(`/user/${user._id}`, { status: "active" });
+      await api.put(`/user/active/${user._id}`);
       toast.success("User is now active");
       refetch();
       onClose();
     } catch (error) {
-      toast.error("Failed to activate user");
+      toast.error(error?.response?.data?.message || "Failed to activate user");
     } finally {
       setLoading(false);
     }
