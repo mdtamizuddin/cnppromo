@@ -15,10 +15,12 @@ import {
   UserGroupIcon,
   ChatBubbleLeftRightIcon,
   LifebuoyIcon,
+  UserIcon,
+  AtSymbolIcon,
 } from "@heroicons/react/24/outline";
 
 const RequierActive = () => {
-  const { settings } = useSelector((state) => state.user);
+  const { user, settings } = useSelector((state) => state.user);
   const supportMessanger =
     settings?.links?.supportMessanger || "https://m.me/1151649641374328";
 
@@ -103,6 +105,57 @@ const RequierActive = () => {
                   অ্যাডমিন অ্যাক্টিভ অপেক্ষা...
                 </h2>
               </div>
+
+              {/* User Information Card */}
+              {user && (
+                <div className="bg-gradient-to-br from-slate-50 via-white to-teal-50/30 border border-slate-200/90 rounded-2xl p-4 text-left shadow-xs transition-all">
+                  <div className="flex items-center gap-3.5">
+                    {/* Avatar with Status Indicator */}
+                    <div className="relative shrink-0">
+                      <img
+                        src={user?.avatar || "/avater.avif"}
+                        alt={user?.name || "User"}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm ring-2 ring-teal-500/20"
+                        onError={(e) => {
+                          e.target.src = "/avater.avif";
+                        }}
+                      />
+                      <span
+                        className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-amber-400 border-2 border-white rounded-full ring-1 ring-amber-300"
+                        title="অপেক্ষমান একাউন্ট"
+                      />
+                    </div>
+
+                    {/* Details: Name, Username, Email */}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-sm sm:text-base font-bold text-gray-900 truncate">
+                          {user?.name || "ব্যবহারকারী"}
+                        </h3>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                          অপেক্ষমান
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                        {user?.username && (
+                          <span className="inline-flex items-center gap-1 font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">
+                            <AtSymbolIcon className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                            <span>{user.username}</span>
+                          </span>
+                        )}
+
+                        {user?.email && (
+                          <span className="inline-flex items-center gap-1 text-gray-600 font-medium truncate">
+                            <EnvelopeIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                            <span className="truncate">{user.email}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Amber Notice Box */}
               <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 sm:p-5 text-center space-y-2">
