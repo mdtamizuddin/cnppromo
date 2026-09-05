@@ -3,7 +3,6 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const connectDB = require("./util/mongodb");
@@ -156,27 +155,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// 🛡️ Rate Limiters
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 600, // 600 requests per 15 min per IP
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many requests, please try again later." }
-});
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50, // 50 auth requests per 15 min per IP
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many authentication attempts, please try again later." }
-});
-
-app.use("/api/v1/", generalLimiter);
-app.use("/api/v1/user/login", authLimiter);
-app.use("/api/v1/user/pass-less", authLimiter);
-app.use("/api/v1/user/send-link", authLimiter);
 
 // Redirect Unauthorized Origins for browser requests
 app.use((req, res, next) => {
