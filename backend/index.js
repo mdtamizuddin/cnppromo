@@ -32,9 +32,13 @@ const port = process.env.PORT || 4000;
 // and the rate limiters bucket the whole internet together.
 app.set("trust proxy", 1);
 
-// Safety net: never let an unhandled rejection take down the whole server
+// Safety net: never let an unhandled rejection or uncaught exception take down the whole server
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
 });
 
 require("./tracing");
