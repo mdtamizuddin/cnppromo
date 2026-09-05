@@ -32,19 +32,36 @@ const port = process.env.PORT || 4000;
 // and the rate limiters bucket the whole internet together.
 app.set("trust proxy", 1);
 
-// Safety net: never let an unhandled rejection or uncaught exception take down the whole server
+// Global crash-protection safety net: prevent unhandled errors from terminating the Node process
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  console.error("[CRITICAL] Unhandled Rejection at:", promise, "reason:", reason);
 });
 
-process.on("uncaughtException", (error) => {
-  console.error("Uncaught Exception:", error);
+process.on("uncaughtException", (error, origin) => {
+  console.error(`[CRITICAL] Uncaught Exception (${origin}):`, error?.stack || error);
+});
+
+process.on("warning", (warning) => {
+  console.warn("[PROCESS WARNING]", warning.name, warning.message);
 });
 
 require("./tracing");
 
 // Create HTTP server for Socket.IO
 const server = createServer(app);
+
+// HTTP Server crash protection
+server.on("error", (error) => {
+  console.error("HTTP Server Error:", error);
+});
+
+server.on("clientError", (error, socket) => {
+  console.error("HTTP Client Error:", error.message || error);
+  if (error.code === "ECONNRESET" || !socket.writable) {
+    return;
+  }
+  socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
+});
 
 const allowedOrigins = [
   "http://localhost:4321",
@@ -72,6 +89,11 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
   transports: ['websocket', 'polling'],
+});
+
+// Capture engine-level connection errors safely
+io.engine.on("connection_error", (err) => {
+  console.warn("Socket.IO Engine connection error:", err.code, err.message);
 });
 
 // The Socket.IO Admin UI exposes every live socket, room and user. It is only
@@ -333,6 +355,11 @@ const statusUpdater = async (socketId, status) => {
 };
 
 io.on("connection", async (socket) => {
+  // Prevent unhandled socket errors from causing crashes
+  socket.on("error", (err) => {
+    console.error(`Socket error on socket [${socket.id}] (user: ${socket.userId || 'unknown'}):`, err.message || err);
+  });
+
   const userId = socket.userId;
   socket.join(userId);
 
@@ -445,6 +472,27 @@ io.on("connection", async (socket) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
+  // If response headers were already sent, delegate to default Express handler to prevent ERR_HTTP_HEADERS_SENT
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  // Handle malformed JSON body payloads gracefully
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid JSON payload in request body",
+    });
+  }
+
+  // Handle malformed URI components (e.g. bad % encoding from web crawlers)
+  if (err instanceof URIError) {
+    return res.status(400).json({
+      success: false,
+      message: "Malformed URL path or query parameter",
+    });
+  }
+
   const statusCode = err.status || err.statusCode || 500;
   if (statusCode < 500) {
     return res.status(statusCode).json({
@@ -452,10 +500,16 @@ app.use((err, req, res, next) => {
       message: err.message || "Invalid request"
     });
   }
+
   console.error("Unhandled Error:", err.stack || err.message);
-  res.status(500).json({
-    message: process.env.NODE_ENV === 'production' ? "Internal Server Error" : (err.message || "Internal Server Error")
-  });
+  try {
+    res.status(500).json({
+      success: false,
+      message: process.env.NODE_ENV === 'production' ? "Internal Server Error" : (err.message || "Internal Server Error")
+    });
+  } catch (sendError) {
+    console.error("Critical error while sending 500 error response:", sendError);
+  }
 });
 
 // Start the server
