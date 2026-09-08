@@ -42,12 +42,20 @@ const SocialWork = () => {
       const res = await api.get("social-works/all");
       return Array.isArray(res.data) ? res.data : res.data?.data || [];
     },
-    staleTime: 15000,
+    staleTime: 3000,
+    refetchOnMount: "always",
   });
 
   // Filter & Sort Logic
   const filteredTasks = useMemo(() => {
     let result = Array.isArray(dbWorks) ? [...dbWorks] : [];
+
+    // Filter out user's own created campaigns from the worker marketplace feed
+    if (user?._id) {
+      result = result.filter(
+        (t) => String(t.providerId?._id || t.providerId) !== String(user._id)
+      );
+    }
 
     if (selectedPlatform !== "all") {
       result = result.filter(

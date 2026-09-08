@@ -235,8 +235,8 @@ const getAllWorks = async (user, options = {}) => {
 
     const commissionRate = await getCommissionRate();
 
-    // Admin view: return all tasks with pending submit counts
-    if (userRes.role === "admin") {
+    // Admin view: return all tasks with pending submit counts (Only when scope === "admin")
+    if (userRes.role === "admin" && options.scope === "admin") {
       const filter = {};
       if (options.status && options.status !== "all") {
         filter.status = options.status;
@@ -295,9 +295,17 @@ const getAllWorks = async (user, options = {}) => {
     }
 
     // Worker marketplace feed query — using $and to safely combine filters
+    // Find all task IDs where this worker already has a pending or completed submission
+    const submittedWorkIds = await WorkSubmit.distinct("workId", {
+      userId: userRes._id,
+      status: { $in: ["PENDING", "pending", "APPROVED", "completed"] },
+    });
+
     const conditions = [
       { status: { $in: ["ACTIVE", "active"] } },
-      { workers: { $nin: [userRes._id] } }, // Pass ObjectId directly, not .toString()
+      { providerId: { $ne: userRes._id } }, // Provider cannot see or perform their own task in worker feed
+      { workers: { $nin: [userRes._id] } }, // Task workers array check
+      { _id: { $nin: submittedWorkIds } }, // Direct WorkSubmit check guarantees no duplicate appearances
       { $expr: { $lt: ["$completedQuantity", "$targetQuantity"] } },
       {
         $or: [
@@ -476,6 +484,18 @@ const getWorkById = async (workId, user) => {
       obj.price = netReward;
     }
 
+    if (user?._id) {
+      const existingSubmission = await WorkSubmit.findOne({
+        workId,
+        userId: user._id,
+        status: { $in: ["PENDING", "pending", "APPROVED", "completed"] },
+      });
+      if (existingSubmission) {
+        obj.alreadySubmitted = true;
+        obj.submissionStatus = existingSubmission.status;
+      }
+    }
+
     return obj;
   } catch (error) {
     throw new Error("Error fetching task: " + error.message);
@@ -528,7 +548,21 @@ const createWorkSubmit = async (data, workerId) => {
       );
     }
 
-    // Guard #1: Atomic duplicate prevention — push worker only if not already present
+    // Guard #1: Explicitly check if worker already submitted this task
+    const existingSubmit = await WorkSubmit.findOne({
+      workId: task._id,
+      userId: workerId,
+      status: { $in: ["PENDING", "pending", "APPROVED", "completed"] },
+    });
+    if (existingSubmit) {
+      throw new Error(
+        existingSubmit.status.toUpperCase() === "PENDING"
+          ? "You already have a pending submission under review for this task"
+          : "You have already completed this task"
+      );
+    }
+
+    // Atomic duplicate prevention — push worker only if not already present
     const atomicTask = await Work.findOneAndUpdate(
       {
         _id: task._id,

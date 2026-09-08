@@ -16,7 +16,6 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   SparklesIcon,
-  ExclamationTriangleIcon,
   EyeIcon,
 } from "@heroicons/react/24/outline";
 import { useDispatch } from "react-redux";
@@ -88,7 +87,7 @@ const PremiumAdminSocialWorksTable = () => {
     isFetching: worksFetching,
   } = useQuery(
     ["admin-social-works"],
-    async () => (await api.get("social-works/all")).data,
+    async () => (await api.get("social-works/all?scope=admin")).data,
     { staleTime: 15000 }
   );
 
@@ -453,11 +452,10 @@ const PremiumAdminSocialWorksTable = () => {
                   <button
                     key={st}
                     onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
-                      statusFilter === st
+                    className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${statusFilter === st
                         ? "bg-teal-600 text-white border-teal-600 shadow-xs"
                         : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     {st === "PENDING_APPROVAL" ? "Pending Approval" : st === "all" ? "All Tasks" : st}
                   </button>
@@ -552,10 +550,10 @@ const PremiumAdminSocialWorksTable = () => {
                               task.status === "ACTIVE" || task.status === "active"
                                 ? "green"
                                 : task.status === "PENDING_APPROVAL"
-                                ? "amber"
-                                : task.status === "REJECTED"
-                                ? "red"
-                                : "blue"
+                                  ? "amber"
+                                  : task.status === "REJECTED"
+                                    ? "red"
+                                    : "blue"
                             }
                           >
                             {task.status === "PENDING_APPROVAL" ? "Pending" : task.status}
@@ -661,11 +659,10 @@ const PremiumAdminSocialWorksTable = () => {
                   <button
                     key={st}
                     onClick={() => setSubmitStatus(st)}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold capitalize transition-all border ${
-                      submitStatus === st
+                    className={`px-3 py-1 rounded-xl text-xs font-bold capitalize transition-all border ${submitStatus === st
                         ? "bg-teal-600 text-white border-teal-600 shadow-xs"
                         : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     {st}
                   </button>
@@ -727,8 +724,8 @@ const PremiumAdminSocialWorksTable = () => {
                             ["APPROVED", "completed"].includes(sub.status)
                               ? "green"
                               : ["REJECTED", "rejected"].includes(sub.status)
-                              ? "red"
-                              : "amber"
+                                ? "red"
+                                : "amber"
                           }
                         >
                           {sub.status}
@@ -798,11 +795,10 @@ const PremiumAdminSocialWorksTable = () => {
                       key={preset}
                       type="button"
                       onClick={() => setCommissionRate(preset)}
-                      className={`px-2 py-0.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
-                        Number(commissionRate) === preset
+                      className={`px-2 py-0.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${Number(commissionRate) === preset
                           ? "bg-teal-600 text-white border-teal-600 shadow-2xs"
                           : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-                      }`}
+                        }`}
                     >
                       {preset}%
                     </button>
@@ -937,9 +933,8 @@ const PremiumAdminSocialWorksTable = () => {
                     <div>
                       <h4
                         onClick={() => d.workId && setSelectedTaskDetails(d.workId)}
-                        className={`text-sm font-bold text-gray-900 ${
-                          d.workId ? "hover:text-teal-600 cursor-pointer" : ""
-                        }`}
+                        className={`text-sm font-bold text-gray-900 ${d.workId ? "hover:text-teal-600 cursor-pointer" : ""
+                          }`}
                         title={d.workId ? "Click to view task details" : undefined}
                       >
                         {d.workId?.title || "Unknown Task"}

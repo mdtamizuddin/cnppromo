@@ -102,6 +102,7 @@ router.get("/all", authChecker, async (req, res) => {
       page: req.query.page,
       limit: req.query.limit,
       status: req.query.status,
+      scope: req.query.scope,
     });
     res.status(200).json(result);
   } catch (error) {
@@ -118,6 +119,7 @@ router.get("/", authChecker, async (req, res) => {
       page: req.query.page,
       limit: req.query.limit,
       status: req.query.status,
+      scope: req.query.scope,
     });
     res.status(200).json(result);
   } catch (error) {

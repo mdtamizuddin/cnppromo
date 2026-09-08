@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Card, Button, Typography, Progress } from "@material-tailwind/react";
 import {
   ArrowLeftIcon,
+  ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
   DocumentDuplicateIcon,
   PhotoIcon,
@@ -12,8 +13,10 @@ import {
   ShieldCheckIcon,
   SparklesIcon,
   TrashIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Spin } from "antd";
+import { useQueryClient } from "react-query";
 import toast from "react-hot-toast";
 import { api } from "../../util/axios";
 import { uploadImageToS3 } from "../../util/s3Upload";
@@ -22,6 +25,7 @@ const WorkDetails = () => {
   const { user } = useSelector((state) => state.user);
   const { id: workId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [work, setWork] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +56,7 @@ const WorkDetails = () => {
   const reward = work?.reward || work?.price || 0;
   const screenshotCount = work?.proofConfig?.screenshotCount || 1;
   const screenshotLabels = work?.proofConfig?.screenshotLabels || ["Proof Screenshot"];
+  const isOwnTask = user?._id && String(work?.providerId?._id || work?.providerId) === String(user._id);
 
   const handleCopyComment = () => {
     if (work?.properties?.customCommentText) {
@@ -107,6 +112,9 @@ const WorkDetails = () => {
       });
 
       toast.success("Task submitted for review! You will be credited upon approval.");
+      queryClient.invalidateQueries(["social-works"]);
+      queryClient.removeQueries(["social-works"]);
+      queryClient.invalidateQueries(["my-social-submissions"]);
       navigate("/user/social-works");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to submit task");
@@ -217,14 +225,67 @@ const WorkDetails = () => {
           )}
         </Card>
 
-        {/* Proof Submission Form */}
-        <Card className="p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm bg-white space-y-6">
-          <div className="border-b border-gray-100 pb-3 flex items-center gap-2">
-            <ShieldCheckIcon className="w-5 h-5 text-teal-600" />
-            <h3 className="text-base font-bold text-gray-900">Step 2: Submit Proof of Work</h3>
-          </div>
+        {/* Proof Submission Form, Already Submitted Notice, or Owner Notice */}
+        {work.alreadySubmitted ? (
+          <Card className="p-6 sm:p-8 rounded-3xl border border-teal-200 shadow-sm bg-teal-50/60 space-y-4">
+            <div className="flex items-start gap-3">
+              <CheckCircleIcon className="w-6 h-6 text-teal-600 shrink-0 mt-0.5" />
+              <div className="space-y-2">
+                <h3 className="text-base font-bold text-teal-950">You have already submitted this task!</h3>
+                <p className="text-xs text-teal-800 leading-relaxed">
+                  Your proof has been submitted and is currently{" "}
+                  <strong className="uppercase font-bold">
+                    {["APPROVED", "completed"].includes(work.submissionStatus) ? "Approved & Paid" : "Under Review"}
+                  </strong>
+                  . You can check the review status or track your earnings in your submissions history.
+                </p>
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <Link
+                    to="/user/social-works/submissions"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-colors"
+                  >
+                    <span>View My Submissions</span>
+                    <ArrowRightIcon className="w-3.5 h-3.5" />
+                  </Link>
+                  <Link
+                    to="/user/social-works"
+                    className="text-xs font-bold text-teal-700 hover:text-teal-900"
+                  >
+                    Browse Other Tasks →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : isOwnTask ? (
+          <Card className="p-6 sm:p-8 rounded-3xl border border-amber-200 shadow-sm bg-amber-50/60 space-y-4">
+            <div className="flex items-start gap-3">
+              <InformationCircleIcon className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-2">
+                <h3 className="text-base font-bold text-amber-950">You are the owner of this campaign</h3>
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  Campaign providers cannot submit proof or earn rewards for their own tasks. You can view submissions, track fulfillment progress, or adjust your task details from your campaigns page.
+                </p>
+                <div className="pt-2">
+                  <Link
+                    to="/user/social-works/my-tasks"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors"
+                  >
+                    <span>Go to My Created Campaigns</span>
+                    <ArrowRightIcon className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          <Card className="p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm bg-white space-y-6">
+            <div className="border-b border-gray-100 pb-3 flex items-center gap-2">
+              <ShieldCheckIcon className="w-5 h-5 text-teal-600" />
+              <h3 className="text-base font-bold text-gray-900">Step 2: Submit Proof of Work</h3>
+            </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
             {/* Text Proof Input */}
             <div>
               <label className="block text-xs font-bold text-gray-800 mb-1.5">
@@ -328,6 +389,7 @@ const WorkDetails = () => {
             </div>
           </form>
         </Card>
+        )}
       </div>
     </div>
   );
