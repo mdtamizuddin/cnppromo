@@ -161,7 +161,7 @@ export const userRoutes = [
   },
   {
     path: "work-history",
-    element: <AuthChecker><Lazy><WorkHistory /></Lazy></AuthChecker>,
+    element: <AuthChecker><Lazy><MySubmissions /></Lazy></AuthChecker>,
   },
   {
     path: "settings",

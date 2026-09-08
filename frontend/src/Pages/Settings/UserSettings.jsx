@@ -209,29 +209,29 @@ const handleDeviceLimitSubmit = async (e) => {
       <div className="container mx-auto px-4 max-w-3xl space-y-4">
         
         {/* 📱 Top Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#042f2e] via-[#0f766e] to-[#0284c7] text-white p-5 shadow-lg shadow-teal-900/20">
-          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute bottom-0 right-10 w-24 h-24 rounded-full bg-teal-400/20 blur-xl" />
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#d2fbf0] via-[#e2fbf6] to-[#d6f7ff] text-[#0b0c2a] p-5 border border-teal-100/90 shadow-xs">
+          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-teal-400/20 blur-2xl" />
+          <div className="absolute bottom-0 right-10 w-24 h-24 rounded-full bg-sky-400/15 blur-xl" />
           <div className="relative flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <Link
                 to="/user/home"
-                className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 backdrop-blur flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                className="w-9 h-9 rounded-xl bg-white/80 border border-teal-100 flex items-center justify-center text-gray-700 hover:bg-white transition-colors shadow-2xs"
               >
                 <ChevronLeftIcon className="w-4 h-4 stroke-[2.5]" />
               </Link>
               <div>
-                <h1 className="text-base sm:text-lg font-bold">
+                <h1 className="text-base sm:text-lg font-bold text-[#0b0c2a]">
                   অ্যাকাউন্ট সেটিংস
                 </h1>
-                <p className="text-[11px] text-white/70">
+                <p className="text-[11px] text-gray-600 font-medium">
                   ব্যক্তিগত তথ্য ও সিকিউরিটি কনফিগারেশন
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-100 text-[11px] font-bold border border-emerald-300/30 backdrop-blur">
-              <ShieldCheckIcon className="w-4 h-4 text-emerald-300" />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200">
+              <ShieldCheckIcon className="w-4 h-4 text-emerald-600" />
               <span>ভেরিফাইড মেম্বার</span>
             </div>
           </div>
@@ -240,7 +240,7 @@ const handleDeviceLimitSubmit = async (e) => {
             {/* Clickable Profile Avatar with hover camera badge */}
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="relative group w-14 h-14 rounded-2xl cursor-pointer overflow-hidden border-2 border-white/40 shadow-lg bg-white/10 backdrop-blur flex items-center justify-center shrink-0 transition-transform active:scale-95"
+              className="relative group w-14 h-14 rounded-2xl cursor-pointer overflow-hidden border-2 border-teal-200 shadow-sm bg-white flex items-center justify-center shrink-0 transition-transform active:scale-95"
               title="Change Profile Picture"
             >
               {user?.avatar ? (
@@ -250,7 +250,7 @@ const handleDeviceLimitSubmit = async (e) => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="font-black text-xl text-white">
+                <span className="font-black text-xl text-teal-700">
                   {user?.name?.[0]?.toUpperCase() || "U"}
                 </span>
               )}
@@ -261,11 +261,11 @@ const handleDeviceLimitSubmit = async (e) => {
               </div>
             </div>
             <div>
-              <p className="text-sm font-bold flex items-center gap-1">
+              <p className="text-sm font-bold flex items-center gap-1 text-gray-900">
                 <span>{user?.name}</span>
-                <CheckBadgeIcon className="w-4 h-4 text-sky-300" />
+                <CheckBadgeIcon className="w-4 h-4 text-sky-600" />
               </p>
-              <p className="text-[11px] text-white/70 font-mono">@{user?.username} • Level {user?.level || 1}</p>
+              <p className="text-[11px] text-gray-600 font-mono">@{user?.username} • Level {user?.level || 1}</p>
             </div>
           </div>
         </div>

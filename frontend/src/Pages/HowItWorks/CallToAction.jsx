@@ -11,13 +11,13 @@ const CallToAction = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="bg-gradient-to-r from-[#0b0c2a] via-[#1a1b41] to-[#2d2e5a] rounded-3xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-indigo-900/20 border border-[#3e3f70]"
+            className="bg-gradient-to-r from-[#d2fbf0] via-[#e2fbf6] to-[#d6f7ff] rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 border border-teal-100/90 shadow-xs"
         >
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 text-center md:text-left">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 sm:gap-8 text-center md:text-left">
                 
                 {/* Gift Box CSS Illustration */}
                 <div className="w-24 h-24 shrink-0 relative flex items-center justify-center group">
-                    <div className="absolute inset-0 bg-blue-500 rounded-2xl opacity-20 filter blur-xl group-hover:opacity-40 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-teal-400/20 rounded-2xl opacity-40 filter blur-xl group-hover:opacity-60 transition-opacity duration-300"></div>
                     <div className="relative w-20 h-20">
                         {/* Box Lid */}
                         <div className="absolute top-0 left-1 right-1 h-6 bg-primary rounded-sm z-20 border border-teal-400/30 shadow-md"></div>
@@ -36,8 +36,8 @@ const CallToAction = () => {
                 </div>
 
                 <div>
-                    <h2 className="text-white text-2xl md:text-3xl font-bold mb-2">আজই আপনার আয়ের যাত্রা শুরু করুন!</h2>
-                    <p className="text-gray-400 text-[15px] max-w-[450px]">
+                    <h2 className="text-[#0b0c2a] text-2xl md:text-3xl font-black mb-2 tracking-tight">আজই আপনার আয়ের যাত্রা শুরু করুন!</h2>
+                    <p className="text-gray-600 text-sm max-w-[450px] font-medium leading-relaxed">
                         হাজারো সক্রিয় মেম্বারদের সাথে যুক্ত হন এবং CNP-PROMO থেকে ঘরে বসেই সহজ উপায়ে আয় করুন।
                     </p>
                 </div>
@@ -45,7 +45,7 @@ const CallToAction = () => {
 
             <Link 
                 to="/register" 
-                className="bg-white text-[#0b0c2a] hover:text-primary font-bold text-[17px] py-3.5 px-8 rounded-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md shrink-0"
+                className="bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-700 hover:to-sky-700 text-white font-bold text-base py-3.5 px-8 rounded-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md shrink-0 active:scale-95"
             >
                 এখনই যোগ দিন
                 <FontAwesomeIcon icon={faArrowRight} />

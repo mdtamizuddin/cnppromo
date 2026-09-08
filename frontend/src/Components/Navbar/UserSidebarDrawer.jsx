@@ -136,7 +136,12 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
             const isActive =
               item.to &&
               (location.pathname === item.to ||
-                (item.to === "/home" && location.pathname === "/welcome"));
+                (item.to === "/home" && location.pathname === "/welcome") ||
+                (item.to === "/user/social-works" &&
+                  location.pathname.startsWith("/user/social-works")) ||
+                (item.to === "/user/works" &&
+                  location.pathname.startsWith("/user/works") &&
+                  !location.pathname.startsWith("/user/social-works")));
             const Icon = item.icon;
 
             if (item.onClick) {

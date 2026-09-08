@@ -129,49 +129,50 @@ const Level = () => {
     <div className="bg-[#f8faff] min-h-screen pb-20 pt-6">
       <div className="container mx-auto px-4 max-w-5xl space-y-8">
         
-        {/* 🌟 Top Hero Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b0c2a] via-[#151954] to-[#0b0c2a] p-6 sm:p-8 lg:p-10 text-white shadow-xl border border-indigo-900/30">
-          <div className="absolute -right-10 -top-10 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="absolute left-1/3 bottom-0 w-60 h-60 bg-amber-600/15 rounded-full blur-2xl pointer-events-none"></div>
+        {/* 🌟 Top Brand Hero Banner */}
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#d2fbf0] via-[#e2fbf6] to-[#d6f7ff] p-5 sm:p-8 lg:p-10 border border-teal-100/90 shadow-xs">
+          <div className="absolute -right-10 -top-10 w-72 sm:w-96 h-72 sm:h-96 bg-teal-400/20 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute left-1/4 -bottom-10 w-64 sm:w-80 h-64 sm:h-80 bg-sky-400/15 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
-            <div className="lg:col-span-8 space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-amber-300 text-xs font-bold tracking-wide">
-                <TrophyIcon className="w-3.5 h-3.5" />
+            <div className="lg:col-span-8 space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-800 text-[11px] sm:text-xs font-bold tracking-wide">
+                <TrophyIcon className="w-3.5 h-3.5 text-amber-600" />
                 <span>VIP Rank & Member Tier System</span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0b0c2a] leading-tight tracking-tight">
                 আপনার মেম্বারশিপ লেভেল ও <br />
-                <span className="bg-gradient-to-r from-amber-300 via-orange-300 to-pink-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#0d9488] to-[#0284c7] bg-clip-text text-transparent">
                   ভিআইপি প্রিভিলেজ 👑
                 </span>
               </h1>
 
-              <p className="text-indigo-200/90 text-xs sm:text-sm max-w-xl leading-relaxed">
+              <p className="text-gray-600 text-xs sm:text-sm max-w-xl leading-relaxed font-medium">
                 আপনার রেফারেল নেটওয়ার্ক বাড়িয়ে লেভেল আপগ্রেড করুন এবং প্রতিটি রেফারে সর্বোচ্চ ৪০ টাকা পর্যন্ত কমিশন ও প্রায়োরিটি পেমেন্ট সুবিধা উপভোগ করুন।
               </p>
 
               {/* Badges */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/10 text-[11px] font-semibold text-gray-200 flex items-center gap-1.5">
-                  <CheckBadgeIcon className="w-4 h-4 text-emerald-400" />
-                  স্বয়ংক্রিয় লেভেল আপগ্রেড
+              <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                <div className="px-3.5 py-1.5 rounded-xl bg-white/85 border border-teal-100 text-[11px] font-bold text-teal-900 flex items-center gap-1.5 shadow-2xs">
+                  <CheckBadgeIcon className="w-4 h-4 text-emerald-600" />
+                  <span>স্বয়ংক্রিয় লেভেল আপগ্রেড</span>
                 </div>
-                <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/10 text-[11px] font-semibold text-gray-200 flex items-center gap-1.5">
-                  <BanknotesIcon className="w-4 h-4 text-amber-400" />
-                  সর্বোচ্চ ৳৪০/রেফার কমিশন
+                <div className="px-3.5 py-1.5 rounded-xl bg-white/85 border border-teal-100 text-[11px] font-bold text-teal-900 flex items-center gap-1.5 shadow-2xs">
+                  <BanknotesIcon className="w-4 h-4 text-amber-600" />
+                  <span>সর্বোচ্চ ৳৪০/রেফার কমিশন</span>
                 </div>
               </div>
             </div>
 
             {/* Right 3D Illustration */}
             <div className="lg:col-span-4 flex justify-center">
-              <div className="relative w-48 sm:w-56 lg:w-64 aspect-square">
+              <div className="relative w-48 sm:w-56 lg:w-64 aspect-square flex items-center justify-center">
+                <div className="absolute inset-0 bg-teal-400/15 rounded-full blur-2xl pointer-events-none"></div>
                 <img
                   src="/level_hero_illustration.jpg"
                   alt="VIP Level and Badges"
-                  className="w-full h-full object-contain drop-shadow-2xl rounded-2xl hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-contain drop-shadow-[0_15px_30px_rgba(13,148,136,0.2)] rounded-2xl hover:scale-105 transition-transform duration-500 relative z-10"
                 />
               </div>
             </div>

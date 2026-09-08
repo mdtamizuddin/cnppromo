@@ -147,37 +147,37 @@ const PaymentProof = () => {
     <div className="bg-[#f8faff] min-h-screen pb-20 pt-6">
       <div className="container mx-auto px-4 max-w-6xl space-y-10">
 
-        {/* 🌟 Top Hero Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b0c2a] via-[#151954] to-[#0b0c2a] p-6 sm:p-8 lg:p-10 text-white shadow-xl border border-indigo-900/30">
-          <div className="absolute -right-10 -top-10 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="absolute left-1/3 bottom-0 w-60 h-60 bg-blue-600/15 rounded-full blur-2xl pointer-events-none"></div>
+        {/* 🌟 Top Brand Hero Banner */}
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#d2fbf0] via-[#e2fbf6] to-[#d6f7ff] p-5 sm:p-8 lg:p-10 border border-teal-100/90 shadow-xs">
+          <div className="absolute -right-10 -top-10 w-72 sm:w-96 h-72 sm:h-96 bg-teal-400/20 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute left-1/4 -bottom-10 w-64 sm:w-80 h-64 sm:h-80 bg-sky-400/15 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
-            <div className="lg:col-span-8 space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-emerald-400 text-xs font-bold tracking-wide">
-                <ShieldCheckIcon className="w-4 h-4" />
+            <div className="lg:col-span-8 space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-800 text-[11px] sm:text-xs font-bold tracking-wide">
+                <ShieldCheckIcon className="w-4 h-4 text-teal-600" />
                 <span>লাইভ পেমেন্ট স্টেটমেন্ট ও ভেরিফাইড প্রুফ</span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0b0c2a] leading-tight tracking-tight">
                 CNP-Promo লাইভ পেমেন্ট প্রুফ <br />
-                <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#0d9488] to-[#0284c7] bg-clip-text text-transparent">
                   ১০০% বিশ্বস্ত ও শতভাগ নিশ্চিত ক্যাশআউট 💰
                 </span>
               </h1>
 
-              <p className="text-indigo-200/90 text-xs sm:text-sm max-w-xl leading-relaxed">
+              <p className="text-gray-600 text-xs sm:text-sm max-w-xl leading-relaxed font-medium">
                 প্রতিদিন মেম্বারদের bKash, Nagad ও Rocket অ্যাকাউন্টে পাঠানো সফল পেমেন্টের লাইভ ট্রানজেকশন স্ক্রিনশট দেখুন।
               </p>
 
               {/* Trust Stats Bar */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/10 text-xs font-semibold text-gray-200 flex items-center gap-1.5">
-                  <BanknotesIcon className="w-4 h-4 text-emerald-400" />
-                  <span>সর্বমোট প্রুফ: <strong>৳{totalPaidSum.toLocaleString()}</strong></span>
+              <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                <div className="px-3.5 py-1.5 rounded-xl bg-white/85 border border-teal-100 text-xs font-bold text-teal-900 flex items-center gap-1.5 shadow-2xs">
+                  <BanknotesIcon className="w-4 h-4 text-emerald-600" />
+                  <span>সর্বমোট প্রুফ: <strong className="text-teal-700">৳{totalPaidSum.toLocaleString()}</strong></span>
                 </div>
-                <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/10 text-xs font-semibold text-gray-200 flex items-center gap-1.5">
-                  <CheckCircleIcon className="w-4 h-4 text-sky-400" />
+                <div className="px-3.5 py-1.5 rounded-xl bg-white/85 border border-teal-100 text-xs font-bold text-teal-900 flex items-center gap-1.5 shadow-2xs">
+                  <CheckCircleIcon className="w-4 h-4 text-sky-600" />
                   <span>{rawList.length}+ সফল লেনদেন</span>
                 </div>
               </div>
@@ -185,11 +185,12 @@ const PaymentProof = () => {
 
             {/* Right illustration / graphic */}
             <div className="lg:col-span-4 flex justify-center">
-              <div className="relative w-44 sm:w-52 aspect-square">
+              <div className="relative w-44 sm:w-52 aspect-square flex items-center justify-center">
+                <div className="absolute inset-0 bg-teal-400/15 rounded-full blur-2xl pointer-events-none"></div>
                 <img
                   src="/wallet_3d_illustration.png"
                   alt="Wallet 3D"
-                  className="w-full h-full object-contain drop-shadow-2xl  transition-transform duration-500"
+                  className="w-full h-full object-contain drop-shadow-[0_15px_30px_rgba(13,148,136,0.2)] hover:scale-105 transition-transform duration-500 relative z-10"
                 />
               </div>
             </div>

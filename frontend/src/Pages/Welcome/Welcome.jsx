@@ -264,35 +264,39 @@ const Welcome = () => {
     <div className="bg-[#f8faff] min-h-screen pb-20 pt-6">
       <div className="container mx-auto px-4 max-w-6xl space-y-8">
 
-        {/* 🌟 Top Dark Hero Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b0c2a] via-[#151954] to-[#0b0c2a] p-6 sm:p-8 lg:p-10 text-white shadow-xl border border-indigo-900/30">
+        {/* 🌟 Top Brand Hero Banner */}
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#d2fbf0] via-[#e2fbf6] to-[#d6f7ff] p-5 sm:p-8 lg:p-10 border border-teal-100/90 shadow-xs">
           {/* Ambient Glows */}
-          <div className="absolute -right-10 -top-10 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="absolute left-1/3 bottom-0 w-60 h-60 bg-blue-600/15 rounded-full blur-2xl pointer-events-none"></div>
+          <div className="absolute -right-10 -top-10 w-72 sm:w-96 h-72 sm:h-96 bg-teal-400/20 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute left-1/4 -bottom-10 w-64 sm:w-80 h-64 sm:h-80 bg-sky-400/15 rounded-full blur-3xl pointer-events-none"></div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center relative z-10">
 
             {/* Left Content */}
-            <div className="lg:col-span-8 space-y-6">
-              <div>
-                <p className="text-gray-400 text-xs sm:text-sm font-medium">Welcome back,</p>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight mt-1 flex items-center gap-2">
-                  <span>{user?.name || "Member"}</span>
+            <div className="lg:col-span-8 space-y-5 sm:space-y-6">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-800 text-[11px] sm:text-xs font-bold tracking-wide">
+                  <SparklesIcon className="w-3.5 h-3.5 text-teal-600" />
+                  <span>CNP PROMO Member Dashboard</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0b0c2a] tracking-tight flex items-center gap-2">
+                  <span>Welcome back, {user?.name || "Member"}</span>
                   <span className="text-2xl animate-bounce">👋</span>
                 </h1>
-                <p className="text-indigo-200/90 text-xs sm:text-sm mt-1">
-                  Let's complete tasks and earn more!
+                <p className="text-gray-600 text-xs sm:text-sm font-medium">
+                  Complete social microtasks, refer friends, and grow your earnings every day!
                 </p>
               </div>
 
               {/* Glassmorphism Balance Container */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="bg-white/80 backdrop-blur-xl border border-teal-100/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
                 <div>
-                  <div className="flex items-center gap-2 text-gray-300 text-xs font-medium">
+                  <div className="flex items-center gap-2 text-teal-800 text-xs font-bold tracking-wide uppercase">
                     <span>Available Balance</span>
                     <button
                       onClick={() => setShowBalance(!showBalance)}
-                      className="text-gray-300 hover:text-white transition-colors"
+                      className="text-teal-600 hover:text-teal-900 transition-colors"
+                      title={showBalance ? "Hide Balance" : "Show Balance"}
                     >
                       {showBalance ? (
                         <EyeSlashIcon className="w-4 h-4" />
@@ -301,19 +305,20 @@ const Welcome = () => {
                       )}
                     </button>
                   </div>
-                  <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mt-1">
-                    {showBalance
-                      ? `৳ ${(((user?.balance || 0) + (data?.bonus?.effective || 0))).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
-                      : "৳ ••••••••"}
+                  <div className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mt-1 flex items-baseline gap-1">
+                    <span className="text-teal-700">৳</span>
+                    <span>{showBalance
+                      ? `${(((user?.balance || 0) + (data?.bonus?.effective || 0))).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+                      : "••••••••"}</span>
                   </div>
                   {showBalance && data?.bonus?.effective > 0 && (
                     <div className="mt-2">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-indigo-100/90">
-                        <span className="font-semibold text-amber-300">Main ৳{(user?.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
-                        <span className="text-gray-400">+</span>
-                        <span className="font-semibold text-amber-300">Bonus ৳{data.bonus.effective.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-600">
+                        <span className="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">Main ৳{(user?.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                        <span className="text-teal-400">+</span>
+                        <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">Bonus ৳{data.bonus.effective.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                         {(data.bonus.startDate || data.bonus.endDate) && (
-                          <span className="text-gray-400">
+                          <span className="text-gray-500">
                             · {data.bonus.startDate && `From ${new Date(data.bonus.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
                             {data.bonus.startDate && data.bonus.endDate && " to "}
                             {data.bonus.endDate && `${new Date(data.bonus.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
@@ -322,27 +327,36 @@ const Welcome = () => {
                       </div>
                     </div>
                   )}
-                  <p className="text-gray-400 text-[11px] mt-1">
+                  <p className="text-gray-500 text-[11px] mt-1.5 font-medium">
                     Minimum Withdraw: ৳300.00
                   </p>
                 </div>
 
-                <Link to="/user/account/withdraw">
-                  <Button className="bg-gradient-to-r from-[#ff6b6b] to-[#ff8e53] hover:from-[#fa5252] hover:to-[#f76707] normal-case text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-lg shadow-orange-500/25 flex items-center gap-2 transition-all hover:scale-105">
-                    <span>Withdraw Now</span>
-                    <ArrowRightIcon className="w-4 h-4" />
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                  <Link to="/user/account" className="flex-1 sm:flex-none">
+                    <Button className="w-full sm:w-auto bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 normal-case font-bold text-xs sm:text-sm px-4 py-3 rounded-xl shadow-2xs flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                      <PlusIcon className="w-4 h-4" />
+                      <span>Top Up</span>
+                    </Button>
+                  </Link>
+                  <Link to="/user/account/withdraw" className="flex-1 sm:flex-none">
+                    <Button className="w-full sm:w-auto bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-700 hover:to-sky-700 normal-case text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95">
+                      <span>Withdraw</span>
+                      <ArrowRightIcon className="w-4 h-4 stroke-[2.5]" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
 
             {/* Right 3D Wallet Graphic */}
             <div className="lg:col-span-4 flex justify-center">
-              <div className="relative w-48 sm:w-56 lg:w-64 aspect-square">
+              <div className="relative w-44 sm:w-56 lg:w-64 aspect-square flex items-center justify-center">
+                <div className="absolute inset-0 bg-teal-400/15 rounded-full blur-2xl pointer-events-none"></div>
                 <img
-                  src="/payment_proof_hero.jpg"
-                  alt="CNP-PROMO Wallet"
-                  className="w-full h-full object-contain drop-shadow-2xl rounded-2xl hover:scale-105 transition-transform duration-500"
+                  src="/wallet_3d_illustration.png"
+                  alt="CNP PROMO Wallet"
+                  className="w-full h-full object-contain drop-shadow-[0_15px_30px_rgba(13,148,136,0.25)] hover:scale-105 transition-transform duration-500 relative z-10"
                 />
               </div>
             </div>
