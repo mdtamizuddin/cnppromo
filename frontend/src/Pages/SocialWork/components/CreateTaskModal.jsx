@@ -427,8 +427,8 @@ const CreateTaskModal = ({ open, onClose }) => {
                 </label>
                 <input
                   type="number"
-                  step="0.1"
-                  min="0.1"
+                  step="0.01"
+                  min="0.01"
                   required
                   value={costPerUnit}
                   onChange={(e) => setCostPerUnit(e.target.value)}

@@ -35,6 +35,20 @@ router.get("/my-tasks", authChecker, async (req, res) => {
   }
 });
 
+// Provider updates a task while under review (PENDING_APPROVAL)
+router.put("/update/:taskId", authChecker, async (req, res) => {
+  try {
+    const result = await services.updateWork(
+      req.params.taskId,
+      req.body,
+      req.user._id
+    );
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
 // Provider cancels an active or pending task, refunding remaining escrow
 router.put("/cancel/:taskId", authChecker, async (req, res) => {
   try {

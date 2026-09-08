@@ -10,6 +10,7 @@ import {
   ClockIcon,
   BanknotesIcon,
   XCircleIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import moment from "moment";
 import toast from "react-hot-toast";
@@ -271,12 +272,22 @@ const MySocialTasks = () => {
                         </a>
                       )}
 
+                      {task.status === "PENDING_APPROVAL" && (
+                        <Link
+                          to={`/user/social-works/create?edit=${task._id}`}
+                          className="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-semibold"
+                        >
+                          <PencilSquareIcon className="w-3.5 h-3.5" />
+                          <span>Edit Campaign</span>
+                        </Link>
+                      )}
+
                       {isCancellable && (
                         <button
                           type="button"
                           onClick={() => handleCancelTask(task._id)}
                           disabled={cancellingId === task._id}
-                          className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium"
+                          className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer"
                         >
                           <XCircleIcon className="w-3.5 h-3.5" />
                           <span>Cancel & Refund Escrow</span>

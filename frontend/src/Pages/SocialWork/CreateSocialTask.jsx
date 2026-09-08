@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useQueryClient } from "react-query";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Card, Button, Typography } from "@material-tailwind/react";
 import {
   SparklesIcon,
@@ -38,8 +38,13 @@ const ACTION_TYPES = [
 const CreateSocialTask = () => {
   const { user } = useSelector((state) => state.user);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+
+  const editId = searchParams.get("edit");
+  const [originalTask, setOriginalTask] = useState(null);
+  const [fetchingTask, setFetchingTask] = useState(Boolean(editId));
 
   // Form State
   const [platform, setPlatform] = useState("youtube");
@@ -63,15 +68,66 @@ const CreateSocialTask = () => {
   const [targetQuantity, setTargetQuantity] = useState(10);
   const [costPerUnit, setCostPerUnit] = useState(2.0);
 
-  // Escrow Calculation
+  // Load Task for Editing if editId provided
+  useEffect(() => {
+    if (!editId) return;
+    const loadTask = async () => {
+      try {
+        setFetchingTask(true);
+        const { data } = await api.get(`social-works/${editId}`);
+        const task = data?.data || data;
+        if (!task) throw new Error("Task not found");
+
+        if (task.status !== "PENDING_APPROVAL") {
+          toast.error("Task can only be edited while it is Under Review");
+          return navigate("/user/social-works/my-tasks");
+        }
+
+        setOriginalTask(task);
+        setPlatform(task.platform || "youtube");
+        setActionType(task.actionType || "subscribe");
+        setTitle(task.title || "");
+        setDescription(task.description || "");
+        setTaskUrl(task.taskUrl || task.url || "");
+        setWatchDuration(task.properties?.watchDuration || 60);
+        setCustomCommentText(task.properties?.customCommentText || "");
+        setChannelOrAccountName(task.properties?.channelOrAccountName || "");
+        setAdditionalInstructions(task.properties?.additionalInstructions || "");
+        setTextPrompt(task.proofConfig?.textPrompt || "Enter your account username / proof details");
+        setScreenshotCount(task.proofConfig?.screenshotCount || 1);
+        setScreenshotLabels(
+          task.proofConfig?.screenshotLabels?.length
+            ? task.proofConfig.screenshotLabels
+            : ["Screenshot of completed action"]
+        );
+        setTargetQuantity(task.targetQuantity || 10);
+        setCostPerUnit(task.costPerUnit || task.price || 2.0);
+      } catch (err) {
+        toast.error(err.response?.data?.message || err.message || "Failed to load task");
+        navigate("/user/social-works/my-tasks");
+      } finally {
+        setFetchingTask(false);
+      }
+    };
+    loadTask();
+  }, [editId, navigate]);
+
+  // Escrow & Delta Calculation
   const totalBudget = useMemo(() => {
     const qty = parseInt(targetQuantity, 10) || 0;
     const price = parseFloat(costPerUnit) || 0;
     return Math.round(qty * price * 100) / 100;
   }, [targetQuantity, costPerUnit]);
 
+  const originalBudget = originalTask
+    ? (originalTask.totalBudget || (originalTask.costPerUnit * originalTask.targetQuantity) || 0)
+    : 0;
+  const budgetDelta = Math.round((totalBudget - originalBudget) * 100) / 100;
+
   const userBalance = user?.balance || 0;
-  const isBalanceSufficient = userBalance >= totalBudget && totalBudget > 0;
+  const isBalanceSufficient = originalTask
+    ? (budgetDelta <= 0 || userBalance >= budgetDelta)
+    : (userBalance >= totalBudget && totalBudget > 0);
 
   const handleScreenshotCountChange = (count) => {
     setScreenshotCount(count);
@@ -95,7 +151,11 @@ const CreateSocialTask = () => {
     if (!taskUrl.trim()) return toast.error("Please enter the target URL");
     if (totalBudget <= 0) return toast.error("Total budget must be greater than 0");
     if (!isBalanceSufficient) {
-      return toast.error("Insufficient balance to fund this task");
+      return toast.error(
+        originalTask
+          ? `Insufficient balance. Need an extra ৳${budgetDelta.toFixed(2)} to update budget.`
+          : "Insufficient balance to fund this task"
+      );
     }
 
     try {
@@ -124,18 +184,31 @@ const CreateSocialTask = () => {
         costPerUnit: parseFloat(costPerUnit) || 0,
       };
 
-      await api.post("social-works/create", payload);
+      if (editId) {
+        await api.put(`social-works/update/${editId}`, payload);
+        toast.success("Campaign updated successfully!");
+      } else {
+        await api.post("social-works/create", payload);
+        toast.success("Task created and submitted for admin review!");
+      }
 
-      toast.success("Task created and submitted for admin review!");
       queryClient.invalidateQueries(["my-social-tasks"]);
       queryClient.invalidateQueries(["user"]);
       navigate("/user/social-works/my-tasks");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to create task");
+      toast.error(error.response?.data?.message || "Failed to save task");
     } finally {
       setLoading(false);
     }
   };
+
+  if (fetchingTask) {
+    return (
+      <div className="bg-[#f8faff] min-h-screen py-20 text-center">
+        <p className="text-sm text-gray-500 font-semibold">Loading campaign details…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#f8faff] min-h-screen pb-20 pt-4">
@@ -157,13 +230,15 @@ const CreateSocialTask = () => {
           <div className="border-b border-gray-100 pb-5">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-bold mb-2">
               <SparklesIcon className="w-3.5 h-3.5 text-teal-600" />
-              <span>Create Campaign</span>
+              <span>{originalTask ? "Edit Campaign (Under Review)" : "Create Campaign"}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-gray-900">
-              Post a New Social Task
+              {originalTask ? "Edit Social Task" : "Post a New Social Task"}
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Reach thousands of real platform workers to grow your subscribers, views, likes, and comments.
+              {originalTask
+                ? "Modify your campaign instructions, target links, or budget before admin approval."
+                : "Reach thousands of real platform workers to grow your subscribers, views, likes, and comments."}
             </p>
           </div>
 
@@ -419,7 +494,7 @@ const CreateSocialTask = () => {
                   </label>
                   <input
                     type="number"
-                    step="0.1"
+                    step="0.01"
                     min="0.01"
                     required
                     value={costPerUnit}
@@ -432,13 +507,33 @@ const CreateSocialTask = () => {
               {/* Escrow Card */}
               <div className="p-4 rounded-2xl bg-white border border-teal-100 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 font-medium">Total Escrow Budget to be Deducted</p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    {originalTask ? "Total Required Escrow Budget" : "Total Escrow Budget to be Deducted"}
+                  </p>
                   <p className="text-2xl sm:text-3xl font-black text-teal-700">
                     ৳ {totalBudget.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-[11px] text-gray-400">
                     {targetQuantity || 0} units × ৳{parseFloat(costPerUnit || 0).toFixed(2)}
                   </p>
+
+                  {originalTask && (
+                    <div className="mt-2 text-xs font-semibold">
+                      {budgetDelta > 0 ? (
+                        <span className="text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 inline-block">
+                          Additional Escrow to Deduct: +৳{budgetDelta.toFixed(2)}
+                        </span>
+                      ) : budgetDelta < 0 ? (
+                        <span className="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 inline-block">
+                          Escrow to Refund: -৳{Math.abs(budgetDelta).toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 inline-block">
+                          Escrow Budget Unchanged (৳{totalBudget.toFixed(2)})
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-right">
@@ -461,7 +556,9 @@ const CreateSocialTask = () => {
                 <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-3.5 rounded-2xl border border-red-200">
                   <ExclamationTriangleIcon className="w-5 h-5 shrink-0" />
                   <span>
-                    Insufficient balance to fund this task. Please deposit funds or adjust the quantity / price.
+                    {originalTask
+                      ? `Insufficient balance to cover the additional ৳${budgetDelta.toFixed(2)} budget increase.`
+                      : "Insufficient balance to fund this task. Please deposit funds or adjust the quantity / price."}
                   </span>
                 </div>
               )}
@@ -481,13 +578,17 @@ const CreateSocialTask = () => {
               <Button
                 type="submit"
                 disabled={loading || !isBalanceSufficient || totalBudget <= 0}
-                className="bg-gradient-to-r from-teal-600 to-sky-600 text-white normal-case font-bold text-sm px-8 py-3.5 rounded-2xl shadow-md hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+                className="bg-gradient-to-r from-teal-600 to-sky-600 text-white normal-case font-bold text-sm px-8 py-3.5 rounded-2xl shadow-md hover:shadow-lg disabled:opacity-50 flex items-center gap-2 cursor-pointer"
               >
                 {loading ? (
-                  <span>Publishing Task…</span>
+                  <span>{originalTask ? "Saving Changes…" : "Publishing Task…"}</span>
                 ) : (
                   <>
-                    <span>Lock ৳{totalBudget.toFixed(2)} & Post Task</span>
+                    <span>
+                      {originalTask
+                        ? "Save Changes"
+                        : `Lock ৳${totalBudget.toFixed(2)} & Post Task`}
+                    </span>
                     <CheckCircleIcon className="w-5 h-5" />
                   </>
                 )}

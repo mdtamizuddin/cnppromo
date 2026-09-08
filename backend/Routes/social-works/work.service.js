@@ -95,6 +95,99 @@ const createWork = async (workData, userId) => {
 };
 
 /**
+ * Provider updates a task while it is still under review (PENDING_APPROVAL)
+ */
+const updateWork = async (taskId, updateData, userId) => {
+  try {
+    const task = await Work.findOne({ _id: taskId, providerId: userId });
+    if (!task) {
+      throw new Error("Task not found or unauthorized");
+    }
+
+    if (task.status !== "PENDING_APPROVAL") {
+      throw new Error("Task can only be edited while it is Under Review");
+    }
+
+    // Determine targetQuantity and costPerUnit
+    const targetQuantity = updateData.targetQuantity
+      ? parseInt(updateData.targetQuantity, 10)
+      : task.targetQuantity;
+    const costPerUnit =
+      updateData.costPerUnit !== undefined
+        ? parseFloat(updateData.costPerUnit)
+        : task.costPerUnit;
+
+    if (!costPerUnit || costPerUnit <= 0) {
+      throw new Error("Cost per unit must be greater than 0");
+    }
+    if (!targetQuantity || targetQuantity <= 0) {
+      throw new Error("Target quantity must be at least 1");
+    }
+
+    const newTotalBudget = Math.round(targetQuantity * costPerUnit * 100) / 100;
+    const delta = Math.round((newTotalBudget - task.totalBudget) * 100) / 100;
+
+    if (delta > 0) {
+      // Provider increased the budget — deduct difference from balance
+      const provider = await User.findOneAndUpdate(
+        { _id: userId, balance: { $gte: delta } },
+        { $inc: { balance: -delta } },
+        { new: true }
+      );
+      if (!provider) {
+        throw new Error(
+          `Insufficient balance. You need an additional ৳${delta.toFixed(
+            2
+          )} to increase this task's budget.`
+        );
+      }
+    } else if (delta < 0) {
+      // Provider reduced the budget — refund difference to balance
+      const refundAmount = Math.abs(delta);
+      await User.findByIdAndUpdate(userId, {
+        $inc: { balance: refundAmount },
+      });
+    }
+
+    // Apply field updates
+    if (updateData.title) task.title = updateData.title.trim();
+    if (updateData.description !== undefined)
+      task.description = updateData.description.trim();
+    if (updateData.taskUrl !== undefined) {
+      task.taskUrl = updateData.taskUrl.trim();
+      task.url = updateData.taskUrl.trim();
+    }
+    if (updateData.platform) task.platform = updateData.platform;
+    if (updateData.actionType) task.actionType = updateData.actionType;
+
+    if (updateData.properties) {
+      task.properties = {
+        ...task.properties,
+        ...updateData.properties,
+      };
+    }
+
+    if (updateData.proofConfig) {
+      task.proofConfig = {
+        ...task.proofConfig,
+        ...updateData.proofConfig,
+      };
+    }
+
+    task.targetQuantity = targetQuantity;
+    task.costPerUnit = costPerUnit;
+    task.price = costPerUnit;
+    task.totalBudget = newTotalBudget;
+    task.escrowRemaining = newTotalBudget;
+
+    await task.save();
+    return task;
+  } catch (error) {
+    throw new Error("Error updating task: " + error.message);
+  }
+};
+
+/**
  * Worker & Public Feed: Fetch active tasks with hidden platform commission
  */
 const getAllWorks = async (user, options = {}) => {
@@ -1353,6 +1446,7 @@ const adminCleanupAllCompletedTasks = async () => {
 
 module.exports = {
   createWork,
+  updateWork,
   getAllWorks,
   getMyCreatedTasks,
   cancelWorkByProvider,
