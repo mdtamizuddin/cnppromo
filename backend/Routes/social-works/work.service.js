@@ -2,6 +2,7 @@ const { Work, WorkSubmit } = require("./work.model");
 const ProfitLedger = require("./profitLedger.model");
 const User = require("../User/user.model");
 const Setting = require("../Settings/setting.model");
+const { deleteManyFromS3 } = require("../../util/s3");
 const {
   notifyUser,
   notifyMany,
@@ -568,6 +569,15 @@ const providerReviewSubmission = async (
             });
           });
         }
+
+        // Trigger S3 cleanup asynchronously if target reached and no open disputes
+        setImmediate(async () => {
+          try {
+            await cleanupTaskProofImages(task._id, { force: false });
+          } catch (err) {
+            console.error("[Auto S3 Cleanup Error]", err.message);
+          }
+        });
       }
 
       // 4. Record in Platform Profit Ledger
@@ -615,6 +625,15 @@ const providerReviewSubmission = async (
       // Re-open worker slot by pulling worker from task.workers array
       await Work.findByIdAndUpdate(updatedSubmit.workId._id, {
         $pull: { workers: updatedSubmit.userId },
+      });
+
+      // Check if task is already completed/cancelled and this was the last pending submission
+      setImmediate(async () => {
+        try {
+          await cleanupTaskProofImages(updatedSubmit.workId._id, { force: false });
+        } catch (err) {
+          // Silent catch for background worker
+        }
       });
 
       // Notify Worker
@@ -1042,6 +1061,26 @@ const resolveDispute = async (submitId, adminUser, { verdict, adminNote }) => {
       submit.disputeFinedUser = submit.providerId;
       await submit.save();
 
+      // Check if task completed after dispute force-approval
+      const updatedTask = await Work.findById(task._id);
+      if (
+        updatedTask &&
+        updatedTask.completedQuantity >= updatedTask.targetQuantity &&
+        updatedTask.status !== "COMPLETED"
+      ) {
+        updatedTask.status = "COMPLETED";
+        await updatedTask.save();
+      }
+
+      // Asynchronously trigger S3 cleanup for completed task if all disputes settled
+      setImmediate(async () => {
+        try {
+          await cleanupTaskProofImages(task._id, { force: false });
+        } catch (err) {
+          console.error("[Auto S3 Cleanup Error after Dispute]", err.message);
+        }
+      });
+
       // 7. Notify Worker (won)
       notifyUser(submit.userId, {
         category: "tasks",
@@ -1081,6 +1120,15 @@ const resolveDispute = async (submitId, adminUser, { verdict, adminNote }) => {
       submit.disputeFinedUser = submit.userId;
       await submit.save();
 
+      // Asynchronously trigger S3 cleanup if task is completed and this was the last unresolved dispute
+      setImmediate(async () => {
+        try {
+          await cleanupTaskProofImages(task._id, { force: false });
+        } catch (err) {
+          console.error("[Auto S3 Cleanup Error after Dispute]", err.message);
+        }
+      });
+
       // 3. Notify Worker (lost + fined)
       notifyUser(submit.userId, {
         category: "tasks",
@@ -1108,6 +1156,201 @@ const resolveDispute = async (submitId, adminUser, { verdict, adminNote }) => {
   }
 };
 
+/**
+ * Clean up all uploaded proof screenshots on AWS S3 for a completed task
+ * Guard conditions:
+ * 1. Task target reached or status is COMPLETED / CANCELLED
+ * 2. All worker submissions are in a terminal state (zero PENDING submissions)
+ * 3. Zero active unresolved disputes
+ * 4. Task has not already had its storage purged (unless force = true)
+ *
+ * @param {string|ObjectId} taskId
+ * @param {object} [options] - { force: boolean }
+ * @returns {Promise<{ success: boolean, cleaned: boolean, reason?: string, deletedCount: number }>}
+ */
+const cleanupTaskProofImages = async (taskId, options = { force: false }) => {
+  try {
+    const task = await Work.findById(taskId);
+    if (!task) {
+      return {
+        success: false,
+        cleaned: false,
+        reason: "Task not found",
+        deletedCount: 0,
+      };
+    }
+
+    // 1. Guard against double cleanup
+    if (task.storageCleaned && !options.force) {
+      return {
+        success: true,
+        cleaned: false,
+        reason: "Storage already cleaned for this task",
+        deletedCount: 0,
+      };
+    }
+
+    // 2. Eligibility checks (unless force is true)
+    if (!options.force) {
+      const isCompleted =
+        ["COMPLETED", "completed", "CANCELLED", "cancelled"].includes(
+          task.status
+        ) || task.completedQuantity >= task.targetQuantity;
+
+      if (!isCompleted) {
+        return {
+          success: false,
+          cleaned: false,
+          reason: "Task is not yet completed or target quantity not reached",
+          deletedCount: 0,
+        };
+      }
+
+      // Check for any remaining PENDING submissions
+      const pendingCount = await WorkSubmit.countDocuments({
+        workId: task._id,
+        status: { $in: ["PENDING", "pending"] },
+      });
+      if (pendingCount > 0) {
+        return {
+          success: false,
+          cleaned: false,
+          reason: `Task still has ${pendingCount} pending submission(s) awaiting review`,
+          deletedCount: 0,
+        };
+      }
+
+      // Check for any active unresolved disputes
+      const openDisputes = await WorkSubmit.countDocuments({
+        workId: task._id,
+        disputed: true,
+        disputeVerdict: null,
+      });
+      if (openDisputes > 0) {
+        return {
+          success: false,
+          cleaned: false,
+          reason: `Task has ${openDisputes} active dispute(s) pending admin verdict`,
+          deletedCount: 0,
+        };
+      }
+    }
+
+    // 3. Fetch all submissions for this task that have screenshots
+    const submissions = await WorkSubmit.find({
+      workId: task._id,
+      $or: [
+        { "proofData.screenshots.0": { $exists: true } },
+        { proofImage: { $exists: true, $ne: null } },
+      ],
+    });
+
+    const allUrls = [];
+    submissions.forEach((sub) => {
+      if (Array.isArray(sub.proofData?.screenshots)) {
+        sub.proofData.screenshots.forEach((url) => {
+          if (url && typeof url === "string") allUrls.push(url);
+        });
+      }
+      if (sub.proofImage && typeof sub.proofImage === "string") {
+        allUrls.push(sub.proofImage);
+      }
+    });
+
+    let deletedCount = 0;
+    if (allUrls.length > 0) {
+      const s3Res = await deleteManyFromS3(allUrls);
+      deletedCount = s3Res.deletedCount || allUrls.length;
+      console.log(
+        `[S3 Cleanup] Task ${task._id} ("${task.title}"): Successfully purged ${deletedCount} proof screenshots from S3.`
+      );
+    }
+
+    // 4. Update all submissions: clear screenshots array and flag as cleaned
+    await WorkSubmit.updateMany(
+      { workId: task._id },
+      {
+        $set: {
+          "proofData.screenshots": [],
+          "proofData.screenshotsCleaned": true,
+          "proofData.cleanedAt": new Date(),
+          proofImage: null,
+        },
+      }
+    );
+
+    // 5. Update task document
+    task.storageCleaned = true;
+    task.storageCleanedAt = new Date();
+    task.storageCleanedCount = deletedCount;
+    if (task.status !== "COMPLETED" && task.status !== "CANCELLED") {
+      task.status = "COMPLETED";
+    }
+    await task.save();
+
+    return {
+      success: true,
+      cleaned: true,
+      deletedCount,
+      submissionsUpdated: submissions.length,
+    };
+  } catch (error) {
+    console.error(`[S3 Cleanup Error] Task ${taskId}:`, error.message);
+    return {
+      success: false,
+      cleaned: false,
+      reason: error.message,
+      deletedCount: 0,
+    };
+  }
+};
+
+/**
+ * Admin sweep utility: Sweep all completed tasks whose storage has not yet been cleaned,
+ * and clean up their S3 screenshots if all submissions and disputes are finalized.
+ */
+const adminCleanupAllCompletedTasks = async () => {
+  try {
+    const candidateTasks = await Work.find({
+      $or: [
+        { status: "COMPLETED" },
+        { status: "completed" },
+        { status: "CANCELLED" },
+        { $expr: { $gte: ["$completedQuantity", "$targetQuantity"] } },
+      ],
+      storageCleaned: { $ne: true },
+    }).select("_id title status completedQuantity targetQuantity");
+
+    let totalCleanedTasks = 0;
+    let totalImagesDeleted = 0;
+    const skippedTasks = [];
+
+    for (const task of candidateTasks) {
+      const res = await cleanupTaskProofImages(task._id, { force: false });
+      if (res.cleaned) {
+        totalCleanedTasks++;
+        totalImagesDeleted += res.deletedCount || 0;
+      } else {
+        skippedTasks.push({
+          taskId: task._id,
+          title: task.title,
+          reason: res.reason,
+        });
+      }
+    }
+
+    return {
+      scannedCount: candidateTasks.length,
+      cleanedCount: totalCleanedTasks,
+      totalImagesDeleted,
+      skippedCount: skippedTasks.length,
+      skippedTasks,
+    };
+  } catch (error) {
+    throw new Error("Error during batch S3 cleanup: " + error.message);
+  }
+};
+
 module.exports = {
   createWork,
   getAllWorks,
@@ -1125,4 +1368,6 @@ module.exports = {
   fileDispute,
   getDisputedSubmissions,
   resolveDispute,
+  cleanupTaskProofImages,
+  adminCleanupAllCompletedTasks,
 };

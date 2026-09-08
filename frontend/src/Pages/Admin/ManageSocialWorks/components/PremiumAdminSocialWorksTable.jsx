@@ -67,6 +67,10 @@ const PremiumAdminSocialWorksTable = () => {
   const [resolvingDisputeId, setResolvingDisputeId] = useState(null);
   const [disputeAdminNote, setDisputeAdminNote] = useState({});
 
+  // S3 Storage cleanup state
+  const [cleaningTaskId, setCleaningTaskId] = useState(null);
+  const [isSweepingStorage, setIsSweepingStorage] = useState(false);
+
   const queryClient = useQueryClient();
   const { ref: subsDesktopRef, inView: subsDesktopInView } = useInView();
 
@@ -244,12 +248,49 @@ const PremiumAdminSocialWorksTable = () => {
           ? "Worker's appeal accepted! Worker paid, provider fined 2×."
           : "Appeal dismissed. Worker fined 2×."
       );
-      setDisputeAdminNote((prev) => ({ ...prev, [submitId]: "" }));
-      refreshAll();
+      queryClient.invalidateQueries(["admin-social-disputes"]);
+      queryClient.invalidateQueries(["admin-social-work-submits"]);
+      queryClient.invalidateQueries(["admin-social-works"]);
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to resolve dispute");
     } finally {
       setResolvingDisputeId(null);
+    }
+  };
+
+  // S3 Storage Purge Handlers
+  const handleCleanupTaskS3 = async (taskId) => {
+    setCleaningTaskId(taskId);
+    try {
+      const { data } = await api.post(`/social-works/admin/tasks/${taskId}/cleanup-s3`, { force: true });
+      if (data?.success) {
+        toast.success(`Purged ${data.deletedCount || 0} proof images from S3!`);
+        queryClient.invalidateQueries(["admin-social-works"]);
+      } else {
+        toast.error(data?.reason || "Failed to purge task storage");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message);
+    } finally {
+      setCleaningTaskId(null);
+    }
+  };
+
+  const handleSweepS3 = async () => {
+    if (!window.confirm("Sweep all completed tasks and purge their uploaded S3 screenshots?")) return;
+    setIsSweepingStorage(true);
+    try {
+      const { data } = await api.post("/social-works/admin/cleanup-s3-batch");
+      if (data?.success) {
+        toast.success(`Swept ${data.data.scannedCount} tasks: Cleaned ${data.data.cleanedCount} tasks (${data.data.totalImagesDeleted} images purged)!`);
+        queryClient.invalidateQueries(["admin-social-works"]);
+      } else {
+        toast.error(data?.message || "Failed to sweep storage");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message);
+    } finally {
+      setIsSweepingStorage(false);
     }
   };
 
@@ -354,8 +395,8 @@ const PremiumAdminSocialWorksTable = () => {
                 )}
               </div>
 
-              {/* Status Filter */}
-              <div className="flex gap-1.5 overflow-x-auto w-full sm:w-auto">
+              {/* Status Filter & S3 Batch Action */}
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
                 {["all", "PENDING_APPROVAL", "ACTIVE", "REJECTED", "COMPLETED"].map((st) => (
                   <button
                     key={st}
@@ -369,6 +410,17 @@ const PremiumAdminSocialWorksTable = () => {
                     {st === "PENDING_APPROVAL" ? "Pending Approval" : st === "all" ? "All Tasks" : st}
                   </button>
                 ))}
+
+                <button
+                  type="button"
+                  onClick={handleSweepS3}
+                  disabled={isSweepingStorage}
+                  className="px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border border-teal-200 bg-teal-50/80 text-teal-800 hover:bg-teal-100 flex items-center gap-1 shadow-2xs"
+                  title="Purge uploaded screenshots for all completed tasks"
+                >
+                  <ArrowPathIcon className={`w-3.5 h-3.5 ${isSweepingStorage ? "animate-spin" : ""}`} />
+                  <span>{isSweepingStorage ? "Purging S3..." : "Sweep S3 Storage"}</span>
+                </button>
               </div>
             </div>
           }
@@ -451,6 +503,29 @@ const PremiumAdminSocialWorksTable = () => {
                           >
                             {task.status === "PENDING_APPROVAL" ? "Pending" : task.status}
                           </StatusPill>
+
+                          {task.storageCleaned ? (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200 font-medium">
+                                ✓ S3 Cleaned ({task.storageCleanedCount || 0})
+                              </span>
+                            </div>
+                          ) : ["COMPLETED", "completed"].includes(task.status) ? (
+                            <div className="mt-1">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCleanupTaskS3(task._id);
+                                }}
+                                disabled={cleaningTaskId === task._id}
+                                className="inline-flex items-center gap-1 text-[10px] text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-1.5 py-0.5 rounded-md border border-amber-200 font-bold transition-colors cursor-pointer"
+                                title="Purge all proof screenshots from S3 storage"
+                              >
+                                {cleaningTaskId === task._id ? "Purging..." : "Purge S3"}
+                              </button>
+                            </div>
+                          ) : null}
                         </td>
 
                         {/* Actions */}

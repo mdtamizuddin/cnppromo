@@ -245,7 +245,11 @@ const TaskSubmissionsReview = () => {
                     )}
 
                     {/* Screenshot Gallery */}
-                    {screenshots.length > 0 && (
+                    {sub.proofData?.screenshotsCleaned ? (
+                      <div className="flex items-center gap-1.5 py-2 px-3 rounded-xl bg-teal-50/70 border border-teal-100 text-[11px] text-teal-800 font-medium">
+                        <span>📦 Proof screenshots purged from cloud storage (Task Completed)</span>
+                      </div>
+                    ) : screenshots.length > 0 ? (
                       <div>
                         <span className="font-semibold text-gray-600 block mb-1.5 text-[11px]">
                           Submitted Proof Screenshots ({screenshots.length}):
@@ -269,7 +273,7 @@ const TaskSubmissionsReview = () => {
                           ))}
                         </div>
                       </div>
-                    )}
+                    ) : null}
 
                     {isRejected && sub.rejectionReason && (
                       <div className="text-[11px] text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100">

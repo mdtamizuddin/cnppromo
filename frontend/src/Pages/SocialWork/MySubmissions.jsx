@@ -252,7 +252,11 @@ const MySubmissions = () => {
                       </div>
                     )}
 
-                    {screenshots.length > 0 && (
+                    {sub.proofData?.screenshotsCleaned ? (
+                      <div className="flex items-center gap-1.5 py-2 px-3 rounded-xl bg-teal-50/70 border border-teal-100 text-[11px] text-teal-800 font-medium">
+                        <span>📦 Proof screenshots purged from cloud storage (Task Completed)</span>
+                      </div>
+                    ) : screenshots.length > 0 ? (
                       <div className="space-y-1.5">
                         <span className="font-semibold text-gray-600 block text-[11px]">
                           Your Uploaded Screenshot Proofs ({screenshots.length}):
@@ -276,7 +280,7 @@ const MySubmissions = () => {
                           ))}
                         </div>
                       </div>
-                    )}
+                    ) : null}
 
                     {/* Rejection Alert */}
                     {isRejected && sub.rejectionReason && (

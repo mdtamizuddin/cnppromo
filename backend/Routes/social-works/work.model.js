@@ -155,6 +155,20 @@ const workSchema = new mongoose.Schema(
       ref: "User",
       default: [],
     },
+    // S3 Cloud Storage Cleanup Tracking
+    storageCleaned: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    storageCleanedAt: {
+      type: Date,
+      default: null,
+    },
+    storageCleanedCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -191,6 +205,8 @@ const workSubmitSchema = new mongoose.Schema(
       text: { type: String, default: "", trim: true, maxlength: 1000 },
       screenshots: [{ type: String, trim: true }],
       watchedSeconds: { type: Number, default: 0 },
+      screenshotsCleaned: { type: Boolean, default: false },
+      cleanedAt: { type: Date, default: null },
     },
     // Legacy support
     answers: {

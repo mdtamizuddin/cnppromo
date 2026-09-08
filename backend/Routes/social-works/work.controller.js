@@ -232,6 +232,40 @@ router.put(
   }
 );
 
+// Admin: Clean up S3 proof images for a specific task
+router.post(
+  "/admin/tasks/:taskId/cleanup-s3",
+  authChecker,
+  roleChecker(["admin"]),
+  async (req, res) => {
+    try {
+      const force = req.body?.force === true;
+      const result = await services.cleanupTaskProofImages(
+        req.params.taskId,
+        { force }
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// Admin: Batch sweep all completed tasks and purge eligible S3 proof images
+router.post(
+  "/admin/cleanup-s3-batch",
+  authChecker,
+  roleChecker(["admin"]),
+  async (req, res) => {
+    try {
+      const result = await services.adminCleanupAllCompletedTasks();
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 // Admin/Moderator lists all submissions across all tasks
 router.get(
   "/all-submits",

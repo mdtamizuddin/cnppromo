@@ -220,7 +220,11 @@ const SubmissionReviewModal = ({ submit, onClose, onSuccess }) => {
           )}
 
           {/* Submitted Screenshots */}
-          {screenshots.length > 0 && (
+          {submit?.proofData?.screenshotsCleaned ? (
+            <div className="flex items-center gap-1.5 py-2.5 px-3.5 rounded-xl bg-teal-50/70 border border-teal-100 text-xs text-teal-800 font-medium">
+              <span>📦 Proof screenshots purged from cloud storage (Task Completed)</span>
+            </div>
+          ) : screenshots.length > 0 ? (
             <div className="space-y-2">
               <span className="font-bold text-gray-700 block">
                 Proof Screenshots ({screenshots.length}):
@@ -240,7 +244,7 @@ const SubmissionReviewModal = ({ submit, onClose, onSuccess }) => {
                 ))}
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* Rejection Note */}
           {isRejected && submit?.rejectionReason && (
