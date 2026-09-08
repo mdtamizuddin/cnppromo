@@ -162,26 +162,37 @@ const getAllWorks = async (user, options = {}) => {
       });
     }
 
-    // Worker marketplace feed query
-    const filter = {
-      status: { $in: ["ACTIVE", "active"] },
-      workers: { $nin: [userRes._id.toString()] },
-      $expr: { $lt: ["$completedQuantity", "$targetQuantity"] },
-    };
+    // Worker marketplace feed query — using $and to safely combine filters
+    const conditions = [
+      { status: { $in: ["ACTIVE", "active"] } },
+      { workers: { $nin: [userRes._id] } }, // Pass ObjectId directly, not .toString()
+      { $expr: { $lt: ["$completedQuantity", "$targetQuantity"] } },
+      {
+        $or: [
+          { deadline: null },
+          { deadline: { $exists: false } },
+          { deadline: { $gt: new Date() } },
+        ],
+      },
+    ];
 
     if (options.platform && options.platform !== "all") {
-      filter.platform = options.platform.toLowerCase();
+      conditions.push({ platform: options.platform.toLowerCase() });
     }
     if (options.actionType && options.actionType !== "all") {
-      filter.actionType = options.actionType;
+      conditions.push({ actionType: options.actionType });
     }
     if (options.search && options.search.trim()) {
       const q = options.search.trim();
-      filter.$or = [
-        { title: { $regex: q, $options: "i" } },
-        { description: { $regex: q, $options: "i" } },
-      ];
+      conditions.push({
+        $or: [
+          { title: { $regex: q, $options: "i" } },
+          { description: { $regex: q, $options: "i" } },
+        ],
+      });
     }
+
+    const filter = { $and: conditions };
 
     let sortObj = { createdAt: -1 };
     if (options.sortBy === "highest") {
@@ -351,15 +362,55 @@ const createWorkSubmit = async (data, workerId) => {
       throw new Error("This task is not currently active");
     }
 
-    if (task.completedQuantity >= task.targetQuantity) {
-      throw new Error("This task has already reached its target capacity");
+    // Guard #5: Provider cannot submit to own task
+    if (task.providerId.toString() === workerId.toString()) {
+      throw new Error("You cannot submit proof for your own task");
     }
 
-    if (
-      task.workers &&
-      task.workers.some((w) => w.toString() === workerId.toString())
-    ) {
-      throw new Error("You have already submitted proof for this task");
+    // Guard #7: Check deadline
+    if (task.deadline && new Date() > new Date(task.deadline)) {
+      throw new Error("This task has passed its deadline");
+    }
+
+    // Guard #9: Check retry limit for previously rejected workers
+    const previousRejections = await WorkSubmit.countDocuments({
+      workId: task._id,
+      userId: workerId,
+      status: { $in: ["REJECTED", "rejected"] },
+    });
+    const maxRetries = typeof task.maxRetries === "number" ? task.maxRetries : 1;
+    if (previousRejections > maxRetries) {
+      throw new Error(
+        `You have exceeded the maximum retry limit (${maxRetries + 1} attempts) for this task`
+      );
+    }
+
+    // Guard #6: Check real capacity (completed + pending = filled slots)
+    const pendingCount = await WorkSubmit.countDocuments({
+      workId: task._id,
+      status: { $in: ["PENDING", "pending"] },
+    });
+    if (task.completedQuantity + pendingCount >= task.targetQuantity) {
+      throw new Error(
+        "This task has no available slots right now. Try again later."
+      );
+    }
+
+    // Guard #1: Atomic duplicate prevention — push worker only if not already present
+    const atomicTask = await Work.findOneAndUpdate(
+      {
+        _id: task._id,
+        status: { $in: ["ACTIVE", "active"] },
+        workers: { $nin: [workerId] },
+      },
+      { $push: { workers: workerId } },
+      { new: true }
+    );
+
+    if (!atomicTask) {
+      throw new Error(
+        "You have already submitted proof for this task or the task is no longer available"
+      );
     }
 
     const commissionRate = await getCommissionRate();
@@ -385,16 +436,12 @@ const createWorkSubmit = async (data, workerId) => {
       netAmount,
       platformFee,
       status: "PENDING",
+      attemptNumber: previousRejections + 1,
     });
 
     await workSubmit.save();
 
-    // Mark worker as submitted to prevent parallel duplicate submissions
-    await Work.findByIdAndUpdate(task._id, {
-      $push: { workers: workerId },
-    });
-
-    // Notify provider
+    // Notify provider about new submission
     if (task.providerId) {
       notifyUser(task.providerId, {
         category: "tasks",
@@ -451,9 +498,12 @@ const providerReviewSubmission = async (
         });
       }
 
-      // 2. Deduct from Task Escrow and increment completed count
-      const task = await Work.findByIdAndUpdate(
-        updatedSubmit.workId._id,
+      // 2. Guard #2: Atomic escrow deduction with floor guard — prevents negative escrow
+      const task = await Work.findOneAndUpdate(
+        {
+          _id: updatedSubmit.workId._id,
+          escrowRemaining: { $gte: updatedSubmit.grossAmount },
+        },
         {
           $inc: {
             escrowRemaining: -updatedSubmit.grossAmount,
@@ -463,12 +513,64 @@ const providerReviewSubmission = async (
         { new: true }
       );
 
-      if (task && task.completedQuantity >= task.targetQuantity) {
-        task.status = "COMPLETED";
-        await task.save();
+      if (!task) {
+        // Guard #4: Compensating rollback — revert submission and refund worker
+        await WorkSubmit.findByIdAndUpdate(submitId, {
+          status: "PENDING",
+          reviewedAt: null,
+        });
+        if (updatedSubmit.netAmount > 0) {
+          await User.findByIdAndUpdate(updatedSubmit.userId, {
+            $inc: { balance: -updatedSubmit.netAmount },
+          });
+        }
+        throw new Error(
+          "Insufficient escrow remaining. The task may have already reached its budget limit."
+        );
       }
 
-      // 3. Record in Platform Profit Ledger
+      // 3. Guard #8: Auto-complete task if target reached + auto-reject orphaned PENDING submissions
+      if (task.completedQuantity >= task.targetQuantity) {
+        task.status = "COMPLETED";
+        await task.save();
+
+        // Find and auto-reject any remaining PENDING submissions
+        const orphanedSubmits = await WorkSubmit.find({
+          workId: task._id,
+          status: { $in: ["PENDING", "pending"] },
+        });
+
+        if (orphanedSubmits.length > 0) {
+          await WorkSubmit.updateMany(
+            { workId: task._id, status: { $in: ["PENDING", "pending"] } },
+            {
+              status: "REJECTED",
+              rejectionReason:
+                "Task completed — target quantity reached. Submission auto-closed.",
+              reviewedAt: new Date(),
+            }
+          );
+
+          // Re-open worker slots for auto-rejected workers
+          const orphanedWorkerIds = orphanedSubmits.map((s) => s.userId);
+          await Work.findByIdAndUpdate(task._id, {
+            $pull: { workers: { $in: orphanedWorkerIds } },
+          });
+
+          // Notify auto-rejected workers
+          orphanedSubmits.forEach((s) => {
+            notifyUser(s.userId, {
+              category: "tasks",
+              type: "task_auto_closed",
+              title: "Task Completed",
+              message: `The task "${task.title}" reached its target. Your pending submission was automatically closed.`,
+              link: "/user/social-works/submissions",
+            });
+          });
+        }
+      }
+
+      // 4. Record in Platform Profit Ledger
       await ProfitLedger.create({
         taskId: updatedSubmit.workId._id,
         submissionId: updatedSubmit._id,
@@ -479,7 +581,7 @@ const providerReviewSubmission = async (
         platformFee: updatedSubmit.platformFee,
       });
 
-      // 4. Notify Worker
+      // 5. Notify Worker
       notifyUser(updatedSubmit.userId, {
         category: "tasks",
         type: "task_approved",

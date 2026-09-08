@@ -140,6 +140,16 @@ const workSchema = new mongoose.Schema(
       default: null,
       trim: true,
     },
+    deadline: {
+      type: Date,
+      default: null,
+    },
+    maxRetries: {
+      type: Number,
+      default: 1,
+      min: [0, "Max retries cannot be negative"],
+      max: [3, "Max retries cannot exceed 3"],
+    },
     workers: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "User",
@@ -232,6 +242,11 @@ const workSubmitSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    attemptNumber: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
   },
   {
     timestamps: true,
@@ -242,7 +257,13 @@ const workSubmitSchema = new mongoose.Schema(
 workSubmitSchema.index({ workId: 1, status: 1, createdAt: -1 });
 workSubmitSchema.index({ providerId: 1, status: 1, createdAt: -1 });
 workSubmitSchema.index({ userId: 1, createdAt: -1 });
-workSubmitSchema.index({ workId: 1, userId: 1 });
+workSubmitSchema.index(
+  { workId: 1, userId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["PENDING", "pending"] } },
+  }
+);
 
 const Work = mongoose.model("SocialWork", workSchema);
 const WorkSubmit = mongoose.model("WorkSubmit", workSubmitSchema);
