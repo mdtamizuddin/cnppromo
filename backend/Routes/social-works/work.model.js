@@ -247,6 +247,45 @@ const workSubmitSchema = new mongoose.Schema(
       default: 1,
       min: 1,
     },
+    // Dispute / Appeal System
+    disputed: {
+      type: Boolean,
+      default: false,
+    },
+    disputeReason: {
+      type: String,
+      default: null,
+      trim: true,
+      maxlength: [1000, "Dispute reason cannot exceed 1000 characters"],
+    },
+    disputedAt: {
+      type: Date,
+      default: null,
+    },
+    disputeVerdict: {
+      type: String,
+      enum: [null, "WORKER_WINS", "PROVIDER_WINS"],
+      default: null,
+    },
+    disputeResolvedAt: {
+      type: Date,
+      default: null,
+    },
+    disputeAdminNote: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    disputeFine: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    disputeFinedUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   {
     timestamps: true,

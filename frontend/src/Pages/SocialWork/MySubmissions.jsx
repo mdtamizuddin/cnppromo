@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from "react";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { Card, Button, Dialog } from "@material-tailwind/react";
+import toast from "react-hot-toast";
 import {
   SparklesIcon,
   CheckCircleIcon,
@@ -27,6 +28,12 @@ const MySubmissions = () => {
   const { user } = useSelector((state) => state.user);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [lightboxImage, setLightboxImage] = useState(null);
+  const queryClient = useQueryClient();
+
+  // Dispute modal state
+  const [disputeModal, setDisputeModal] = useState(null); // submission object
+  const [disputeReason, setDisputeReason] = useState("");
+  const [filingDispute, setFilingDispute] = useState(false);
 
   const { data: submits, isLoading } = useQuery({
     queryKey: ["my-social-submissions", user?._id],
@@ -62,6 +69,27 @@ const MySubmissions = () => {
     const rejected = list.filter((s) => ["REJECTED", "rejected"].includes(s.status)).length;
     return { total, pending, totalEarned, rejected, approvedCount: approved.length };
   }, [submits]);
+
+  // Handle file dispute
+  const handleFileDispute = async () => {
+    if (!disputeModal) return;
+    try {
+      setFilingDispute(true);
+      await api.post(`social-works/dispute/${disputeModal._id}`, {
+        reason: disputeReason.trim(),
+      });
+      toast.success("Appeal submitted! Admin will review your submission.");
+      setDisputeModal(null);
+      setDisputeReason("");
+      queryClient.invalidateQueries(["my-social-submissions"]);
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to file appeal"
+      );
+    } finally {
+      setFilingDispute(false);
+    }
+  };
 
   return (
     <div className="bg-[#f8faff] min-h-screen pb-20 pt-4">
@@ -252,9 +280,46 @@ const MySubmissions = () => {
 
                     {/* Rejection Alert */}
                     {isRejected && sub.rejectionReason && (
-                      <div className="p-3.5 rounded-2xl bg-red-50 text-red-700 border border-red-100 space-y-0.5">
+                      <div className="p-3.5 rounded-2xl bg-red-50 text-red-700 border border-red-100 space-y-2">
                         <strong className="block font-bold">Rejection Feedback from Provider:</strong>
                         <span>{sub.rejectionReason}</span>
+
+                        {/* Dispute Status */}
+                        {sub.disputed && sub.disputeVerdict === "WORKER_WINS" && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px]">
+                            <strong>✅ Appeal Accepted!</strong> Admin ruled in your favor.
+                            {sub.disputeAdminNote && <span className="block mt-0.5 text-emerald-600">Admin Note: {sub.disputeAdminNote}</span>}
+                          </div>
+                        )}
+                        {sub.disputed && sub.disputeVerdict === "PROVIDER_WINS" && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 text-[11px]">
+                            <strong>❌ Appeal Dismissed.</strong> Admin upheld the rejection.
+                            {sub.disputeFine > 0 && (
+                              <span className="block mt-0.5 font-bold text-red-600">
+                                Penalty: ৳{sub.disputeFine.toFixed(2)} deducted from your balance.
+                              </span>
+                            )}
+                            {sub.disputeAdminNote && <span className="block mt-0.5 text-orange-600">Admin Note: {sub.disputeAdminNote}</span>}
+                          </div>
+                        )}
+                        {sub.disputed && !sub.disputeVerdict && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-[11px]">
+                            <strong>⏳ Appeal Under Review</strong> — Admin is reviewing your submission proofs.
+                          </div>
+                        )}
+
+                        {/* Appeal Button — only show if not already disputed */}
+                        {!sub.disputed && (
+                          <button
+                            onClick={() => {
+                              setDisputeModal(sub);
+                              setDisputeReason("");
+                            }}
+                            className="mt-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition-all shadow-sm"
+                          >
+                            ⚠️ Appeal This Rejection
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -288,6 +353,80 @@ const MySubmissions = () => {
           </div>
         </Dialog>
       )}
+
+      {/* Dispute / Appeal Modal */}
+      <Dialog
+        open={Boolean(disputeModal)}
+        handler={() => !filingDispute && setDisputeModal(null)}
+        size="md"
+        className="rounded-3xl p-0 overflow-hidden"
+      >
+        <div className="p-6 sm:p-8 space-y-5">
+          <div>
+            <h3 className="text-lg font-black text-gray-900">⚠️ Appeal Rejection</h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Task: <strong>{disputeModal?.workId?.title || "Social Media Task"}</strong>
+            </p>
+          </div>
+
+          {/* Warning Banner */}
+          <div className="p-3.5 rounded-2xl bg-orange-50 border border-orange-200 text-xs text-orange-800 space-y-1">
+            <strong className="block font-bold">⚠️ Important — Read Before Filing</strong>
+            <p>
+              Admin will review your proof screenshots and text against the task requirements.
+              If your appeal is <strong>valid</strong>, you will be paid and the provider will be fined <strong>2× the task rate</strong>.
+            </p>
+            <p>
+              If your appeal is <strong>invalid</strong>, <strong>you will be fined 2× the reward amount</strong> and the fine will be deducted from your balance.
+            </p>
+          </div>
+
+          {/* Provider's rejection reason */}
+          {disputeModal?.rejectionReason && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-xs">
+              <span className="font-bold text-red-700">Provider's Rejection Reason:</span>
+              <p className="text-red-600 mt-0.5">{disputeModal.rejectionReason}</p>
+            </div>
+          )}
+
+          {/* Dispute Reason Textarea */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1.5">
+              Why do you believe this rejection is unfair? *
+            </label>
+            <textarea
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              placeholder="Explain in detail why your submission was valid and the rejection is wrong. Reference your proof screenshots and text..."
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-orange-300 focus:border-orange-400 outline-none resize-none"
+              rows={4}
+              maxLength={1000}
+              disabled={filingDispute}
+            />
+            <p className="text-[10px] text-gray-400 mt-1 text-right">
+              {disputeReason.length}/1000 (minimum 10 characters)
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+            <button
+              onClick={() => setDisputeModal(null)}
+              disabled={filingDispute}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleFileDispute}
+              disabled={filingDispute || disputeReason.trim().length < 10}
+              className="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {filingDispute ? "Submitting Appeal..." : "Submit Appeal"}
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 };

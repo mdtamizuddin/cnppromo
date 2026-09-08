@@ -63,6 +63,10 @@ const PremiumAdminSocialWorksTable = () => {
   const [commissionRate, setCommissionRate] = useState(10);
   const [savingCommission, setSavingCommission] = useState(false);
 
+  // Dispute resolution state
+  const [resolvingDisputeId, setResolvingDisputeId] = useState(null);
+  const [disputeAdminNote, setDisputeAdminNote] = useState({});
+
   const queryClient = useQueryClient();
   const { ref: subsDesktopRef, inView: subsDesktopInView } = useInView();
 
@@ -97,6 +101,17 @@ const PremiumAdminSocialWorksTable = () => {
         }
       },
     }
+  );
+
+  // 5. Fetch Open Disputes
+  const {
+    data: disputes,
+    isLoading: disputesLoading,
+    refetch: refetchDisputes,
+  } = useQuery(
+    ["admin-social-disputes"],
+    async () => (await api.get("social-works/admin/disputes")).data,
+    { staleTime: 15000 }
   );
 
   // 4. Fetch Submissions Stream
@@ -155,6 +170,7 @@ const PremiumAdminSocialWorksTable = () => {
     refetchWorks();
     queryClient.invalidateQueries(["admin-social-analytics"]);
     queryClient.invalidateQueries(["admin-social-work-submits"]);
+    refetchDisputes();
   };
 
   // Moderation Handler
@@ -212,6 +228,28 @@ const PremiumAdminSocialWorksTable = () => {
       toast.error(err?.response?.data?.message || "Failed to update commission");
     } finally {
       setSavingCommission(false);
+    }
+  };
+
+  // Dispute Resolution Handler
+  const handleResolveDispute = async (submitId, verdict) => {
+    try {
+      setResolvingDisputeId(submitId);
+      await api.put(`social-works/admin/resolve-dispute/${submitId}`, {
+        verdict,
+        adminNote: disputeAdminNote[submitId] || "",
+      });
+      toast.success(
+        verdict === "WORKER_WINS"
+          ? "Worker's appeal accepted! Worker paid, provider fined 2×."
+          : "Appeal dismissed. Worker fined 2×."
+      );
+      setDisputeAdminNote((prev) => ({ ...prev, [submitId]: "" }));
+      refreshAll();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to resolve dispute");
+    } finally {
+      setResolvingDisputeId(null);
     }
   };
 
@@ -286,6 +324,7 @@ const PremiumAdminSocialWorksTable = () => {
           tabs={[
             { key: "works", label: "Tasks & Moderation", count: works?.length || 0 },
             { key: "submissions", label: "Worker Submissions", count: submissions.length },
+            { key: "disputes", label: "⚠️ Disputes", count: (disputes || []).length },
             { key: "commission", label: "Platform Commission & Revenue" },
           ]}
         />
@@ -692,6 +731,172 @@ const PremiumAdminSocialWorksTable = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ══ TAB 4: Disputes Resolution ═════════════════════════════════════ */}
+      {activeTab === "disputes" && (
+        <TableCard
+          toolbar={
+            <div className="flex items-center justify-between w-full">
+              <h3 className="text-sm font-bold text-gray-800">
+                Open Disputes ({(disputes || []).length})
+              </h3>
+              <IconAction
+                icon={ArrowPathIcon}
+                label="Refresh"
+                tone="teal"
+                onClick={refetchDisputes}
+              />
+            </div>
+          }
+        >
+          {disputesLoading ? (
+            <SkeletonRows columns={6} rows={3} />
+          ) : (disputes || []).length === 0 ? (
+            <EmptyState
+              icon={CheckCircleIcon}
+              heading="No Open Disputes"
+              sub="All disputes have been resolved. Great job!"
+            />
+          ) : (
+            <div className="space-y-4 p-4">
+              {(disputes || []).map((d) => (
+                <div
+                  key={d._id}
+                  className="p-5 rounded-2xl border border-orange-200 bg-orange-50/30 space-y-4"
+                >
+                  {/* Header */}
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900">
+                        {d.workId?.title || "Unknown Task"}
+                      </h4>
+                      <p className="text-[10px] text-gray-500 mt-0.5">
+                        Platform: <strong className="uppercase">{d.workId?.platform}</strong>
+                        {" · "}
+                        Submitted: {moment(d.createdAt).format("MMM D, YYYY · h:mm A")}
+                        {" · "}
+                        Disputed: {moment(d.disputedAt).format("MMM D, h:mm A")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-gray-800">
+                        Gross: ৳{(d.grossAmount || 0).toFixed(2)}
+                      </span>
+                      <span className="text-xs font-bold text-emerald-600">
+                        Net: ৳{(d.netAmount || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Parties */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
+                      <span className="font-bold text-blue-800 block">Worker (Appellant):</span>
+                      <span className="text-blue-700">
+                        {d.userId?.name || d.userId?.username || "Unknown"} ({d.userId?.email})
+                      </span>
+                      <span className="block text-blue-500 mt-0.5">
+                        Balance: ৳{(d.userId?.balance || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-purple-50 border border-purple-100">
+                      <span className="font-bold text-purple-800 block">Provider (Task Owner):</span>
+                      <span className="text-purple-700">
+                        {d.providerId?.name || d.providerId?.username || "Unknown"} ({d.providerId?.email})
+                      </span>
+                      <span className="block text-purple-500 mt-0.5">
+                        Balance: ৳{(d.providerId?.balance || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Provider's Rejection Reason */}
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-xs">
+                    <strong className="text-red-700">Provider's Rejection Reason:</strong>
+                    <p className="text-red-600 mt-0.5">{d.rejectionReason}</p>
+                  </div>
+
+                  {/* Worker's Appeal Reason */}
+                  <div className="p-3 rounded-xl bg-orange-50 border border-orange-200 text-xs">
+                    <strong className="text-orange-700">Worker's Appeal Reason:</strong>
+                    <p className="text-orange-600 mt-0.5">{d.disputeReason}</p>
+                  </div>
+
+                  {/* Proof Evidence */}
+                  <div className="space-y-2">
+                    {d.proofData?.text && (
+                      <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 text-xs">
+                        <strong className="text-gray-700">Submitted Text Proof:</strong>
+                        <p className="text-gray-800 mt-0.5 font-mono whitespace-pre-wrap">{d.proofData.text}</p>
+                      </div>
+                    )}
+                    {(d.proofData?.screenshots || []).length > 0 && (
+                      <div>
+                        <span className="text-[11px] font-bold text-gray-600 block mb-1">
+                          Screenshot Proofs ({d.proofData.screenshots.length}):
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {d.proofData.screenshots.map((url, idx) => (
+                            <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                              <img
+                                src={url}
+                                alt={`Proof ${idx + 1}`}
+                                className="w-24 h-24 rounded-xl object-cover border border-gray-200 hover:scale-105 transition-transform cursor-pointer"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Admin Note + Verdict Buttons */}
+                  <div className="space-y-3 pt-3 border-t border-orange-200">
+                    <div>
+                      <label className="text-[11px] font-bold text-gray-600 block mb-1">
+                        Admin Note (optional):
+                      </label>
+                      <input
+                        type="text"
+                        value={disputeAdminNote[d._id] || ""}
+                        onChange={(e) =>
+                          setDisputeAdminNote((prev) => ({
+                            ...prev,
+                            [d._id]: e.target.value,
+                          }))
+                        }
+                        placeholder="Add a note visible to both parties..."
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-teal-200 focus:border-teal-400 outline-none"
+                        disabled={resolvingDisputeId === d._id}
+                      />
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      {/* Worker Wins */}
+                      <button
+                        onClick={() => handleResolveDispute(d._id, "WORKER_WINS")}
+                        disabled={resolvingDisputeId === d._id}
+                        className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all disabled:opacity-50"
+                      >
+                        ✅ Worker Wins — Pay Worker + Fine Provider 2×(৳{(d.grossAmount * 2).toFixed(2)})
+                      </button>
+
+                      {/* Provider Wins */}
+                      <button
+                        onClick={() => handleResolveDispute(d._id, "PROVIDER_WINS")}
+                        disabled={resolvingDisputeId === d._id}
+                        className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all disabled:opacity-50"
+                      >
+                        ❌ Dismiss Appeal — Fine Worker 2×(৳{(d.netAmount * 2).toFixed(2)})
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TableCard>
       )}
 
       {/* Review Submission Modal */}

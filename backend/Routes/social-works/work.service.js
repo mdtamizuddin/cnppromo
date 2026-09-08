@@ -886,6 +886,228 @@ const deleteWork = async (workId) => {
   }
 };
 
+/**
+ * Worker: File a dispute/appeal on a rejected submission
+ */
+const fileDispute = async (submitId, workerId, reason) => {
+  try {
+    if (!reason || reason.trim().length < 10) {
+      throw new Error(
+        "Please provide a detailed reason for your appeal (at least 10 characters)"
+      );
+    }
+
+    const submit = await WorkSubmit.findOne({
+      _id: submitId,
+      userId: workerId,
+    }).populate("workId");
+
+    if (!submit) throw new Error("Submission not found or unauthorized");
+
+    if (!["REJECTED", "rejected"].includes(submit.status)) {
+      throw new Error("Only rejected submissions can be disputed");
+    }
+
+    if (submit.disputed) {
+      throw new Error("You have already filed a dispute for this submission");
+    }
+
+    if (submit.disputeVerdict) {
+      throw new Error("This submission already has a resolved dispute");
+    }
+
+    submit.disputed = true;
+    submit.disputeReason = reason.trim();
+    submit.disputedAt = new Date();
+    await submit.save();
+
+    // Notify Admins
+    const admins = await User.find({ role: "admin" }).select("_id");
+    if (admins.length > 0) {
+      notifyMany(
+        admins.map((a) => a._id),
+        {
+          category: "tasks",
+          type: "dispute_filed",
+          title: "⚠️ New Dispute Filed",
+          message: `A worker disputed their rejection on task "${
+            submit.workId?.title || "Unknown"
+          }". Review required.`,
+          link: "/admin/social-works",
+        }
+      );
+    }
+
+    return submit;
+  } catch (error) {
+    throw new Error("Error filing dispute: " + error.message);
+  }
+};
+
+/**
+ * Admin: Get all disputed submissions for review
+ */
+const getDisputedSubmissions = async () => {
+  try {
+    const disputes = await WorkSubmit.find({
+      disputed: true,
+      disputeVerdict: null,
+    })
+      .populate("workId")
+      .populate("userId", "name username email avatar balance")
+      .populate("providerId", "name username email avatar balance")
+      .sort({ disputedAt: -1 });
+
+    return disputes;
+  } catch (error) {
+    throw new Error("Error fetching disputes: " + error.message);
+  }
+};
+
+/**
+ * Admin: Resolve a dispute
+ * - WORKER_WINS: Force-approve submission + fine provider 2x grossAmount
+ * - PROVIDER_WINS: Dismiss appeal + fine worker 2x netAmount
+ */
+const resolveDispute = async (submitId, adminUser, { verdict, adminNote }) => {
+  try {
+    if (!["WORKER_WINS", "PROVIDER_WINS"].includes(verdict)) {
+      throw new Error("Invalid verdict. Must be WORKER_WINS or PROVIDER_WINS");
+    }
+
+    const submit = await WorkSubmit.findById(submitId).populate("workId");
+    if (!submit) throw new Error("Submission not found");
+
+    if (!submit.disputed) {
+      throw new Error("This submission has no active dispute");
+    }
+
+    if (submit.disputeVerdict) {
+      throw new Error("This dispute has already been resolved");
+    }
+
+    const task = submit.workId;
+    if (!task) throw new Error("Associated task not found");
+
+    if (verdict === "WORKER_WINS") {
+      // ── Worker was right, submission is valid ──
+      // 1. Force-approve the submission
+      submit.status = "APPROVED";
+      submit.reviewedAt = new Date();
+
+      // 2. Credit worker with netAmount
+      if (submit.netAmount > 0) {
+        await User.findByIdAndUpdate(submit.userId, {
+          $inc: { balance: submit.netAmount },
+        });
+      }
+
+      // 3. Deduct from task escrow
+      await Work.findOneAndUpdate(
+        {
+          _id: task._id,
+          escrowRemaining: { $gte: submit.grossAmount },
+        },
+        {
+          $inc: {
+            escrowRemaining: -submit.grossAmount,
+            completedQuantity: 1,
+          },
+        }
+      );
+
+      // 4. Record platform profit
+      await ProfitLedger.create({
+        taskId: task._id,
+        submissionId: submit._id,
+        providerId: submit.providerId,
+        workerId: submit.userId,
+        grossAmount: submit.grossAmount,
+        netAmount: submit.netAmount,
+        platformFee: submit.platformFee,
+      });
+
+      // 5. Fine provider 2x grossAmount
+      const fineAmount =
+        Math.round(submit.grossAmount * 2 * 100) / 100;
+      await User.findByIdAndUpdate(submit.providerId, {
+        $inc: { balance: -fineAmount },
+      });
+
+      // 6. Update dispute metadata
+      submit.disputeVerdict = "WORKER_WINS";
+      submit.disputeResolvedAt = new Date();
+      submit.disputeAdminNote = adminNote || "";
+      submit.disputeFine = fineAmount;
+      submit.disputeFinedUser = submit.providerId;
+      await submit.save();
+
+      // 7. Notify Worker (won)
+      notifyUser(submit.userId, {
+        category: "tasks",
+        type: "dispute_won",
+        title: "Dispute Resolved in Your Favor! 🎉",
+        message: `Admin reviewed your dispute on "${task.title}" and ruled in your favor. ৳${submit.netAmount.toFixed(
+          2
+        )} has been credited to your balance.`,
+        link: "/user/social-works/submissions",
+      });
+
+      // 8. Notify Provider (fined)
+      notifyUser(submit.providerId, {
+        category: "tasks",
+        type: "dispute_lost_fined",
+        title: "⚠️ Dispute Lost — Fine Applied",
+        message: `Admin ruled that your rejection of a submission on "${task.title}" was invalid. A penalty of ৳${fineAmount.toFixed(
+          2
+        )} (2× task rate) has been deducted from your balance.`,
+        link: "/user/social-works/my-tasks",
+      });
+
+      return submit;
+    } else {
+      // ── PROVIDER_WINS: Worker's appeal was invalid ──
+      // 1. Fine worker 2x netAmount
+      const fineAmount = Math.round(submit.netAmount * 2 * 100) / 100;
+      await User.findByIdAndUpdate(submit.userId, {
+        $inc: { balance: -fineAmount },
+      });
+
+      // 2. Update dispute metadata
+      submit.disputeVerdict = "PROVIDER_WINS";
+      submit.disputeResolvedAt = new Date();
+      submit.disputeAdminNote = adminNote || "";
+      submit.disputeFine = fineAmount;
+      submit.disputeFinedUser = submit.userId;
+      await submit.save();
+
+      // 3. Notify Worker (lost + fined)
+      notifyUser(submit.userId, {
+        category: "tasks",
+        type: "dispute_lost_fined",
+        title: "⚠️ Dispute Dismissed — Fine Applied",
+        message: `Admin reviewed your dispute on "${task.title}" and ruled against you. A penalty of ৳${fineAmount.toFixed(
+          2
+        )} (2× reward) has been deducted from your balance for filing an invalid appeal.`,
+        link: "/user/social-works/submissions",
+      });
+
+      // 4. Notify Provider (vindicated)
+      notifyUser(submit.providerId, {
+        category: "tasks",
+        type: "dispute_won",
+        title: "Dispute Dismissed ✅",
+        message: `A worker's dispute on "${task.title}" was reviewed and dismissed by admin. Your rejection was upheld.`,
+        link: "/user/social-works/my-tasks",
+      });
+
+      return submit;
+    }
+  } catch (error) {
+    throw new Error("Error resolving dispute: " + error.message);
+  }
+};
+
 module.exports = {
   createWork,
   getAllWorks,
@@ -900,4 +1122,7 @@ module.exports = {
   getWorkSubmitById,
   getAdminAnalytics,
   deleteWork,
+  fileDispute,
+  getDisputedSubmissions,
+  resolveDispute,
 };
