@@ -58,6 +58,13 @@ const WorkDetails = () => {
   const screenshotLabels = work?.proofConfig?.screenshotLabels || ["Proof Screenshot"];
   const isOwnTask = user?._id && String(work?.providerId?._id || work?.providerId) === String(user._id);
 
+  const handleCopyLink = () => {
+    if (targetUrl) {
+      navigator.clipboard.writeText(targetUrl);
+      toast.success("Target link copied to clipboard!");
+    }
+  };
+
   const handleCopyComment = () => {
     if (work?.properties?.customCommentText) {
       navigator.clipboard.writeText(work.properties.customCommentText);
@@ -90,7 +97,7 @@ const WorkDetails = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
 
     if (!proofText.trim()) {
       return toast.error("Please provide the required text proof");
@@ -130,20 +137,20 @@ const WorkDetails = () => {
   if (!work) return null;
 
   return (
-    <div className="bg-[#f8faff] min-h-screen pb-20 pt-6">
-      <div className="container mx-auto px-4 max-w-3xl space-y-6">
+    <div className="bg-[#f8faff] min-h-screen pb-28 pt-4 sm:pt-6">
+      <div className="container mx-auto px-3 sm:px-4 max-w-3xl space-y-4 sm:space-y-6">
         {/* Back Link */}
         <button
           onClick={() => navigate("/user/social-works")}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-teal-700 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-teal-700 transition-colors py-1"
         >
           <ArrowLeftIcon className="w-4 h-4" />
           <span>Back to Marketplace</span>
         </button>
 
         {/* Task Header Card */}
-        <Card className="p-6 sm:p-8 rounded-3xl border border-teal-100/80 shadow-sm bg-white space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4">
+        <Card className="p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-teal-100/80 shadow-sm bg-white space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3 sm:pb-4">
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-teal-50 text-teal-800 border border-teal-200">
                 {work.platform || "Social Media"}
@@ -154,7 +161,7 @@ const WorkDetails = () => {
             </div>
 
             <div className="text-right">
-              <span className="text-2xl font-black text-emerald-600">
+              <span className="text-xl sm:text-2xl font-black text-emerald-600 leading-tight">
                 ৳{reward.toFixed(2)}
               </span>
               <p className="text-[10px] text-gray-400 font-medium">Your Net Earnings</p>
@@ -162,11 +169,11 @@ const WorkDetails = () => {
           </div>
 
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-gray-900 leading-snug">
+            <h1 className="text-lg sm:text-2xl font-black text-gray-900 leading-snug break-words">
               {work.title}
             </h1>
             {work.description && (
-              <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed break-words">
                 {work.description}
               </p>
             )}
@@ -174,41 +181,54 @@ const WorkDetails = () => {
 
           {/* Action Link Banner */}
           {targetUrl && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-teal-50 via-sky-50 to-emerald-50 border border-teal-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-teal-50 via-sky-50 to-emerald-50 border border-teal-100 space-y-3">
               <div>
                 <p className="text-xs font-bold text-gray-900">Step 1: Open Target URL</p>
-                <p className="text-[11px] text-gray-500">
-                  Open the target link in a new tab, complete the requested action, and take screenshots.
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  Complete the requested action on the target page, then capture screenshots.
+                </p>
+                <p className="text-[10px] text-teal-800 font-mono break-all mt-1 bg-white/70 p-1.5 rounded-lg border border-teal-100">
+                  {targetUrl}
                 </p>
               </div>
-              <a
-                href={targetUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all"
-              >
-                <span>Open Link</span>
-                <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-              </a>
+              <div className="flex items-center gap-2">
+                <a
+                  href={targetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md transition-all active:scale-95"
+                >
+                  <span>Open Link</span>
+                  <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="px-3.5 py-2.5 rounded-xl bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold border border-gray-200 shadow-2xs transition-all active:scale-95 flex items-center gap-1.5"
+                >
+                  <DocumentDuplicateIcon className="w-4 h-4 text-gray-500" />
+                  <span>Copy</span>
+                </button>
+              </div>
             </div>
           )}
 
           {/* Dynamic Action Helper: Comment Box */}
           {work.actionType === "comment" && work.properties?.customCommentText && (
-            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-amber-900">Required Comment Text:</span>
                 <Button
                   size="sm"
                   variant="text"
                   onClick={handleCopyComment}
-                  className="normal-case text-xs text-amber-800 flex items-center gap-1 p-1 hover:bg-amber-100 rounded-lg"
+                  className="normal-case text-xs text-amber-800 flex items-center gap-1 p-1 hover:bg-amber-100 rounded-lg active:scale-95"
                 >
                   <DocumentDuplicateIcon className="w-3.5 h-3.5" />
                   <span>Copy Text</span>
                 </Button>
               </div>
-              <p className="text-xs text-gray-800 bg-white p-2.5 rounded-xl border border-amber-200/60 font-mono">
+              <p className="text-xs text-gray-800 bg-white p-2.5 rounded-xl border border-amber-200/60 font-mono break-words select-all">
                 {work.properties.customCommentText}
               </p>
             </div>
@@ -216,7 +236,7 @@ const WorkDetails = () => {
 
           {/* Dynamic Action Helper: Watch Time */}
           {work.actionType === "watch_time" && work.properties?.watchDuration > 0 && (
-            <div className="p-3.5 rounded-2xl bg-sky-50 border border-sky-200/80 flex items-center gap-2 text-xs text-sky-900">
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-sky-50 border border-sky-200/80 flex items-center gap-2 text-xs text-sky-900">
               <ClockIcon className="w-4 h-4 text-sky-600 shrink-0" />
               <span>
                 Please watch at least <strong>{work.properties.watchDuration} seconds</strong> before taking your completion screenshot.
@@ -227,7 +247,7 @@ const WorkDetails = () => {
 
         {/* Proof Submission Form, Already Submitted Notice, or Owner Notice */}
         {work.alreadySubmitted ? (
-          <Card className="p-6 sm:p-8 rounded-3xl border border-teal-200 shadow-sm bg-teal-50/60 space-y-4">
+          <Card className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-teal-200 shadow-sm bg-teal-50/60 space-y-4">
             <div className="flex items-start gap-3">
               <CheckCircleIcon className="w-6 h-6 text-teal-600 shrink-0 mt-0.5" />
               <div className="space-y-2">
@@ -242,7 +262,7 @@ const WorkDetails = () => {
                 <div className="pt-2 flex flex-wrap items-center gap-3">
                   <Link
                     to="/user/social-works/submissions"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-colors active:scale-95"
                   >
                     <span>View My Submissions</span>
                     <ArrowRightIcon className="w-3.5 h-3.5" />
@@ -258,7 +278,7 @@ const WorkDetails = () => {
             </div>
           </Card>
         ) : isOwnTask ? (
-          <Card className="p-6 sm:p-8 rounded-3xl border border-amber-200 shadow-sm bg-amber-50/60 space-y-4">
+          <Card className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-amber-200 shadow-sm bg-amber-50/60 space-y-4">
             <div className="flex items-start gap-3">
               <InformationCircleIcon className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
               <div className="space-y-2">
@@ -269,7 +289,7 @@ const WorkDetails = () => {
                 <div className="pt-2">
                   <Link
                     to="/user/social-works/my-tasks"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors active:scale-95"
                   >
                     <span>Go to My Created Campaigns</span>
                     <ArrowRightIcon className="w-3.5 h-3.5" />
@@ -279,116 +299,142 @@ const WorkDetails = () => {
             </div>
           </Card>
         ) : (
-          <Card className="p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm bg-white space-y-6">
+          <Card className="p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm bg-white space-y-5 sm:space-y-6">
             <div className="border-b border-gray-100 pb-3 flex items-center gap-2">
               <ShieldCheckIcon className="w-5 h-5 text-teal-600" />
-              <h3 className="text-base font-bold text-gray-900">Step 2: Submit Proof of Work</h3>
+              <h3 className="text-sm sm:text-base font-bold text-gray-900">Step 2: Submit Proof of Work</h3>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Text Proof Input */}
-            <div>
-              <label className="block text-xs font-bold text-gray-800 mb-1.5">
-                {work.proofConfig?.textPrompt || "Your Account Username / Verification Info"} *
-              </label>
-              <textarea
-                rows={3}
-                required
-                value={proofText}
-                onChange={(e) => setProofText(e.target.value)}
-                placeholder="e.g. My username on the platform is @myuser, subscribed at 7:30 PM..."
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
-              />
-            </div>
-
-            {/* Screenshots Uploaders */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-gray-800">
-                  Required Screenshot Proofs ({screenshotCount}) *
+            <form id="proof-submission-form" onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+              {/* Text Proof Input - 16px font on mobile prevents iOS Safari auto zoom */}
+              <div>
+                <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                  {work.proofConfig?.textPrompt || "Your Account Username / Verification Info"} *
                 </label>
-                <span className="text-[11px] text-gray-400">
-                  {screenshots.filter(Boolean).length} of {screenshotCount} uploaded
-                </span>
+                <textarea
+                  rows={3}
+                  required
+                  value={proofText}
+                  onChange={(e) => setProofText(e.target.value)}
+                  placeholder="e.g. My username on the platform is @myuser, completed at 7:30 PM..."
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl text-base sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
+                />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {Array.from({ length: screenshotCount }).map((_, idx) => {
-                  const uploadedUrl = screenshots[idx];
-                  const isUploading = uploadingIndex === idx;
-                  const label = screenshotLabels[idx] || `Screenshot #${idx + 1}`;
+              {/* Screenshots Uploaders */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-gray-800">
+                    Required Screenshot Proofs ({screenshotCount}) *
+                  </label>
+                  <span className="text-[11px] text-teal-700 font-bold bg-teal-50 px-2 py-0.5 rounded-md">
+                    {screenshots.filter(Boolean).length} / {screenshotCount} uploaded
+                  </span>
+                </div>
 
-                  return (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-2xl border border-gray-200/80 bg-gray-50/50 space-y-2 relative"
-                    >
-                      <span className="block text-xs font-semibold text-gray-700 truncate">
-                        {label}
-                      </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                  {Array.from({ length: screenshotCount }).map((_, idx) => {
+                    const uploadedUrl = screenshots[idx];
+                    const isUploading = uploadingIndex === idx;
+                    const label = screenshotLabels[idx] || `Screenshot #${idx + 1}`;
 
-                      {uploadedUrl ? (
-                        <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-white">
-                          <img
-                            src={uploadedUrl}
-                            alt={label}
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveScreenshot(idx)}
-                            className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 shadow-md transition-all"
-                          >
-                            <TrashIcon className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center w-full aspect-video rounded-xl border-2 border-dashed border-gray-300 hover:border-teal-500 bg-white hover:bg-teal-50/20 cursor-pointer transition-all p-4 text-center">
-                          {isUploading ? (
-                            <div className="space-y-2 w-full text-center">
-                              <p className="text-xs font-semibold text-teal-700">Uploading… {uploadProgress}%</p>
-                              <Progress value={uploadProgress} size="sm" color="teal" />
-                            </div>
-                          ) : (
-                            <>
-                              <PhotoIcon className="w-8 h-8 text-gray-400 mb-1" />
-                              <span className="text-xs font-bold text-teal-600">Click to Upload</span>
-                              <span className="text-[10px] text-gray-400">PNG, JPG up to 10MB</span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => handleFileUpload(idx, e.target.files?.[0])}
-                              />
-                            </>
-                          )}
-                        </label>
-                      )}
-                    </div>
-                  );
-                })}
+                    return (
+                      <div
+                        key={idx}
+                        className="p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 bg-gray-50/50 space-y-2 relative"
+                      >
+                        <span className="block text-xs font-semibold text-gray-700 truncate">
+                          {label}
+                        </span>
+
+                        {uploadedUrl ? (
+                          <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-white">
+                            <img
+                              src={uploadedUrl}
+                              alt={label}
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveScreenshot(idx)}
+                              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-600 text-white hover:bg-red-700 shadow-md transition-all flex items-center justify-center active:scale-95"
+                              title="Delete screenshot"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center w-full min-h-[130px] aspect-video rounded-xl border-2 border-dashed border-gray-300 hover:border-teal-500 bg-white hover:bg-teal-50/20 cursor-pointer transition-all p-4 text-center active:scale-[0.99] touch-tap-none">
+                            {isUploading ? (
+                              <div className="space-y-2 w-full text-center">
+                                <p className="text-xs font-semibold text-teal-700">Uploading… {uploadProgress}%</p>
+                                <Progress value={uploadProgress} size="sm" color="teal" />
+                              </div>
+                            ) : (
+                              <>
+                                <PhotoIcon className="w-8 h-8 text-teal-600 mb-1" />
+                                <span className="text-xs font-bold text-teal-700">Tap to Upload Screenshot</span>
+                                <span className="text-[10px] text-gray-400 mt-0.5">Gallery or Camera (JPG, PNG)</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => handleFileUpload(idx, e.target.files?.[0])}
+                                />
+                              </>
+                            )}
+                          </label>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
-            {/* Submit Button */}
-            <div className="pt-4 border-t border-gray-100 flex items-center justify-end">
-              <Button
-                type="submit"
-                disabled={submitting || uploadingIndex !== null}
-                className="w-full sm:w-auto bg-gradient-to-r from-teal-600 to-sky-600 text-white normal-case font-bold px-8 py-3 rounded-2xl shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {submitting ? (
-                  <span>Submitting Proof…</span>
-                ) : (
-                  <>
-                    <span>Submit Work for Approval</span>
-                    <CheckCircleIcon className="w-4 h-4" />
-                  </>
-                )}
-              </Button>
+              {/* In-Card Submit Button (Desktop & Tablet) */}
+              <div className="hidden sm:flex pt-4 border-t border-gray-100 items-center justify-end">
+                <Button
+                  type="submit"
+                  disabled={submitting || uploadingIndex !== null}
+                  className="w-full sm:w-auto bg-gradient-to-r from-teal-600 to-sky-600 text-white normal-case font-bold px-8 py-3 rounded-2xl shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
+                >
+                  {submitting ? (
+                    <span>Submitting Proof…</span>
+                  ) : (
+                    <>
+                      <span>Submit Work for Approval</span>
+                      <CheckCircleIcon className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        )}
+
+        {/* 📱 Mobile Sticky Bottom Action Bar for effortless submission without scrolling */}
+        {!work.alreadySubmitted && !isOwnTask && (
+          <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md p-3 border-t border-gray-200/90 shadow-xl sm:hidden z-40 flex items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] text-gray-400 block leading-tight font-medium">Earn upon approval:</span>
+              <span className="text-base font-black text-emerald-600">৳{reward.toFixed(2)}</span>
             </div>
-          </form>
-        </Card>
+            <Button
+              type="submit"
+              form="proof-submission-form"
+              disabled={submitting || uploadingIndex !== null}
+              className="min-h-[42px] bg-gradient-to-r from-teal-600 to-sky-600 text-white normal-case font-bold text-xs px-5 py-2.5 rounded-xl shadow-md disabled:opacity-50 flex items-center justify-center gap-1.5 active:scale-95"
+            >
+              {submitting ? (
+                <span>Submitting…</span>
+              ) : (
+                <>
+                  <span>Submit Proof</span>
+                  <CheckCircleIcon className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          </div>
         )}
       </div>
     </div>

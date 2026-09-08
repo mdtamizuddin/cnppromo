@@ -87,44 +87,44 @@ const TaskSubmissionsReview = () => {
   };
 
   return (
-    <div className="bg-[#f8faff] min-h-screen pb-20 pt-4">
-      <div className="container mx-auto px-4 max-w-5xl space-y-6">
+    <div className="bg-[#f8faff] min-h-screen pb-20 pt-3 sm:pt-4">
+      <div className="container mx-auto px-3 sm:px-4 max-w-5xl space-y-4 sm:space-y-6">
         {/* Shared Sub-Navigation Bar */}
         <SocialNav />
 
         {/* Back button */}
         <button
           onClick={() => navigate("/user/social-works/my-tasks")}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-teal-700 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-teal-700 transition-colors py-1"
         >
           <ArrowLeftIcon className="w-4 h-4" />
           <span>Back to My Campaigns</span>
         </button>
 
         {/* Task Summary Banner */}
-        <Card className="p-5 sm:p-6 rounded-3xl border border-teal-100 bg-white shadow-xs space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
-            <div className="flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 font-extrabold text-xs flex items-center justify-center uppercase">
+        <Card className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-teal-100 bg-white shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+            <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+              <span className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 font-extrabold text-xs flex items-center justify-center uppercase shrink-0 mt-0.5 sm:mt-0">
                 {task?.platform?.slice(0, 2) || "SO"}
               </span>
-              <div>
-                <h1 className="text-base sm:text-lg font-black text-gray-900 line-clamp-1">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-lg font-black text-gray-900 line-clamp-2 sm:line-clamp-1 break-words">
                   {task?.title || "Campaign Submissions Review"}
                 </h1>
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[11px] text-gray-400 mt-0.5">
                   Platform: <strong className="capitalize text-gray-700">{task?.platform}</strong> · Action:{" "}
                   <span className="capitalize text-gray-700">{task?.actionType?.replace("_", " ")}</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 text-right">
+            <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 sm:text-right shrink-0 bg-gray-50/70 sm:bg-transparent p-2 sm:p-0 rounded-xl">
               <div>
                 <p className="text-xs font-bold text-teal-700">
                   Progress: {task?.completedQuantity || 0} / {task?.targetQuantity || 0}
                 </p>
-                <p className="text-[10px] text-gray-400">
+                <p className="text-[10px] text-gray-500">
                   Escrow Remaining: ৳{(task?.escrowRemaining || 0).toFixed(2)}
                 </p>
               </div>
@@ -134,9 +134,9 @@ const TaskSubmissionsReview = () => {
                   href={task.taskUrl || task.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-teal-700 font-bold text-xs flex items-center gap-1 border border-gray-200"
+                  className="px-3 py-1.5 rounded-xl bg-white sm:bg-gray-50 hover:bg-gray-100 text-teal-700 font-bold text-xs flex items-center gap-1 border border-gray-200 active:scale-95"
                 >
-                  <span>Target Link</span>
+                  <span>Link</span>
                   <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                 </a>
               )}
@@ -148,12 +148,12 @@ const TaskSubmissionsReview = () => {
             <span className="text-xs font-bold text-gray-700">
               Submissions ({rawSubmits.length}):
             </span>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar scroll-smooth touch-pan-x">
               {["all", "pending", "approved", "rejected"].map((st) => (
                 <button
                   key={st}
                   onClick={() => setFilterStatus(st)}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold capitalize transition-all border ${
+                  className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold capitalize transition-all border shrink-0 active:scale-95 touch-tap-none ${
                     filterStatus === st
                       ? "bg-teal-600 text-white border-teal-600 shadow-xs"
                       : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
@@ -168,21 +168,21 @@ const TaskSubmissionsReview = () => {
 
         {/* Submissions Feed */}
         {isLoading ? (
-          <div className="py-20 text-center text-xs text-gray-400 font-medium">
+          <div className="py-20 text-center text-xs sm:text-sm text-gray-400 font-medium">
             Loading submissions…
           </div>
         ) : filteredSubmits.length === 0 ? (
-          <Card className="p-12 text-center rounded-3xl border border-gray-100 shadow-sm bg-white">
-            <div className="w-16 h-16 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto mb-3 text-2xl">
+          <Card className="p-8 sm:p-12 text-center rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm bg-white">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto mb-3 text-2xl">
               📬
             </div>
-            <h4 className="text-sm font-bold text-gray-800">No submissions found</h4>
-            <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+            <h4 className="text-sm sm:text-base font-bold text-gray-800">No submissions found</h4>
+            <p className="text-xs sm:text-sm text-gray-400 mt-1 max-w-sm mx-auto">
               When workers complete your campaign, their proof responses will appear here for your review.
             </p>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {filteredSubmits.map((sub) => {
               const isPending = ["PENDING", "pending"].includes(sub.status);
               const isApproved = ["APPROVED", "completed"].includes(sub.status);
@@ -193,12 +193,12 @@ const TaskSubmissionsReview = () => {
               return (
                 <Card
                   key={sub._id}
-                  className="p-5 sm:p-6 rounded-3xl border border-gray-200/80 bg-white hover:border-teal-200 transition-all shadow-xs space-y-4"
+                  className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-200/80 bg-white hover:border-teal-200 transition-all shadow-xs space-y-3 sm:space-y-4"
                 >
                   {/* Top Bar */}
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-full bg-teal-50 text-teal-700 font-black text-xs flex items-center justify-center">
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-teal-50 text-teal-700 font-black text-xs flex items-center justify-center shrink-0">
                         {sub.userId?.name ? sub.userId.name.charAt(0).toUpperCase() : "W"}
                       </div>
                       <div>
@@ -225,13 +225,13 @@ const TaskSubmissionsReview = () => {
                   </div>
 
                   {/* Proof Details */}
-                  <div className="space-y-3 text-xs">
+                  <div className="space-y-2.5 sm:space-y-3 text-xs">
                     {sub.proofData?.text && (
                       <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
                         <span className="font-semibold text-gray-600 block mb-0.5">
                           Worker's Text Response:
                         </span>
-                        <p className="text-gray-900 font-mono text-[11px] whitespace-pre-wrap">
+                        <p className="text-gray-900 font-mono text-[11px] whitespace-pre-wrap break-words">
                           {sub.proofData.text}
                         </p>
                       </div>
@@ -254,12 +254,12 @@ const TaskSubmissionsReview = () => {
                         <span className="font-semibold text-gray-600 block mb-1.5 text-[11px]">
                           Submitted Proof Screenshots ({screenshots.length}):
                         </span>
-                        <div className="flex flex-wrap gap-2.5">
+                        <div className="flex flex-wrap gap-2 sm:gap-2.5">
                           {screenshots.map((url, idx) => (
                             <div
                               key={idx}
                               onClick={() => setSelectedImage(url)}
-                              className="w-24 h-24 rounded-2xl overflow-hidden border border-gray-200 relative cursor-pointer hover:scale-105 transition-transform bg-gray-50 group"
+                              className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200 relative cursor-pointer active:scale-95 transition-transform bg-gray-50 group"
                             >
                               <img
                                 src={url}
@@ -276,56 +276,58 @@ const TaskSubmissionsReview = () => {
                     ) : null}
 
                     {isRejected && sub.rejectionReason && (
-                      <div className="text-[11px] text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100">
+                      <div className="text-[11px] text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100 break-words">
                         <strong>Rejection Reason:</strong> {sub.rejectionReason}
                       </div>
                     )}
                   </div>
 
-                  {/* Actions for Pending Submissions */}
+                  {/* Actions for Pending Submissions - Responsive for Mobile Touch */}
                   {isPending && (
-                    <div className="pt-2 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-end gap-2">
+                    <div className="pt-2.5 border-t border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
                       {rejectingId === sub._id ? (
-                        <div className="w-full flex flex-col sm:flex-row items-center gap-2">
+                        <div className="w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                           <input
                             type="text"
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
-                            placeholder="State reason for rejecting (e.g. screenshot does not show subscribe)"
-                            className="flex-1 px-3.5 py-2 text-xs bg-white border border-red-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-red-400"
+                            placeholder="Reason for rejecting (e.g. invalid screenshot)"
+                            className="flex-1 px-3.5 py-2 text-base sm:text-xs bg-white border border-red-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-red-400"
                           />
-                          <Button
-                            size="sm"
-                            color="red"
-                            onClick={() => handleReject(sub._id)}
-                            disabled={busyId === sub._id}
-                            className="normal-case text-xs px-3.5 py-2 rounded-xl shrink-0"
-                          >
-                            Confirm Reject
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="text"
-                            onClick={() => {
-                              setRejectingId(null);
-                              setRejectReason("");
-                            }}
-                            className="normal-case text-xs px-2.5 py-2 text-gray-500 rounded-xl shrink-0"
-                          >
-                            Cancel
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              color="red"
+                              onClick={() => handleReject(sub._id)}
+                              disabled={busyId === sub._id}
+                              className="flex-1 sm:flex-none min-h-[38px] normal-case text-xs px-3.5 py-2 rounded-xl shrink-0 active:scale-95"
+                            >
+                              Confirm Reject
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="text"
+                              onClick={() => {
+                                setRejectingId(null);
+                                setRejectReason("");
+                              }}
+                              className="min-h-[38px] normal-case text-xs px-2.5 py-2 text-gray-500 rounded-xl shrink-0"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
                         </div>
                       ) : (
-                        <>
+                        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                           <Button
                             size="sm"
                             variant="outlined"
                             color="red"
                             onClick={() => setRejectingId(sub._id)}
                             disabled={busyId === sub._id}
-                            className="normal-case text-xs px-3.5 py-2 rounded-xl flex items-center gap-1 font-bold"
+                            className="min-h-[40px] normal-case text-xs px-3.5 py-2 rounded-xl flex items-center justify-center gap-1 font-bold active:scale-95"
                           >
-                            <XCircleIcon className="w-3.5 h-3.5" />
+                            <XCircleIcon className="w-4 h-4" />
                             <span>Reject</span>
                           </Button>
 
@@ -333,12 +335,12 @@ const TaskSubmissionsReview = () => {
                             size="sm"
                             onClick={() => handleApprove(sub._id)}
                             disabled={busyId === sub._id}
-                            className="bg-emerald-600 hover:bg-emerald-700 normal-case text-xs px-5 py-2 rounded-xl text-white flex items-center gap-1.5 font-bold shadow-xs"
+                            className="min-h-[40px] bg-emerald-600 hover:bg-emerald-700 normal-case text-xs px-5 py-2 rounded-xl text-white flex items-center justify-center gap-1.5 font-bold shadow-xs active:scale-95"
                           >
-                            <CheckCircleIcon className="w-3.5 h-3.5" />
+                            <CheckCircleIcon className="w-4 h-4" />
                             <span>Approve & Release Payment</span>
                           </Button>
-                        </>
+                        </div>
                       )}
                     </div>
                   )}
@@ -360,7 +362,7 @@ const TaskSubmissionsReview = () => {
           <div className="relative p-2 bg-black/95 rounded-2xl flex flex-col items-center">
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 p-2"
+              className="absolute top-4 right-4 text-white hover:text-gray-300 p-2 z-50 bg-black/50 rounded-full"
             >
               <XMarkIcon className="w-6 h-6" />
             </button>

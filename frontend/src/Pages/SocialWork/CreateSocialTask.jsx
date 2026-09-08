@@ -211,28 +211,28 @@ const CreateSocialTask = () => {
   }
 
   return (
-    <div className="bg-[#f8faff] min-h-screen pb-20 pt-4">
-      <div className="container mx-auto px-4 max-w-4xl space-y-6">
+    <div className="bg-[#f8faff] min-h-screen pb-24 pt-3 sm:pt-4">
+      <div className="container mx-auto px-3 sm:px-4 max-w-4xl space-y-4 sm:space-y-6">
         {/* Shared Sub-Navigation Bar */}
         <SocialNav />
 
         {/* Back link */}
         <button
           onClick={() => navigate("/user/social-works/my-tasks")}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-teal-700 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-teal-700 transition-colors py-1"
         >
           <ArrowLeftIcon className="w-4 h-4" />
           <span>Back to My Campaigns</span>
         </button>
 
         {/* Studio Form Card */}
-        <Card className="p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-xs bg-white space-y-8">
-          <div className="border-b border-gray-100 pb-5">
+        <Card className="p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-gray-200/80 shadow-xs bg-white space-y-6 sm:space-y-8">
+          <div className="border-b border-gray-100 pb-4 sm:pb-5">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-bold mb-2">
               <SparklesIcon className="w-3.5 h-3.5 text-teal-600" />
               <span>{originalTask ? "Edit Campaign (Under Review)" : "Create Campaign"}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-900">
+            <h1 className="text-xl sm:text-3xl font-black text-gray-900">
               {originalTask ? "Edit Social Task" : "Post a New Social Task"}
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -242,13 +242,13 @@ const CreateSocialTask = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Step 1: Platform Selection */}
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-800">
                 1. Select Social Media Platform
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-2.5">
                 {PLATFORMS.map((p) => {
                   const isSelected = platform === p.id;
                   return (
@@ -256,16 +256,16 @@ const CreateSocialTask = () => {
                       key={p.id}
                       type="button"
                       onClick={() => setPlatform(p.id)}
-                      className={`flex items-center gap-2.5 p-3 rounded-2xl border text-left transition-all ${
+                      className={`flex items-center gap-2 sm:gap-2.5 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border text-left transition-all active:scale-95 touch-tap-none ${
                         isSelected
                           ? "border-teal-500 bg-teal-50/50 shadow-xs ring-2 ring-teal-500/20"
                           : "border-gray-200/80 bg-white hover:border-gray-300 hover:bg-gray-50/60"
                       }`}
                     >
-                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${p.bg} ${p.color}`}>
+                      <span className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center text-xs sm:text-sm font-bold shrink-0 ${p.bg} ${p.color}`}>
                         {p.icon}
                       </span>
-                      <span className={`text-xs font-bold ${isSelected ? "text-teal-900" : "text-gray-700"}`}>
+                      <span className={`text-xs font-bold truncate ${isSelected ? "text-teal-900" : "text-gray-700"}`}>
                         {p.label}
                       </span>
                     </button>
@@ -275,7 +275,7 @@ const CreateSocialTask = () => {
             </div>
 
             {/* Step 2: Action Type Selection */}
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-800">
                 2. Select Action Type Required
               </label>
@@ -287,14 +287,14 @@ const CreateSocialTask = () => {
                       key={a.id}
                       type="button"
                       onClick={() => setActionType(a.id)}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                      className={`min-h-[38px] sm:min-h-[40px] flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all active:scale-95 touch-tap-none ${
                         isSelected
                           ? "border-teal-500 bg-teal-50 text-teal-900 font-bold shadow-2xs"
                           : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                       }`}
                     >
-                      <span className="text-sm">{a.icon}</span>
-                      <span className="text-xs">{a.label}</span>
+                      <span className="text-sm shrink-0">{a.icon}</span>
+                      <span className="text-xs truncate">{a.label}</span>
                     </button>
                   );
                 })}
@@ -302,7 +302,7 @@ const CreateSocialTask = () => {
             </div>
 
             {/* Step 3: Action Details & Dynamic Properties */}
-            <div className="space-y-4 p-5 rounded-2xl bg-gray-50/70 border border-gray-200/70">
+            <div className="space-y-4 p-4 sm:p-5 rounded-2xl bg-gray-50/70 border border-gray-200/70">
               <label className="block text-xs font-bold uppercase tracking-wider text-teal-900">
                 3. Action & Target Details
               </label>
@@ -316,8 +316,8 @@ const CreateSocialTask = () => {
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Subscribe to YouTube channel and like the recent video"
-                  className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  placeholder="e.g. Subscribe to YouTube channel and like recent video"
+                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                 />
               </div>
 
@@ -331,7 +331,7 @@ const CreateSocialTask = () => {
                   value={taskUrl}
                   onChange={(e) => setTaskUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                 />
               </div>
 
@@ -347,7 +347,7 @@ const CreateSocialTask = () => {
                       min="10"
                       value={watchDuration}
                       onChange={(e) => setWatchDuration(e.target.value)}
-                      className="w-36 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                      className="w-32 px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-base sm:text-sm font-bold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                     />
                     <span className="text-xs text-gray-500">
                       ≈ {(watchDuration / 60).toFixed(1)} minutes
@@ -367,7 +367,7 @@ const CreateSocialTask = () => {
                     value={customCommentText}
                     onChange={(e) => setCustomCommentText(e.target.value)}
                     placeholder="e.g. Great video! Subscribed and looking forward to more content."
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-base sm:text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   />
                 </div>
               )}
@@ -383,7 +383,7 @@ const CreateSocialTask = () => {
                     value={channelOrAccountName}
                     onChange={(e) => setChannelOrAccountName(e.target.value)}
                     placeholder="e.g. @mychannelname"
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-base sm:text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   />
                 </div>
               )}
@@ -397,13 +397,13 @@ const CreateSocialTask = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Explain step-by-step what the worker should do..."
-                  className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-base sm:text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                 />
               </div>
             </div>
 
             {/* Step 4: Dynamic Proof Requirements */}
-            <div className="space-y-4 p-5 rounded-2xl bg-gray-50/70 border border-gray-200/70">
+            <div className="space-y-4 p-4 sm:p-5 rounded-2xl bg-gray-50/70 border border-gray-200/70">
               <label className="block text-xs font-bold uppercase tracking-wider text-teal-900">
                 4. Proof of Work Requirements
               </label>
@@ -417,7 +417,7 @@ const CreateSocialTask = () => {
                   value={textPrompt}
                   onChange={(e) => setTextPrompt(e.target.value)}
                   placeholder="e.g. Provide your YouTube username / channel link"
-                  className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-base sm:text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                 />
               </div>
 
@@ -431,7 +431,7 @@ const CreateSocialTask = () => {
                       key={count}
                       type="button"
                       onClick={() => handleScreenshotCountChange(count)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+                      className={`min-h-[38px] px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 touch-tap-none ${
                         screenshotCount === count
                           ? "border-teal-500 bg-teal-500 text-white shadow-xs"
                           : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
@@ -454,7 +454,7 @@ const CreateSocialTask = () => {
                       value={lbl}
                       onChange={(e) => handleLabelChange(idx, e.target.value)}
                       placeholder={`e.g. Screenshot showing ${actionType} proof`}
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                      className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-base sm:text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                     />
                   </div>
                 ))}
@@ -462,18 +462,18 @@ const CreateSocialTask = () => {
             </div>
 
             {/* Step 5: User-Defined Pricing & Escrow Calculator */}
-            <div className="space-y-4 p-6 rounded-3xl bg-gradient-to-r from-teal-500/5 via-sky-500/5 to-emerald-500/5 border border-teal-200">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-teal-500/5 via-sky-500/5 to-emerald-500/5 border border-teal-200">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-teal-900">
                   5. Quantity, Pricing & Escrow Budget
                 </label>
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-teal-800 bg-teal-100 px-3 py-1 rounded-full">
-                  <BanknotesIcon className="w-4 h-4" />
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-800 bg-teal-100 px-2.5 py-0.5 rounded-full">
+                  <BanknotesIcon className="w-3.5 h-3.5" />
                   100% User Defined Pricing
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
                     Target Quantity (Workers Needed) *
@@ -484,7 +484,7 @@ const CreateSocialTask = () => {
                     required
                     value={targetQuantity}
                     onChange={(e) => setTargetQuantity(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-base sm:text-sm font-bold text-gray-900 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   />
                 </div>
 
@@ -499,21 +499,21 @@ const CreateSocialTask = () => {
                     required
                     value={costPerUnit}
                     onChange={(e) => setCostPerUnit(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-base sm:text-sm font-bold text-gray-900 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   />
                 </div>
               </div>
 
               {/* Escrow Card */}
-              <div className="p-4 rounded-2xl bg-white border border-teal-100 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-teal-100 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                 <div>
                   <p className="text-xs text-gray-500 font-medium">
-                    {originalTask ? "Total Required Escrow Budget" : "Total Escrow Budget to be Deducted"}
+                    {originalTask ? "Total Required Escrow Budget" : "Total Escrow to be Deducted"}
                   </p>
-                  <p className="text-2xl sm:text-3xl font-black text-teal-700">
+                  <p className="text-2xl sm:text-3xl font-black text-teal-700 leading-tight">
                     ৳ {totalBudget.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                   </p>
-                  <p className="text-[11px] text-gray-400">
+                  <p className="text-[11px] text-gray-400 mt-0.5">
                     {targetQuantity || 0} units × ৳{parseFloat(costPerUnit || 0).toFixed(2)}
                   </p>
 
@@ -521,30 +521,32 @@ const CreateSocialTask = () => {
                     <div className="mt-2 text-xs font-semibold">
                       {budgetDelta > 0 ? (
                         <span className="text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 inline-block">
-                          Additional Escrow to Deduct: +৳{budgetDelta.toFixed(2)}
+                          Additional Escrow: +৳{budgetDelta.toFixed(2)}
                         </span>
                       ) : budgetDelta < 0 ? (
                         <span className="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 inline-block">
-                          Escrow to Refund: -৳{Math.abs(budgetDelta).toFixed(2)}
+                          Escrow Refund: -৳{Math.abs(budgetDelta).toFixed(2)}
                         </span>
                       ) : (
                         <span className="text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 inline-block">
-                          Escrow Budget Unchanged (৳{totalBudget.toFixed(2)})
+                          Budget Unchanged (৳{totalBudget.toFixed(2)})
                         </span>
                       )}
                     </div>
                   )}
                 </div>
 
-                <div className="text-right">
-                  <p className="text-xs text-gray-500 font-medium">Your Available Balance</p>
-                  <p className={`text-xl font-black ${isBalanceSufficient ? "text-emerald-600" : "text-red-500"}`}>
-                    ৳ {userBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                  </p>
+                <div className="w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 sm:text-right flex sm:block items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Available Balance</p>
+                    <p className={`text-lg sm:text-xl font-black ${isBalanceSufficient ? "text-emerald-600" : "text-red-500"}`}>
+                      ৳ {userBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
                   {!isBalanceSufficient && (
                     <Link
                       to="/user/topup"
-                      className="inline-block text-xs font-bold text-teal-600 hover:underline mt-0.5"
+                      className="inline-block text-xs font-bold text-teal-600 hover:underline mt-0.5 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200"
                     >
                       Deposit Funds ↗
                     </Link>
@@ -553,7 +555,7 @@ const CreateSocialTask = () => {
               </div>
 
               {!isBalanceSufficient && (
-                <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-3.5 rounded-2xl border border-red-200">
+                <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-3 rounded-2xl border border-red-200">
                   <ExclamationTriangleIcon className="w-5 h-5 shrink-0" />
                   <span>
                     {originalTask
@@ -564,13 +566,13 @@ const CreateSocialTask = () => {
               )}
             </div>
 
-            {/* Submit Action */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+            {/* Submit Action - Full width responsive on mobile */}
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-100">
               <Button
                 type="button"
                 variant="text"
                 onClick={() => navigate("/user/social-works/my-tasks")}
-                className="normal-case text-gray-500 rounded-xl"
+                className="normal-case text-gray-500 rounded-xl py-2.5"
               >
                 Cancel
               </Button>
@@ -578,7 +580,7 @@ const CreateSocialTask = () => {
               <Button
                 type="submit"
                 disabled={loading || !isBalanceSufficient || totalBudget <= 0}
-                className="bg-gradient-to-r from-teal-600 to-sky-600 text-white normal-case font-bold text-sm px-8 py-3.5 rounded-2xl shadow-md hover:shadow-lg disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                className="min-h-[44px] bg-gradient-to-r from-teal-600 to-sky-600 text-white normal-case font-bold text-xs sm:text-sm px-8 py-3 rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               >
                 {loading ? (
                   <span>{originalTask ? "Saving Changes…" : "Publishing Task…"}</span>

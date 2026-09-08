@@ -92,59 +92,59 @@ const MySubmissions = () => {
   };
 
   return (
-    <div className="bg-[#f8faff] min-h-screen pb-20 pt-4">
-      <div className="container mx-auto px-4 max-w-5xl space-y-6">
+    <div className="bg-[#f8faff] min-h-screen pb-20 pt-3 sm:pt-4">
+      <div className="container mx-auto px-3 sm:px-4 max-w-5xl space-y-4 sm:space-y-6">
         {/* Shared Sub-Navigation Bar */}
         <SocialNav />
 
         {/* Top Header Card */}
-        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-teal-500/10 via-white to-sky-500/10 border border-teal-100 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-teal-500/10 via-white to-sky-500/10 border border-teal-100 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-gray-900">
+            <h1 className="text-lg sm:text-2xl font-black text-gray-900">
               My Task Submissions
             </h1>
             <p className="text-xs text-gray-500 mt-1">
               Track the review progress of the tasks you submitted and inspect earned rewards.
             </p>
           </div>
-          <Link to="/user/social-works">
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl normal-case">
+          <Link to="/user/social-works" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto min-h-[40px] bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl normal-case flex items-center justify-center active:scale-95">
               Find More Tasks
             </Button>
           </Link>
         </div>
 
-        {/* Worker Summary Stat Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-2xs">
-            <p className="text-xs text-gray-400 font-medium">Total Submitted</p>
-            <p className="text-xl font-black text-gray-900 mt-1">{stats.total}</p>
+        {/* Worker Summary Stat Cards - 2 cols on mobile */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-gray-200/80 shadow-2xs">
+            <p className="text-[11px] sm:text-xs text-gray-400 font-medium">Total Submitted</p>
+            <p className="text-lg sm:text-xl font-black text-gray-900 mt-0.5 sm:mt-1">{stats.total}</p>
           </div>
-          <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-2xs">
-            <p className="text-xs text-gray-400 font-medium">Under Review</p>
-            <p className="text-xl font-black text-amber-600 mt-1">{stats.pending}</p>
+          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-gray-200/80 shadow-2xs">
+            <p className="text-[11px] sm:text-xs text-gray-400 font-medium">Under Review</p>
+            <p className="text-lg sm:text-xl font-black text-amber-600 mt-0.5 sm:mt-1">{stats.pending}</p>
           </div>
-          <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-2xs">
-            <p className="text-xs text-gray-400 font-medium">Approved Tasks</p>
-            <p className="text-xl font-black text-emerald-600 mt-1">{stats.approvedCount}</p>
+          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-gray-200/80 shadow-2xs">
+            <p className="text-[11px] sm:text-xs text-gray-400 font-medium">Approved Tasks</p>
+            <p className="text-lg sm:text-xl font-black text-emerald-600 mt-0.5 sm:mt-1">{stats.approvedCount}</p>
           </div>
-          <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-2xs">
-            <p className="text-xs text-gray-400 font-medium">Total Earned</p>
-            <p className="text-xl font-black text-teal-600 mt-1">
+          <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-gray-200/80 shadow-2xs">
+            <p className="text-[11px] sm:text-xs text-gray-400 font-medium">Total Earned</p>
+            <p className="text-lg sm:text-xl font-black text-teal-600 mt-0.5 sm:mt-1 truncate">
               ৳{stats.totalEarned.toFixed(2)}
             </p>
           </div>
         </div>
 
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {/* Status Filter Tabs - Touch Momentum */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth touch-pan-x">
           {SUBMIT_FILTERS.map((f) => {
             const isSelected = selectedFilter === f.id;
             return (
               <button
                 key={f.id}
                 onClick={() => setSelectedFilter(f.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                className={`min-h-[36px] px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shrink-0 active:scale-95 touch-tap-none ${
                   isSelected
                     ? "bg-teal-600 text-white border-teal-600 shadow-xs"
                     : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
@@ -158,28 +158,28 @@ const MySubmissions = () => {
 
         {/* Submissions List */}
         {isLoading ? (
-          <div className="py-20 text-center text-xs text-gray-400 font-medium">
+          <div className="py-20 text-center text-xs sm:text-sm text-gray-400 font-medium">
             Loading your submissions…
           </div>
         ) : filteredSubmissions.length === 0 ? (
-          <Card className="p-12 text-center rounded-3xl border border-gray-100 shadow-sm bg-white">
-            <div className="w-16 h-16 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto mb-3 text-2xl">
+          <Card className="p-8 sm:p-12 text-center rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm bg-white">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto mb-3 text-2xl">
               📜
             </div>
-            <h4 className="text-sm font-bold text-gray-800">No submissions found</h4>
-            <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+            <h4 className="text-sm sm:text-base font-bold text-gray-800">No submissions found</h4>
+            <p className="text-xs sm:text-sm text-gray-400 mt-1 max-w-sm mx-auto">
               Start working on social tasks in the Browse tab to begin earning BDT rewards.
             </p>
             <div className="mt-5">
               <Link to="/user/social-works">
-                <Button className="bg-teal-600 hover:bg-teal-700 normal-case text-xs px-5 py-2.5 rounded-xl text-white font-bold">
+                <Button className="bg-teal-600 hover:bg-teal-700 normal-case text-xs sm:text-sm px-5 py-2.5 rounded-xl text-white font-bold active:scale-95">
                   Browse Available Tasks
                 </Button>
               </Link>
             </div>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {filteredSubmissions.map((sub) => {
               const isApproved = ["APPROVED", "completed"].includes(sub.status);
               const isRejected = ["REJECTED", "rejected"].includes(sub.status);
@@ -192,30 +192,29 @@ const MySubmissions = () => {
               return (
                 <Card
                   key={sub._id}
-                  className="p-5 sm:p-6 rounded-3xl border border-gray-200/80 bg-white hover:border-teal-200 transition-all shadow-xs space-y-4"
+                  className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-200/80 bg-white hover:border-teal-200 transition-all shadow-xs space-y-3 sm:space-y-4"
                 >
                   {/* Header Row */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-gray-100 pb-3">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm sm:text-base font-bold text-gray-900">
+                        <h3 className="text-sm sm:text-base font-bold text-gray-900 break-words">
                           {sub.workId?.title || "Social Media Task"}
                         </h3>
                         {sub.workId?.platform && (
-                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200">
+                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200 shrink-0">
                             {sub.workId.platform}
                           </span>
                         )}
                       </div>
                       <p className="text-[11px] text-gray-400 mt-0.5">
-                        Submitted {moment(sub.createdAt).format("MMM D, YYYY · h:mm A")} · ID: #
-                        {sub._id.slice(-6).toUpperCase()}
+                        Submitted {moment(sub.createdAt).format("MMM D, YYYY · h:mm A")} · ID: #{sub._id.slice(-6).toUpperCase()}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <span className="text-lg font-black text-emerald-600">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-1 sm:pt-0">
+                      <div className="text-left sm:text-right">
+                        <span className="text-base sm:text-lg font-black text-emerald-600">
                           ৳{reward.toFixed(2)}
                         </span>
                         <p className="text-[10px] text-gray-400">Net Reward</p>
@@ -231,7 +230,7 @@ const MySubmissions = () => {
                         }`}
                       >
                         {isApproved
-                          ? "Approved & Credited"
+                          ? "Approved & Paid"
                           : isRejected
                           ? "Rejected"
                           : "Under Review"}
@@ -240,13 +239,13 @@ const MySubmissions = () => {
                   </div>
 
                   {/* Proof Details Preview */}
-                  <div className="space-y-3 text-xs">
+                  <div className="space-y-2.5 sm:space-y-3 text-xs">
                     {sub.proofData?.text && (
                       <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
                         <span className="font-semibold text-gray-600 block mb-0.5">
                           Your Submitted Text Proof:
                         </span>
-                        <p className="text-gray-800 font-mono text-[11px] whitespace-pre-wrap">
+                        <p className="text-gray-800 font-mono text-[11px] whitespace-pre-wrap break-words">
                           {sub.proofData.text}
                         </p>
                       </div>
@@ -261,12 +260,12 @@ const MySubmissions = () => {
                         <span className="font-semibold text-gray-600 block text-[11px]">
                           Your Uploaded Screenshot Proofs ({screenshots.length}):
                         </span>
-                        <div className="flex flex-wrap gap-2.5">
+                        <div className="flex flex-wrap gap-2 sm:gap-2.5">
                           {screenshots.map((url, idx) => (
                             <div
                               key={idx}
                               onClick={() => setLightboxImage(url)}
-                              className="w-20 h-20 rounded-xl overflow-hidden border border-gray-200 relative cursor-pointer hover:scale-105 transition-transform bg-gray-50 group"
+                              className="w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-gray-200 relative cursor-pointer active:scale-95 transition-transform bg-gray-50 group"
                             >
                               <img
                                 src={url}
@@ -286,7 +285,7 @@ const MySubmissions = () => {
                     {isRejected && sub.rejectionReason && (
                       <div className="p-3.5 rounded-2xl bg-red-50 text-red-700 border border-red-100 space-y-2">
                         <strong className="block font-bold">Rejection Feedback from Provider:</strong>
-                        <span>{sub.rejectionReason}</span>
+                        <span className="break-words block">{sub.rejectionReason}</span>
 
                         {/* Dispute Status */}
                         {sub.disputed && sub.disputeVerdict === "WORKER_WINS" && (
@@ -319,9 +318,9 @@ const MySubmissions = () => {
                               setDisputeModal(sub);
                               setDisputeReason("");
                             }}
-                            className="mt-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition-all shadow-sm"
+                            className="mt-2 min-h-[40px] px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
                           >
-                            ⚠️ Appeal This Rejection
+                            <span>⚠️ Appeal This Rejection</span>
                           </button>
                         )}
                       </div>
@@ -345,7 +344,7 @@ const MySubmissions = () => {
           <div className="relative p-2 bg-black/95 rounded-2xl flex flex-col items-center">
             <button
               onClick={() => setLightboxImage(null)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 p-2"
+              className="absolute top-4 right-4 text-white hover:text-gray-300 p-2 z-50 bg-black/50 rounded-full"
             >
               <XMarkIcon className="w-6 h-6" />
             </button>
@@ -363,11 +362,11 @@ const MySubmissions = () => {
         open={Boolean(disputeModal)}
         handler={() => !filingDispute && setDisputeModal(null)}
         size="md"
-        className="rounded-3xl p-0 overflow-hidden"
+        className="m-3 sm:m-auto rounded-2xl sm:rounded-3xl p-0 overflow-hidden"
       >
-        <div className="p-6 sm:p-8 space-y-5">
+        <div className="p-4 sm:p-8 space-y-4 sm:space-y-5 max-h-[90vh] overflow-y-auto">
           <div>
-            <h3 className="text-lg font-black text-gray-900">⚠️ Appeal Rejection</h3>
+            <h3 className="text-base sm:text-lg font-black text-gray-900">⚠️ Appeal Rejection</h3>
             <p className="text-xs text-gray-500 mt-1">
               Task: <strong>{disputeModal?.workId?.title || "Social Media Task"}</strong>
             </p>
@@ -393,7 +392,7 @@ const MySubmissions = () => {
             </div>
           )}
 
-          {/* Dispute Reason Textarea */}
+          {/* Dispute Reason Textarea - 16px font prevents iOS zoom */}
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1.5">
               Why do you believe this rejection is unfair? *
@@ -402,7 +401,7 @@ const MySubmissions = () => {
               value={disputeReason}
               onChange={(e) => setDisputeReason(e.target.value)}
               placeholder="Explain in detail why your submission was valid and the rejection is wrong. Reference your proof screenshots and text..."
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-orange-300 focus:border-orange-400 outline-none resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-base sm:text-sm focus:ring-2 focus:ring-orange-300 focus:border-orange-400 outline-none resize-none"
               rows={4}
               maxLength={1000}
               disabled={filingDispute}
@@ -413,18 +412,18 @@ const MySubmissions = () => {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-2 border-t border-gray-100">
             <button
               onClick={() => setDisputeModal(null)}
               disabled={filingDispute}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-all"
+              className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-all text-center"
             >
               Cancel
             </button>
             <button
               onClick={handleFileDispute}
               disabled={filingDispute || disputeReason.trim().length < 10}
-              className="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="min-h-[42px] px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-center active:scale-95"
             >
               {filingDispute ? "Submitting Appeal..." : "Submit Appeal"}
             </button>
