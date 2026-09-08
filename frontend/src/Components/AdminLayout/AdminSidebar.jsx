@@ -45,40 +45,40 @@ const sidebarData = [
     items: [
       { label: "Admins", icon: UsersIcon, to: "/admin/admins", color: "text-blue-500" },
       { label: "Moderators", icon: UsersIcon, to: "/admin/moderator", color: "text-indigo-500" },
-      { label: "Non-Active User", icon: UserMinusIcon, to: "/admin/non-active-users", color: "text-purple-500" },
-      { label: "Active User", icon: UsersIcon, to: "/admin/users", color: "text-green-500" },
-      { label: "Banned User", icon: NoSymbolIcon, to: "/admin/banned-users", color: "text-red-500" },
+      { label: "Non-Active Users", icon: UserMinusIcon, to: "/admin/non-active-users", color: "text-purple-500" },
+      { label: "Active Users", icon: UsersIcon, to: "/admin/users", color: "text-green-500" },
+      { label: "Banned Users", icon: NoSymbolIcon, to: "/admin/banned-users", color: "text-red-500" },
     ]
   },
   {
     category: "FINANCIAL MANAGEMENT",
     items: [
-      { label: "Earning & Financials", icon: ChartBarIcon, to: "/admin/earnings", color: "text-emerald-500" },
-      { label: "Withdrawal", icon: CurrencyDollarIcon, to: "/admin/withdrawals", color: "text-indigo-600" },
-      { label: "External Withdraw", icon: ArrowsRightLeftIcon, to: "/admin/external-withdrawals", color: "text-purple-600" },
-      { label: "TopUp / Transaction", icon: ArrowsRightLeftIcon, to: "/admin/topup", color: "text-blue-500" },
+      { label: "Earnings & Financials", icon: ChartBarIcon, to: "/admin/earnings", color: "text-emerald-500" },
+      { label: "Withdrawals", icon: CurrencyDollarIcon, to: "/admin/withdrawals", color: "text-indigo-600" },
+      { label: "External Withdrawals", icon: ArrowsRightLeftIcon, to: "/admin/external-withdrawals", color: "text-purple-600" },
+      { label: "Top-Up / Transactions", icon: ArrowsRightLeftIcon, to: "/admin/topup", color: "text-blue-500" },
       { label: "Payment Proofs", icon: PhotoIcon, to: "/admin/payment-proofs", color: "text-pink-500" },
-      { label: "Payment Gateway", icon: CreditCardIcon, to: "/admin/payment-gateway", color: "text-cyan-500" },
+      { label: "Payment Gateways", icon: CreditCardIcon, to: "/admin/payment-gateway", color: "text-cyan-500" },
     ]
   },
   {
     category: "WORK MANAGEMENT",
     items: [
-      { label: "Works", icon: BriefcaseIcon, to: "/admin/works", color: "text-amber-500" },
-      { label: "Social Works", icon: ClipboardDocumentCheckIcon, to: "/admin/social-works", color: "text-teal-500" },
-      { label: "Training", icon: AcademicCapIcon, to: "/admin/training", color: "text-violet-500" },
+      { label: "Micro Tasks", icon: BriefcaseIcon, to: "/admin/works", color: "text-amber-500" },
+      { label: "Social Tasks", icon: ClipboardDocumentCheckIcon, to: "/admin/social-works", color: "text-teal-500" },
+      { label: "Training Courses", icon: AcademicCapIcon, to: "/admin/training", color: "text-violet-500" },
     ]
   },
   {
     category: "SUPPORT & COMMUNICATION",
     items: [
-      { label: "Live Message", icon: ChatBubbleLeftRightIcon, to: "/admin/message", color: "text-blue-500" },
+      { label: "Live Messages", icon: ChatBubbleLeftRightIcon, to: "/admin/message", color: "text-blue-500" },
       { label: "Broadcast Alerts", icon: MegaphoneIcon, to: "/admin/broadcast", color: "text-purple-500" },
       { label: "Reviews & Feedback", icon: StarIcon, to: "/admin/reviews", color: "text-amber-500" },
     ]
   },
   {
-    category: "ACCOUNT",
+    category: "ACCOUNT & SETTINGS",
     items: [
       { label: "Profile", icon: UserIcon, to: "/admin/profile", color: "text-indigo-500" },
       { label: "Settings", icon: Cog6ToothIcon, to: "/admin/settings", color: "text-purple-600" },
@@ -109,8 +109,9 @@ const AdminSidebar = ({ isOpen, onClose }) => {
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-screen bg-[#f8f9fa] border-r border-gray-200 z-50 w-[260px] flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-          }`}
+        className={`fixed top-0 left-0 h-screen bg-[#f8f9fa] border-r border-gray-200 z-50 w-[260px] flex flex-col transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       >
         {/* Mobile Header (Hidden on Desktop since Topbar handles it) */}
         <div className="flex items-center justify-between p-4 lg:hidden border-b border-gray-200 bg-white">
@@ -120,16 +121,16 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           </IconButton>
         </div>
 
-        {/* Profile Summary (Like the image) */}
-        <div className="flex items-center gap-3 p-5 border-b border-gray-200 bg-white shadow-sm mt-0">
+        {/* Profile Summary */}
+        <div className="flex items-center gap-3 p-5 border-b border-gray-200 bg-white shadow-xs mt-0">
           <img
             src={user?.avatar || "/avater.avif"}
             alt="Profile"
-            className="w-12 h-12 rounded-full border border-gray-200 shadow-sm"
+            className="w-12 h-12 rounded-full border border-gray-200 shadow-xs object-cover"
           />
           <div>
             <h3 className="text-sm font-bold text-gray-800">{user?.name || "Admin"}</h3>
-            <p className="text-xs text-gray-500">Super Admin</p>
+            <p className="text-xs text-gray-500 font-medium">Super Admin</p>
           </div>
         </div>
 
@@ -142,17 +143,19 @@ const AdminSidebar = ({ isOpen, onClose }) => {
               </h4>
               <div className="space-y-1">
                 {section.items.map((item, itemIdx) => {
-                  const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + "/");
+                  const isActive =
+                    location.pathname === item.to || location.pathname.startsWith(item.to + "/");
                   const Icon = item.icon;
                   return (
                     <Link
                       key={itemIdx}
                       to={item.to}
                       onClick={onClose}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors ${isActive
-                        ? "bg-[#f4f0ff] text-[#4d28e2]"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                        }`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors ${
+                        isActive
+                          ? "bg-[#f4f0ff] text-[#4d28e2]"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      }`}
                     >
                       <Icon className={`w-5 h-5 ${isActive ? "text-[#4d28e2]" : item.color}`} />
                       {item.label}

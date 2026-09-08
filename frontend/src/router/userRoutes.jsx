@@ -34,6 +34,10 @@ const Withdraw = lazyRetry(() => import("../Pages/Account/Withdraw"));
 const PaymentGateway = lazyRetry(() => import("../Pages/Account/PaymentGateway"));
 const Works = lazyRetry(() => import("../Pages/Admin/Works/Works"));
 const SocialWork = lazyRetry(() => import("../Pages/SocialWork/SocialWork"));
+const MySocialTasks = lazyRetry(() => import("../Pages/SocialWork/MySocialTasks"));
+const CreateSocialTask = lazyRetry(() => import("../Pages/SocialWork/CreateSocialTask"));
+const MySubmissions = lazyRetry(() => import("../Pages/SocialWork/MySubmissions"));
+const TaskSubmissionsReview = lazyRetry(() => import("../Pages/SocialWork/TaskSubmissionsReview"));
 const SocialWorkDetails = lazyRetry(() => import("../Pages/SocialWork/WorkDetails"));
 const WorkDetails = lazyRetry(() => import("../Pages/Admin/Works/WorkDetails"));
 const WorksPage = lazyRetry(() => import("../Pages/Admin/Works/WorksPage"));
@@ -126,6 +130,22 @@ export const userRoutes = [
   {
     path: "social-works",
     element: <AuthChecker><Lazy><SocialWork /></Lazy></AuthChecker>,
+  },
+  {
+    path: "social-works/my-tasks",
+    element: <AuthChecker><Lazy><MySocialTasks /></Lazy></AuthChecker>,
+  },
+  {
+    path: "social-works/create",
+    element: <AuthChecker><Lazy><CreateSocialTask /></Lazy></AuthChecker>,
+  },
+  {
+    path: "social-works/submissions",
+    element: <AuthChecker><Lazy><MySubmissions /></Lazy></AuthChecker>,
+  },
+  {
+    path: "social-works/task/:id/submissions",
+    element: <AuthChecker><Lazy><TaskSubmissionsReview /></Lazy></AuthChecker>,
   },
   {
     path: "social-works/:id",

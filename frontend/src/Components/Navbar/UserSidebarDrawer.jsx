@@ -18,6 +18,7 @@ import {
   DevicePhoneMobileIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import Cookie from "js-cookie";
 import toast from "react-hot-toast";
@@ -31,27 +32,28 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
   const handleLogout = () => {
     Cookie.remove("token-you");
     localStorage.clear();
-    toast.success("লগআউট সফল হয়েছে");
+    toast.success("Logged out successfully");
     window.location.href = "/";
   };
 
   const navMenuItems = [
-    { label: "ড্যাশবোর্ড", to: "/user/home", icon: HomeIcon },
-    { label: "আমার টাস্ক", to: "/user/works", icon: ClipboardDocumentListIcon },
-    { label: "আমার আয়", to: "/user/earnings", icon: BanknotesIcon },
-    { label: "উইথড্র", to: "/user/account/withdraw", icon: CreditCardIcon },
-    { label: "পেমেন্ট গেটওয়ে", to: "/user/payment-gateway", icon: BanknotesIcon },
-    { label: "রেফার & আর্ন", to: "/user/refer", icon: UserGroupIcon },
-    { label: "ওয়ালেট", to: "/user/account", icon: WalletIcon },
-    { label: "ট্রেনিং & সাপোর্ট", to: "/user/training", icon: AcademicCapIcon },
+    { label: "Dashboard", to: "/user/home", icon: HomeIcon },
+    { label: "Social Tasks", to: "/user/social-works", icon: SparklesIcon },
+    { label: "Micro Tasks", to: "/user/works", icon: ClipboardDocumentListIcon },
+    { label: "My Earnings", to: "/user/earnings", icon: BanknotesIcon },
+    { label: "Withdraw", to: "/user/account/withdraw", icon: CreditCardIcon },
+    { label: "Payment Gateway", to: "/user/payment-gateway", icon: BanknotesIcon },
+    { label: "Refer & Earn", to: "/user/refer", icon: UserGroupIcon },
+    { label: "Wallet", to: "/user/account", icon: WalletIcon },
+    { label: "Training & Support", to: "/user/training", icon: AcademicCapIcon },
     {
-      label: "নোটিফিকেশন",
+      label: "Notifications",
       to: "/user/notifications",
       icon: BellIcon,
     },
-    { label: "সেটিংস", to: "/user/settings", icon: Cog6ToothIcon },
-    { label: "Message", to: "/user/message", icon: ChatBubbleLeftRightIcon },
-    { label: "লগইন ডিভাইস", to: "/user/login-devices", icon: DevicePhoneMobileIcon },
+    { label: "Settings", to: "/user/settings", icon: Cog6ToothIcon },
+    { label: "Messages", to: "/user/message", icon: ChatBubbleLeftRightIcon },
+    { label: "Login Devices", to: "/user/login-devices", icon: DevicePhoneMobileIcon },
   ];
 
   const navItems = navMenuItems.map((item) =>
@@ -200,11 +202,11 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
             className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl transition-all"
           >
             <ArrowRightOnRectangleIcon className="w-5 h-5" />
-            <span>লগ আউট</span>
+            <span>Log Out</span>
           </button>
 
           <p className="text-[10px] text-center text-gray-500 font-mono">
-            ভার্সন 1.0.0
+            Version 1.0.0
           </p>
         </div>
       </aside>

@@ -46,7 +46,7 @@ const UserBottomBar = ({ onOpenMenu }) => {
         >
           <HomeIcon className="w-5 h-5 stroke-[2]" />
         </div>
-        <span className="text-[10px] tracking-tight mt-0.5">হোম</span>
+        <span className="text-[10px] tracking-tight mt-0.5">Home</span>
       </Link>
 
       {/* 2. Tasks */}
@@ -65,7 +65,7 @@ const UserBottomBar = ({ onOpenMenu }) => {
         >
           <ClipboardDocumentListIcon className="w-5 h-5 stroke-[2]" />
         </div>
-        <span className="text-[10px] tracking-tight mt-0.5">টাস্ক</span>
+        <span className="text-[10px] tracking-tight mt-0.5">Tasks</span>
       </Link>
 
       {/* 3. Center Earn Button (Raised gradient circular button) */}
@@ -73,7 +73,7 @@ const UserBottomBar = ({ onOpenMenu }) => {
         <Link
           to="/user/social-works"
           className="w-12 h-12 rounded-full bg-brand-gradient text-white flex items-center justify-center shadow-lg shadow-teal-500/40 hover:scale-110 active:scale-95 transition-all border-[3px] border-white"
-          title="Watch & Earn"
+          title="Social Tasks"
         >
           <PlusIcon className="w-6 h-6 stroke-[2.8]" />
         </Link>
@@ -87,7 +87,7 @@ const UserBottomBar = ({ onOpenMenu }) => {
         <div className="p-1 rounded-xl">
           <ChatBubbleLeftRightIcon className="w-5 h-5 stroke-[2]" />
         </div>
-        <span className="text-[10px] tracking-tight mt-0.5">মেসেজ</span>
+        <span className="text-[10px] tracking-tight mt-0.5">Messages</span>
       </Link>
 
       {/* 5. Menu Drawer Trigger */}
@@ -99,7 +99,7 @@ const UserBottomBar = ({ onOpenMenu }) => {
         <div className="p-1 rounded-xl">
           <Bars3Icon className="w-5 h-5 stroke-[2.3]" />
         </div>
-        <span className="text-[10px] tracking-tight mt-0.5">মেনু</span>
+        <span className="text-[10px] tracking-tight mt-0.5">Menu</span>
       </button>
     </div>
   );
