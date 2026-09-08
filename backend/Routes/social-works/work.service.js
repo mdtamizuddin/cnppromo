@@ -24,6 +24,44 @@ const getCommissionRate = async () => {
   }
 };
 
+const getCommissionSettings = async () => {
+  try {
+    let setting = await Setting.findOne();
+    const percent =
+      typeof setting?.taskCommissionPercentage === "number"
+        ? setting.taskCommissionPercentage
+        : 10;
+    return { success: true, commissionRate: percent, setting };
+  } catch (err) {
+    return { success: true, commissionRate: 10, error: err.message };
+  }
+};
+
+const updateCommissionSettings = async (rate) => {
+  const num = Number(rate);
+  if (!Number.isFinite(num) || num < 0 || num > 100) {
+    throw new Error("Commission percentage must be a number between 0 and 100");
+  }
+
+  let setting = await Setting.findOne();
+  if (!setting) {
+    setting = await Setting.create({
+      name: "main",
+      siteName: "CNP-PROMO",
+      taskCommissionPercentage: num,
+    });
+  } else {
+    setting.taskCommissionPercentage = num;
+    await setting.save();
+  }
+
+  return {
+    success: true,
+    commissionRate: setting.taskCommissionPercentage,
+    setting,
+  };
+};
+
 /**
  * Provider creates a task and funds it via Escrow
  */
@@ -1464,4 +1502,6 @@ module.exports = {
   resolveDispute,
   cleanupTaskProofImages,
   adminCleanupAllCompletedTasks,
+  getCommissionSettings,
+  updateCommissionSettings,
 };

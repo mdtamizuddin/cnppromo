@@ -17,13 +17,17 @@ import {
   XCircleIcon,
   SparklesIcon,
   ExclamationTriangleIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
+import { useDispatch } from "react-redux";
+import { setSettings } from "../../../../redux/features/user/userSlice";
 import { useQuery, useInfiniteQuery, useQueryClient } from "react-query";
 import { useInView } from "react-intersection-observer";
 import moment from "moment";
 import toast from "react-hot-toast";
 import { api } from "../../../../util/axios";
 import SubmissionReviewModal from "./SubmissionReviewModal";
+import TaskDetailsModal from "./TaskDetailsModal";
 import DeleteConfirmModal from "../../../../Components/DeleteConfirmModal";
 import {
   PageHeader,
@@ -50,6 +54,7 @@ const PremiumAdminSocialWorksTable = () => {
   const [submitStatus, setSubmitStatus] = useState("pending");
   const [search, setSearch] = useState("");
   const [reviewSubmit, setReviewSubmit] = useState(null);
+  const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -71,6 +76,7 @@ const PremiumAdminSocialWorksTable = () => {
   const [cleaningTaskId, setCleaningTaskId] = useState(null);
   const [isSweepingStorage, setIsSweepingStorage] = useState(false);
 
+  const dispatch = useDispatch();
   const queryClient = useQueryClient();
   const { ref: subsDesktopRef, inView: subsDesktopInView } = useInView();
 
@@ -96,16 +102,38 @@ const PremiumAdminSocialWorksTable = () => {
   // 3. Fetch Site Settings for Commission %
   const { data: settingData } = useQuery(
     ["admin-setting-commission"],
-    async () => (await api.get("setting")).data,
+    async () => {
+      try {
+        const res = await api.get("social-works/admin/commission");
+        if (res.data?.success) return res.data;
+      } catch {
+        // fallback
+      }
+      return (await api.get("setting")).data;
+    },
     {
       staleTime: 60000,
       onSuccess: (data) => {
-        if (typeof data?.taskCommissionPercentage === "number") {
-          setCommissionRate(data.taskCommissionPercentage);
+        const rate =
+          data?.commissionRate ??
+          data?.setting?.taskCommissionPercentage ??
+          data?.taskCommissionPercentage;
+        if (typeof rate === "number") {
+          setCommissionRate(rate);
         }
       },
     }
   );
+
+  useEffect(() => {
+    const rate =
+      settingData?.commissionRate ??
+      settingData?.setting?.taskCommissionPercentage ??
+      settingData?.taskCommissionPercentage;
+    if (typeof rate === "number") {
+      setCommissionRate(rate);
+    }
+  }, [settingData]);
 
   // 5. Fetch Open Disputes
   const {
@@ -223,11 +251,35 @@ const PremiumAdminSocialWorksTable = () => {
     e.preventDefault();
     try {
       setSavingCommission(true);
-      await api.put("setting", {
-        taskCommissionPercentage: parseFloat(commissionRate) || 10,
-      });
-      toast.success("Platform commission percentage updated!");
+      const parsed = parseFloat(commissionRate);
+      if (isNaN(parsed) || parsed < 0 || parsed > 100) {
+        return toast.error("Please enter a valid rate between 0 and 100%");
+      }
+
+      let updatedRate = parsed;
+      try {
+        const res = await api.put("social-works/admin/commission", {
+          commissionRate: parsed,
+          taskCommissionPercentage: parsed,
+        });
+        updatedRate = res.data?.commissionRate ?? res.data?.setting?.taskCommissionPercentage ?? parsed;
+        if (res.data?.setting) {
+          dispatch(setSettings(res.data.setting));
+        }
+      } catch {
+        const res = await api.put("setting", {
+          taskCommissionPercentage: parsed,
+        });
+        updatedRate = res.data?.setting?.taskCommissionPercentage ?? parsed;
+        if (res.data?.setting) {
+          dispatch(setSettings(res.data.setting));
+        }
+      }
+
+      setCommissionRate(updatedRate);
+      toast.success(`Platform commission updated to ${updatedRate}%`);
       queryClient.invalidateQueries(["admin-setting-commission"]);
+      queryClient.invalidateQueries(["admin-social-analytics"]);
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to update commission");
     } finally {
@@ -447,7 +499,12 @@ const PremiumAdminSocialWorksTable = () => {
                     const isModding = moderatingTaskId === task._id;
 
                     return (
-                      <tr key={task._id} className="hover:bg-gray-50/60 transition-colors">
+                      <tr
+                        key={task._id}
+                        onClick={() => setSelectedTaskDetails(task)}
+                        className="hover:bg-teal-50/20 cursor-pointer transition-colors"
+                        title="Click to view full task details"
+                      >
                         {/* Platform / Task */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
@@ -530,12 +587,24 @@ const PremiumAdminSocialWorksTable = () => {
 
                         {/* Actions */}
                         <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                          <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <IconAction
+                              icon={EyeIcon}
+                              label="View Details"
+                              tone="teal"
+                              onClick={(e) => {
+                                e?.stopPropagation?.();
+                                setSelectedTaskDetails(task);
+                              }}
+                            />
                             {isPending ? (
                               <>
                                 <Button
                                   size="sm"
-                                  onClick={() => handleModerate(task._id, "APPROVE")}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleModerate(task._id, "APPROVE");
+                                  }}
                                   disabled={isModding}
                                   className="normal-case text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1 font-bold shadow-xs"
                                 >
@@ -546,7 +615,8 @@ const PremiumAdminSocialWorksTable = () => {
                                   size="sm"
                                   variant="outlined"
                                   color="red"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setRejectingTask(task);
                                     setRejectModalOpen(true);
                                   }}
@@ -562,7 +632,10 @@ const PremiumAdminSocialWorksTable = () => {
                                 icon={TrashIcon}
                                 label="Delete"
                                 tone="red"
-                                onClick={() => setDeleteTarget(task)}
+                                onClick={(e) => {
+                                  e?.stopPropagation?.();
+                                  setDeleteTarget(task);
+                                }}
                               />
                             )}
                           </div>
@@ -705,18 +778,36 @@ const PremiumAdminSocialWorksTable = () => {
               <label className="block text-xs font-bold text-gray-700 mb-1.5">
                 Platform Commission Rate (%)
               </label>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <input
                   type="number"
                   min="0"
                   max="100"
                   step="0.5"
                   required
-                  value={commissionRate}
+                  value={commissionRate ?? ""}
                   onChange={(e) => setCommissionRate(e.target.value)}
                   className="w-36 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                 />
                 <span className="text-sm font-bold text-gray-600">% per completed task</span>
+
+                <div className="flex items-center gap-1.5 ml-2">
+                  <span className="text-[11px] text-gray-400 font-medium">Quick presets:</span>
+                  {[5, 10, 15, 20, 25].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setCommissionRate(preset)}
+                      className={`px-2 py-0.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                        Number(commissionRate) === preset
+                          ? "bg-teal-600 text-white border-teal-600 shadow-2xs"
+                          : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                      }`}
+                    >
+                      {preset}%
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -728,14 +819,14 @@ const PremiumAdminSocialWorksTable = () => {
                 <li>
                   Worker browses feed and sees Net Earnings:{" "}
                   <strong className="text-emerald-700">
-                    ৳{(2 * (1 - (commissionRate || 10) / 100)).toFixed(2)} BDT
+                    ৳{(2 * (1 - (Number(commissionRate) || 10) / 100)).toFixed(2)} BDT
                   </strong>
                   .
                 </li>
                 <li>
                   Platform automatically retains profit:{" "}
                   <strong className="text-teal-700">
-                    ৳{(2 * ((commissionRate || 10) / 100)).toFixed(2)} BDT
+                    ৳{(2 * ((Number(commissionRate) || 10) / 100)).toFixed(2)} BDT
                   </strong>
                   .
                 </li>
@@ -747,9 +838,10 @@ const PremiumAdminSocialWorksTable = () => {
               <Button
                 type="submit"
                 disabled={savingCommission}
-                className="bg-teal-600 hover:bg-teal-700 text-white normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md"
+                className="bg-teal-600 hover:bg-teal-700 text-white normal-case text-xs font-bold px-6 py-2.5 rounded-xl shadow-md flex items-center gap-2"
               >
-                {savingCommission ? "Saving…" : "Save Commission Rate"}
+                {savingCommission && <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />}
+                <span>{savingCommission ? "Saving…" : "Save Commission Rate"}</span>
               </Button>
             </div>
           </form>
@@ -843,7 +935,13 @@ const PremiumAdminSocialWorksTable = () => {
                   {/* Header */}
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h4 className="text-sm font-bold text-gray-900">
+                      <h4
+                        onClick={() => d.workId && setSelectedTaskDetails(d.workId)}
+                        className={`text-sm font-bold text-gray-900 ${
+                          d.workId ? "hover:text-teal-600 cursor-pointer" : ""
+                        }`}
+                        title={d.workId ? "Click to view task details" : undefined}
+                      >
                         {d.workId?.title || "Unknown Task"}
                       </h4>
                       <p className="text-[10px] text-gray-500 mt-0.5">
@@ -972,6 +1070,33 @@ const PremiumAdminSocialWorksTable = () => {
             </div>
           )}
         </TableCard>
+      )}
+
+      {/* Task Details Modal */}
+      {selectedTaskDetails && (
+        <TaskDetailsModal
+          task={selectedTaskDetails}
+          onClose={() => setSelectedTaskDetails(null)}
+          onApprove={(taskId) => {
+            handleModerate(taskId, "APPROVE");
+            setSelectedTaskDetails(null);
+          }}
+          onReject={(task) => {
+            setRejectingTask(task);
+            setRejectModalOpen(true);
+            setSelectedTaskDetails(null);
+          }}
+          onPurgeS3={(taskId) => {
+            handleCleanupTaskS3(taskId);
+            setSelectedTaskDetails((prev) => (prev ? { ...prev, storageCleaned: true } : null));
+          }}
+          onViewSubmissions={(task) => {
+            setActiveTab("submissions");
+            setSearch(task.title || "");
+            setSelectedTaskDetails(null);
+          }}
+          isModding={moderatingTaskId === selectedTaskDetails?._id}
+        />
       )}
 
       {/* Review Submission Modal */}

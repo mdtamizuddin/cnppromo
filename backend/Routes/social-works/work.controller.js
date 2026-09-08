@@ -212,6 +212,37 @@ router.get(
   }
 );
 
+// Admin: Get platform commission percentage
+router.get(
+  "/admin/commission",
+  authChecker,
+  roleChecker(["admin", "moderator"]),
+  async (req, res) => {
+    try {
+      const result = await services.getCommissionSettings();
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// Admin: Update platform commission percentage
+router.put(
+  "/admin/commission",
+  authChecker,
+  roleChecker(["admin", "moderator"]),
+  async (req, res) => {
+    try {
+      const rate = req.body.commissionRate ?? req.body.taskCommissionPercentage;
+      const result = await services.updateCommissionSettings(rate);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+);
+
 // Admin: Get all open disputes awaiting resolution
 router.get(
   "/admin/disputes",

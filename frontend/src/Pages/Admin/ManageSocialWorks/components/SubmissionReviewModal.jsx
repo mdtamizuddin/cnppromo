@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button } from "@material-tailwind/react";
+import { Button, Dialog } from "@material-tailwind/react";
 import {
   ClockIcon,
   BanknotesIcon,
@@ -10,6 +10,7 @@ import {
   PhotoIcon,
   ArrowTopRightOnSquareIcon,
   XMarkIcon,
+  ShieldExclamationIcon,
 } from "@heroicons/react/24/outline";
 import moment from "moment";
 import toast from "react-hot-toast";
@@ -24,6 +25,7 @@ const SubmissionReviewModal = ({ submit, onClose, onSuccess }) => {
 
   const work = submit?.workId;
   const user = submit?.userId;
+  const provider = submit?.providerId || work?.providerId;
   const isPending = ["PENDING", "pending"].includes(submit?.status);
   const isApproved = ["APPROVED", "completed"].includes(submit?.status);
   const isRejected = ["REJECTED", "rejected"].includes(submit?.status);
@@ -148,40 +150,90 @@ const SubmissionReviewModal = ({ submit, onClose, onSuccess }) => {
       >
         <div className="space-y-4 text-xs">
           {/* Metadata Grid */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <DetailTile label="Worker">
               <span className="flex items-center gap-1.5 font-bold text-gray-900">
                 <UserCircleIcon className="w-4 h-4 text-gray-400 shrink-0" />
                 <span className="truncate">{user?.name || "—"}</span>
               </span>
-              {user?.username && <p className="text-[11px] text-gray-400 mt-0.5">@{user.username}</p>}
+              {user?.username && <p className="text-[11px] text-gray-400 mt-0.5">@{user.username} {user?.email ? `· ${user.email}` : ""}</p>}
             </DetailTile>
 
-            <DetailTile label="Net Payout">
-              <span className="flex items-center gap-1.5 font-bold text-emerald-600 text-sm">
-                <BanknotesIcon className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>৳{(submit.netAmount || work?.price || 0).toFixed(2)}</span>
+            <DetailTile label="Task Provider">
+              <span className="flex items-center gap-1.5 font-bold text-gray-900">
+                <UserCircleIcon className="w-4 h-4 text-teal-500 shrink-0" />
+                <span className="truncate">{provider?.name || "Campaign Provider"}</span>
               </span>
-              {submit.platformFee > 0 && (
+              {provider?.username && <p className="text-[11px] text-gray-400 mt-0.5">@{provider.username}</p>}
+            </DetailTile>
+
+            <DetailTile label="Financial Breakdown">
+              <div className="space-y-0.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-normal">Gross Task Rate:</span>
+                  <span className="font-bold text-gray-800">৳{(submit.grossAmount || work?.costPerUnit || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-normal">Worker Payout (Net):</span>
+                  <span className="font-bold text-emerald-600">৳{(submit.netAmount || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-normal">Platform Commission:</span>
+                  <span className="font-bold text-teal-600">৳{(submit.platformFee || 0).toFixed(2)}</span>
+                </div>
+              </div>
+            </DetailTile>
+
+            <DetailTile label="Task & Timing">
+              <p className="font-bold text-gray-800 capitalize text-xs">
+                {work?.platform || "—"} · {work?.actionType?.replace("_", " ") || "action"}
+              </p>
+              <span className="flex items-center gap-1 text-gray-500 text-[11px] mt-1">
+                <CalendarDaysIcon className="w-3.5 h-3.5 text-gray-400" />
+                <span>Submitted {moment(submit.createdAt).format("MMM D, YYYY · h:mm A")}</span>
+              </span>
+              {submit.reviewedAt && (
                 <p className="text-[10px] text-gray-400 mt-0.5">
-                  Platform Fee: ৳{submit.platformFee.toFixed(2)}
+                  Reviewed {moment(submit.reviewedAt).fromNow()}
                 </p>
               )}
             </DetailTile>
-
-            <DetailTile label="Platform & Action">
-              <span className="font-bold text-gray-800 capitalize">
-                {work?.platform || "—"} ({work?.actionType || "task"})
-              </span>
-            </DetailTile>
-
-            <DetailTile label="Submitted At">
-              <span className="flex items-center gap-1 text-gray-600">
-                <CalendarDaysIcon className="w-3.5 h-3.5 text-gray-400" />
-                <span>{moment(submit.createdAt).format("MMM D, YYYY · h:mm A")}</span>
-              </span>
-            </DetailTile>
           </div>
+
+          {/* Dispute Card if submission was disputed */}
+          {submit.disputed && (
+            <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-900 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold flex items-center gap-1.5 text-xs">
+                  <ShieldExclamationIcon className="w-4 h-4 text-amber-600" />
+                  <span>Worker Appeal / Dispute</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-amber-100 text-amber-800">
+                  {submit.disputeVerdict || "Under Review"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-800 bg-white/70 p-2.5 rounded-xl border border-amber-100">
+                <strong>Worker's Reason:</strong> "{submit.disputeReason}"
+              </p>
+              {submit.disputeVerdict && (
+                <div className="text-[11px] space-y-0.5 pt-1">
+                  <p className="text-gray-700">
+                    <strong>Verdict:</strong> {submit.disputeVerdict === "WORKER_WINS" ? "Worker Won (Provider Fined)" : "Provider Upheld (Worker Fined)"}
+                  </p>
+                  {submit.disputeFine > 0 && (
+                    <p className="text-red-600 font-bold">
+                      Fine Penalty: ৳{submit.disputeFine.toFixed(2)} applied
+                    </p>
+                  )}
+                  {submit.disputeAdminNote && (
+                    <p className="text-gray-600 italic">
+                      Admin Note: {submit.disputeAdminNote}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Target URL */}
           {(work?.taskUrl || work?.url) && (
