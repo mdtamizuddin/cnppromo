@@ -1,39 +1,37 @@
 import React, { useState } from "react";
-import { Button } from "@material-tailwind/react";
+import { Button, Dialog } from "@material-tailwind/react";
 import {
-  ClockIcon, BanknotesIcon, CheckCircleIcon, XCircleIcon,
-  UserCircleIcon, CalendarDaysIcon, PlayCircleIcon,
+  ClockIcon,
+  BanknotesIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  UserCircleIcon,
+  CalendarDaysIcon,
+  PhotoIcon,
+  ArrowTopRightOnSquareIcon,
+  XMarkIcon,
+  ShieldExclamationIcon,
 } from "@heroicons/react/24/outline";
 import moment from "moment";
 import toast from "react-hot-toast";
 import { api } from "../../../../util/axios";
 import { Modal, DetailTile, StatusPill } from "../../../../Components/AdminLayout/_Ui/AdminUI";
-import { youtubeThumb } from "./youtube";
-import DeleteConfirmModal from "../../../../Components/DeleteConfirmModal";
-
-const formatDuration = (sec) => {
-  if (!sec && sec !== 0) return "—";
-  if (sec >= 60) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return s > 0 ? `${m}m ${s}s` : `${m}m`;
-  }
-  return `${sec}s`;
-};
 
 const SubmissionReviewModal = ({ submit, onClose, onSuccess }) => {
   const [busy, setBusy] = useState(null); // "approve" | "reject"
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRejectBox, setShowRejectBox] = useState(false);
 
-  const work = submit.workId;
-  const user = submit.userId;
-  const thumb = youtubeThumb(work?.url);
-  const isPending = submit.status === "pending";
+  const work = submit?.workId;
+  const user = submit?.userId;
+  const provider = submit?.providerId || work?.providerId;
+  const isPending = ["PENDING", "pending"].includes(submit?.status);
+  const isApproved = ["APPROVED", "completed"].includes(submit?.status);
+  const isRejected = ["REJECTED", "rejected"].includes(submit?.status);
 
-  // The user is credited only if they actually watched long enough — surface
-  // that up front so the reviewer does not have to do the arithmetic.
-  const requiredDuration = work?.duration || 0;
-  const watchedEnough = requiredDuration ? submit.duration >= requiredDuration : true;
+  const screenshots =
+    submit?.proofData?.screenshots || (submit?.proofImage ? [submit.proofImage] : []);
 
   const run = async (kind, fn, successMessage) => {
     try {
@@ -49,157 +47,290 @@ const SubmissionReviewModal = ({ submit, onClose, onSuccess }) => {
     }
   };
 
-  const approve = () =>
+  const handleApprove = () =>
     run(
       "approve",
-      () => api.put(`social-works/complete/${submit._id}`),
-      `Approved — ৳${work?.price ?? 0} credited`
+      () => api.put(`social-works/review/${submit._id}`, { status: "APPROVED" }),
+      `Approved — ৳${(submit.netAmount || work?.price || 0).toFixed(2)} credited to worker`
     );
 
-  const reject = () =>
-    run(
+  const handleReject = () => {
+    if (!rejectReason.trim()) {
+      return toast.error("Please provide a reason for rejecting this submission");
+    }
+    return run(
       "reject",
-      () => api.put(`social-works/submit/${submit._id}`, { status: "rejected" }),
+      () =>
+        api.put(`social-works/review/${submit._id}`, {
+          status: "REJECTED",
+          rejectionReason: rejectReason.trim(),
+        }),
       "Submission rejected"
     );
+  };
 
   return (
-    <Modal
-      title="Review Submission"
-      subtitle={
-        <span className="flex items-center gap-2">
-          <span className="truncate">{work?.title}</span>
-          <StatusPill tone={submit.status === "completed" ? "green" : submit.status === "rejected" ? "red" : "amber"}>
-            {submit.status}
-          </StatusPill>
-        </span>
-      }
-      onClose={onClose}
-      footer={
-        isPending ? (
-          <div className="flex gap-3">
-            <Button
-              variant="outlined"
-              color="red"
-              fullWidth
-              className="normal-case rounded-xl flex items-center justify-center gap-1.5"
-              onClick={() => setDeleteOpen(true)}
-              disabled={Boolean(busy)}
-            >
-              <XCircleIcon className="w-4 h-4" />
-              {busy === "reject" ? "Rejecting…" : "Reject"}
-            </Button>
-            <Button
-              fullWidth
-              className="normal-case rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-500/25 flex items-center justify-center gap-1.5"
-              onClick={approve}
-              disabled={Boolean(busy)}
-            >
-              <CheckCircleIcon className="w-4 h-4" />
-              {busy === "approve" ? "Approving…" : `Approve & Pay ৳${work?.price ?? 0}`}
-            </Button>
-          </div>
-        ) : (
-          <p className="text-xs text-gray-500 text-center">
-            This submission was already {submit.status}.
-          </p>
-        )
-      }
-    >
-      {thumb && (
-        <a
-          href={work?.url}
-          target="_blank"
-          rel="noreferrer"
-          className="relative block mb-5 rounded-2xl overflow-hidden group"
-        >
-          <img src={thumb} alt="" className="w-full h-40 object-cover" />
-          <div className="absolute inset-0 bg-gray-900/25 group-hover:bg-gray-900/40 transition-colors grid place-items-center">
-            <PlayCircleIcon className="w-12 h-12 text-white drop-shadow-lg" strokeWidth={1.4} />
-          </div>
-        </a>
-      )}
-
-      {!watchedEnough && (
-        <div className="mb-5 flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 ring-1 ring-amber-100">
-          <ClockIcon className="w-5 h-5 text-amber-500 shrink-0 mt-px" />
-          <p className="text-xs text-amber-800">
-            Watched <b>{formatDuration(submit.duration)}</b> of the required{" "}
-            <b>{formatDuration(requiredDuration)}</b>.
-          </p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-3">
-        <DetailTile label="User">
-          <span className="flex items-center gap-1.5">
-            <UserCircleIcon className="w-4 h-4 text-gray-400 shrink-0" />
-            <span className="truncate">{user?.name || "—"}</span>
+    <>
+      <Modal
+        title="Review Worker Submission"
+        subtitle={
+          <span className="flex items-center gap-2">
+            <span className="truncate max-w-sm">{work?.title || "Task Submission"}</span>
+            <StatusPill tone={isApproved ? "green" : isRejected ? "red" : "amber"}>
+              {submit?.status}
+            </StatusPill>
           </span>
-          {user?.username && <p className="text-[11px] font-medium text-gray-400 mt-0.5">@{user.username}</p>}
-        </DetailTile>
+        }
+        onClose={onClose}
+        footer={
+          isPending ? (
+            <div className="w-full space-y-3">
+              {showRejectBox ? (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="Enter reason for rejection (e.g. invalid screenshot)"
+                    className="w-full px-3.5 py-2 text-xs bg-white border border-red-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-red-400"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outlined"
+                      color="red"
+                      fullWidth
+                      size="sm"
+                      onClick={handleReject}
+                      disabled={Boolean(busy)}
+                      className="normal-case text-xs rounded-xl"
+                    >
+                      {busy === "reject" ? "Rejecting…" : "Confirm Rejection"}
+                    </Button>
+                    <Button
+                      variant="text"
+                      size="sm"
+                      onClick={() => setShowRejectBox(false)}
+                      className="normal-case text-xs text-gray-500 rounded-xl"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <Button
+                    variant="outlined"
+                    color="red"
+                    fullWidth
+                    className="normal-case rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold"
+                    onClick={() => setShowRejectBox(true)}
+                    disabled={Boolean(busy)}
+                  >
+                    <XCircleIcon className="w-4 h-4" />
+                    <span>Reject</span>
+                  </Button>
+                  <Button
+                    fullWidth
+                    className="normal-case rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-500/25 flex items-center justify-center gap-1.5 text-xs font-bold"
+                    onClick={handleApprove}
+                    disabled={Boolean(busy)}
+                  >
+                    <CheckCircleIcon className="w-4 h-4" />
+                    <span>Approve & Pay ৳{(submit.netAmount || work?.price || 0).toFixed(2)}</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 text-center w-full">
+              This submission was already marked as {submit?.status}.
+            </p>
+          )
+        }
+      >
+        <div className="space-y-4 text-xs">
+          {/* Metadata Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <DetailTile label="Worker">
+              <span className="flex items-center gap-1.5 font-bold text-gray-900">
+                <UserCircleIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="truncate">{user?.name || "—"}</span>
+              </span>
+              {user?.username && <p className="text-[11px] text-gray-400 mt-0.5">@{user.username} {user?.email ? `· ${user.email}` : ""}</p>}
+            </DetailTile>
 
-        <DetailTile label="Watched">
-          <span className={`flex items-center gap-1.5 ${watchedEnough ? "text-gray-900" : "text-amber-600"}`}>
-            <ClockIcon className="w-4 h-4 text-gray-400 shrink-0" />
-            {formatDuration(submit.duration)}
-          </span>
-          <p className="text-[11px] font-medium text-gray-400 mt-0.5">
-            required {formatDuration(requiredDuration)}
-          </p>
-        </DetailTile>
+            <DetailTile label="Task Provider">
+              <span className="flex items-center gap-1.5 font-bold text-gray-900">
+                <UserCircleIcon className="w-4 h-4 text-teal-500 shrink-0" />
+                <span className="truncate">{provider?.name || "Campaign Provider"}</span>
+              </span>
+              {provider?.username && <p className="text-[11px] text-gray-400 mt-0.5">@{provider.username}</p>}
+            </DetailTile>
 
-        <DetailTile label="Reward">
-          <span className="flex items-center gap-1.5 text-emerald-600">
-            <BanknotesIcon className="w-4 h-4 shrink-0" />
-            ৳{work?.price ?? 0}
-          </span>
-        </DetailTile>
-
-        <DetailTile label="Submitted">
-          <span className="flex items-center gap-1.5">
-            <CalendarDaysIcon className="w-4 h-4 text-gray-400 shrink-0" />
-            {moment(submit.createdAt).fromNow()}
-          </span>
-          <p className="text-[11px] font-medium text-gray-400 mt-0.5">
-            {moment(submit.createdAt).format("MMM DD, YYYY · hh:mm A")}
-          </p>
-        </DetailTile>
-      </div>
-
-      {submit.answers?.length > 0 && (
-        <div className="mt-5">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Answers ({submit.answers.length})
-          </p>
-          <div className="space-y-2">
-            {submit.answers.map((ans, i) => (
-              <div key={i} className="p-3 bg-teal-50/60 rounded-xl border border-teal-100/80">
-                <p className="text-[11px] text-teal-700 font-bold mb-1">
-                  Q{i + 1}. {work?.questions?.[i] || "Question no longer on this task"}
-                </p>
-                <p className="text-sm text-gray-800 break-words">{ans || <span className="text-gray-400">No answer</span>}</p>
+            <DetailTile label="Financial Breakdown">
+              <div className="space-y-0.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-normal">Gross Task Rate:</span>
+                  <span className="font-bold text-gray-800">৳{(submit.grossAmount || work?.costPerUnit || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-normal">Worker Payout (Net):</span>
+                  <span className="font-bold text-emerald-600">৳{(submit.netAmount || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-normal">Platform Commission:</span>
+                  <span className="font-bold text-teal-600">৳{(submit.platformFee || 0).toFixed(2)}</span>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            </DetailTile>
 
-      <DeleteConfirmModal
-        isOpen={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
-        onConfirm={() => {
-          setDeleteOpen(false);
-          reject();
-        }}
-        title="Reject Submission?"
-        message="আপনি কি নিশ্চিত যে এই সাবমিশনটি প্রত্যাখ্যান করতে চান? ইউজার এই কাজের জন্য পেমেন্ট পাবেন না।"
-        itemName={work?.title}
-        confirmText="Reject"
-        cancelText="Cancel"
-        loading={busy === "reject"}
-      />
-    </Modal>
+            <DetailTile label="Task & Timing">
+              <p className="font-bold text-gray-800 capitalize text-xs">
+                {work?.platform || "—"} · {work?.actionType?.replace("_", " ") || "action"}
+              </p>
+              <span className="flex items-center gap-1 text-gray-500 text-[11px] mt-1">
+                <CalendarDaysIcon className="w-3.5 h-3.5 text-gray-400" />
+                <span>Submitted {moment(submit.createdAt).format("MMM D, YYYY · h:mm A")}</span>
+              </span>
+              {submit.reviewedAt && (
+                <p className="text-[10px] text-gray-400 mt-0.5">
+                  Reviewed {moment(submit.reviewedAt).fromNow()}
+                </p>
+              )}
+            </DetailTile>
+          </div>
+
+          {/* Dispute Card if submission was disputed */}
+          {submit.disputed && (
+            <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-900 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold flex items-center gap-1.5 text-xs">
+                  <ShieldExclamationIcon className="w-4 h-4 text-amber-600" />
+                  <span>Worker Appeal / Dispute</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-amber-100 text-amber-800">
+                  {submit.disputeVerdict || "Under Review"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-800 bg-white/70 p-2.5 rounded-xl border border-amber-100">
+                <strong>Worker's Reason:</strong> "{submit.disputeReason}"
+              </p>
+              {submit.disputeVerdict && (
+                <div className="text-[11px] space-y-0.5 pt-1">
+                  <p className="text-gray-700">
+                    <strong>Verdict:</strong> {submit.disputeVerdict === "WORKER_WINS" ? "Worker Won (Provider Fined)" : "Provider Upheld (Worker Fined)"}
+                  </p>
+                  {submit.disputeFine > 0 && (
+                    <p className="text-red-600 font-bold">
+                      Fine Penalty: ৳{submit.disputeFine.toFixed(2)} applied
+                    </p>
+                  )}
+                  {submit.disputeAdminNote && (
+                    <p className="text-gray-600 italic">
+                      Admin Note: {submit.disputeAdminNote}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Target URL */}
+          {(work?.taskUrl || work?.url) && (
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between">
+              <span className="text-gray-500 truncate max-w-xs font-mono text-[11px]">
+                {work.taskUrl || work.url}
+              </span>
+              <a
+                href={work.taskUrl || work.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-teal-600 hover:text-teal-800 font-bold shrink-0"
+              >
+                <span>Open Link</span>
+                <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          )}
+
+          {/* Worker's Text Proof */}
+          {submit?.proofData?.text && (
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 space-y-1">
+              <span className="font-bold text-gray-700 block">Worker's Text Response:</span>
+              <p className="text-gray-900 font-mono text-xs whitespace-pre-wrap">
+                {submit.proofData.text}
+              </p>
+            </div>
+          )}
+
+          {/* Watched Seconds if Applicable */}
+          {submit?.proofData?.watchedSeconds > 0 && (
+            <div className="p-3 rounded-xl bg-sky-50 border border-sky-100 text-sky-900 flex items-center gap-2">
+              <ClockIcon className="w-4 h-4 text-sky-600" />
+              <span>Watched {submit.proofData.watchedSeconds} seconds</span>
+            </div>
+          )}
+
+          {/* Submitted Screenshots */}
+          {submit?.proofData?.screenshotsCleaned ? (
+            <div className="flex items-center gap-1.5 py-2.5 px-3.5 rounded-xl bg-teal-50/70 border border-teal-100 text-xs text-teal-800 font-medium">
+              <span>📦 Proof screenshots purged from cloud storage (Task Completed)</span>
+            </div>
+          ) : screenshots.length > 0 ? (
+            <div className="space-y-2">
+              <span className="font-bold text-gray-700 block">
+                Proof Screenshots ({screenshots.length}):
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {screenshots.map((url, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedImage(url)}
+                    className="aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-50 relative group cursor-pointer hover:border-teal-500 transition-all"
+                  >
+                    <img src={url} alt={`Proof ${idx + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity">
+                      Click to Zoom
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Rejection Note */}
+          {isRejected && submit?.rejectionReason && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-xs">
+              <strong>Rejection Reason:</strong> {submit.rejectionReason}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Screenshot Lightbox Modal */}
+      {selectedImage && (
+        <Dialog
+          open={Boolean(selectedImage)}
+          handler={() => setSelectedImage(null)}
+          size="lg"
+          className="bg-transparent shadow-none p-0 overflow-hidden"
+        >
+          <div className="relative p-2 bg-black/95 rounded-2xl flex flex-col items-center">
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 text-white hover:text-gray-300 p-2"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+            <img
+              src={selectedImage}
+              alt="Proof full view"
+              className="max-h-[85vh] w-auto max-w-full rounded-lg object-contain mt-6"
+            />
+          </div>
+        </Dialog>
+      )}
+    </>
   );
 };
 

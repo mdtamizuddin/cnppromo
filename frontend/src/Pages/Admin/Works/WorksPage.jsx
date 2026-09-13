@@ -72,15 +72,15 @@ const WorksPage = () => {
         {/* 🧭 Top Breadcrumb & Navigation */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs">
-            <Link to="/user/home" className="text-gray-400 hover:text-[#5a32fa] font-medium">
+            <Link to="/user/home" className="text-gray-400 hover:text-teal-700 font-medium">
               হোম
             </Link>
             <span className="text-gray-300">/</span>
-            <Link to="/user/works" className="text-gray-400 hover:text-[#5a32fa] font-medium">
+            <Link to="/user/works" className="text-gray-400 hover:text-teal-700 font-medium">
               কাজের ক্যাটাগরি
             </Link>
             <span className="text-gray-300">/</span>
-            <span className="text-[#5a32fa] font-bold">{currentCategory.name}</span>
+            <span className="text-teal-700 font-bold">{currentCategory.name}</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -88,9 +88,9 @@ const WorksPage = () => {
               <Button
                 variant="outlined"
                 size="sm"
-                className="rounded-xl border-gray-200 bg-white text-gray-800 normal-case text-xs font-bold flex items-center gap-1.5 shadow-sm hover:bg-gray-50"
+                className="rounded-xl border-gray-200 bg-white text-gray-800 normal-case text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-gray-50"
               >
-                <ArrowLeftIcon className="w-4 h-4 text-[#5a32fa]" />
+                <ArrowLeftIcon className="w-4 h-4 text-teal-700" />
                 <span>সব ক্যাটাগরি দেখুন</span>
               </Button>
             </Link>
@@ -98,10 +98,10 @@ const WorksPage = () => {
             <Link to="/user/social-works">
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-[#5a32fa] to-[#7c3aed] hover:from-[#4b26e0] hover:to-[#6d28d9] normal-case text-xs font-bold flex items-center gap-1.5 rounded-xl shadow-md shadow-indigo-500/25 text-white"
+                className="bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-700 hover:to-sky-700 normal-case text-xs font-bold flex items-center gap-1.5 rounded-xl shadow-md shadow-teal-600/20 text-white"
               >
                 <PlayCircleIcon className="w-4 h-4 text-white" />
-                <span>Watch to Earn</span>
+                <span>Social Tasks</span>
               </Button>
             </Link>
           </div>
@@ -117,7 +117,7 @@ const WorksPage = () => {
                 to={`/user/works/category/${encodeURIComponent(cat.path)}`}
                 className={`px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
                   isSelected
-                    ? "bg-[#5a32fa] text-white shadow-md shadow-indigo-500/25 scale-105"
+                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/25 scale-105"
                     : "bg-white text-gray-600 border border-gray-100 hover:bg-gray-50"
                 }`}
               >
@@ -129,40 +129,41 @@ const WorksPage = () => {
         </div>
 
         {/* 🌟 Category Title Hero Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b0c2a] via-[#151954] to-[#0b0c2a] p-6 sm:p-8 lg:p-10 text-white shadow-xl border border-indigo-900/30">
-          <div className="absolute right-0 top-0 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#d2fbf0] via-[#e2fbf6] to-[#d6f7ff] p-5 sm:p-8 lg:p-10 border border-teal-100/90 shadow-xs">
+          <div className="absolute -right-10 -top-10 w-72 sm:w-96 h-72 sm:h-96 bg-teal-400/20 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute left-1/4 -bottom-10 w-64 sm:w-80 h-64 sm:h-80 bg-sky-400/15 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
-            <div className="lg:col-span-8 space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-300 text-xs font-bold backdrop-blur-sm border border-white/10">
+            <div className="lg:col-span-8 space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-800 text-[11px] sm:text-xs font-bold border border-teal-500/20">
                 <span className="text-base">{currentCategory.icon}</span>
                 <span>{currentCategory.badge || "Verified Platform"}</span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0b0c2a] tracking-tight">
                 {currentCategory.name}
               </h1>
 
-              <p className="text-indigo-200/90 text-xs sm:text-sm max-w-xl leading-relaxed">
+              <p className="text-gray-600 text-xs sm:text-sm max-w-xl leading-relaxed font-medium">
                 {currentCategory.desc} — নিচের ভিডিও টিউটোরিয়ালগুলো দেখে নিয়ম মেনে কাজ সম্পন্ন করুন এবং সরাসরি টাকা উপার্জন করুন।
               </p>
 
               {/* Stats */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <span className="px-3 py-1 rounded-xl bg-white/10 text-[11px] font-semibold text-gray-200 border border-white/10 flex items-center gap-1.5">
-                  <CheckCircleIcon className="w-4 h-4 text-emerald-400" />
-                  মোট কাজ: {dbWorks.length} টি
+              <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                <span className="px-3 py-1.5 rounded-xl bg-white/85 text-[11px] font-bold text-teal-900 border border-teal-100 flex items-center gap-1.5 shadow-2xs">
+                  <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
+                  <span>মোট কাজ: {dbWorks.length} টি</span>
                 </span>
-                <span className="px-3 py-1 rounded-xl bg-white/10 text-[11px] font-semibold text-gray-200 border border-white/10 flex items-center gap-1.5">
-                  <ShieldCheckIcon className="w-4 h-4 text-sky-400" />
-                  ১০০% ভেরিফাইড মেথড
+                <span className="px-3 py-1.5 rounded-xl bg-white/85 text-[11px] font-bold text-teal-900 border border-teal-100 flex items-center gap-1.5 shadow-2xs">
+                  <ShieldCheckIcon className="w-4 h-4 text-sky-600" />
+                  <span>১০০% ভেরিফাইড মেথড</span>
                 </span>
               </div>
             </div>
 
-            {/* Right Big Icon Card */}
-            <div className="lg:col-span-4 flex justify-center">
-              <div className="w-32 sm:w-40 aspect-square rounded-3xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-6xl shadow-2xl">
+            {/* Right Big Icon Card - Hidden on mobile */}
+            <div className="hidden lg:flex lg:col-span-4 justify-center">
+              <div className="w-32 sm:w-40 aspect-square rounded-3xl bg-white/80 backdrop-blur-md border border-teal-200/80 flex items-center justify-center text-6xl shadow-sm">
                 {currentCategory.icon}
               </div>
             </div>

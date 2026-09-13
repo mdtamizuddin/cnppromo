@@ -124,6 +124,12 @@ const settingSchema = new mongoose.Schema({
             default: false
         }
     },
+    taskCommissionPercentage: {
+        type: Number,
+        default: 10,
+        min: 0,
+        max: 100
+    },
 }, {
     timestamps: true
 });

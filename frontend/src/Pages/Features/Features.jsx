@@ -106,8 +106,8 @@ const Features = () => {
               </p>
             </div>
 
-            {/* Right Hero Graphic */}
-            <div className="lg:col-span-5 flex justify-center relative">
+            {/* Right Hero Graphic - Hidden on mobile */}
+            <div className="hidden lg:flex lg:col-span-5 justify-center relative">
               <div className="relative w-64 sm:w-80 lg:w-96 aspect-square">
                 {/* Ambient glow background */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-purple-400/30 to-blue-400/30 rounded-full blur-3xl -z-10 animate-pulse"></div>

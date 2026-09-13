@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
-  PlusIcon,
+  BanknotesIcon,
   ChatBubbleLeftRightIcon,
   Bars3Icon,
 } from "@heroicons/react/24/outline";
@@ -17,13 +17,14 @@ const UserBottomBar = ({ onOpenMenu }) => {
     pathname === "/user" ||
     pathname === "/";
   const isWorks = pathname.startsWith("/user/works");
+  const isEarnings = pathname.startsWith("/user/earnings");
   const isMessage =
     pathname === "/user/message" ||
     pathname === "/message" ||
     pathname.startsWith("/user/all-message") ||
     pathname.startsWith("/user/message/");
 
-  // Don't show bottom bar in message pages (matches admin full-bleed behavior)
+  // Don't show floating bottom bar in message pages (prevents overlap)
   if (isMessage) {
     return null;
   }
@@ -46,7 +47,7 @@ const UserBottomBar = ({ onOpenMenu }) => {
         >
           <HomeIcon className="w-5 h-5 stroke-[2]" />
         </div>
-        <span className="text-[10px] tracking-tight mt-0.5">হোম</span>
+        <span className="text-[10px] tracking-tight mt-0.5">Home</span>
       </Link>
 
       {/* 2. Tasks */}
@@ -65,18 +66,29 @@ const UserBottomBar = ({ onOpenMenu }) => {
         >
           <ClipboardDocumentListIcon className="w-5 h-5 stroke-[2]" />
         </div>
-        <span className="text-[10px] tracking-tight mt-0.5">টাস্ক</span>
+        <span className="text-[10px] tracking-tight mt-0.5">Tasks</span>
       </Link>
 
-      {/* 3. Center Earn Button (Raised gradient circular button) */}
-      <div className="flex-1 flex justify-center -mt-6">
+      {/* 3. Center Earnings Button (Raised gradient circular button) */}
+      <div className="flex-1 flex flex-col items-center justify-center -mt-6">
         <Link
-          to="/user/social-works"
-          className="w-12 h-12 rounded-full bg-brand-gradient text-white flex items-center justify-center shadow-lg shadow-teal-500/40 hover:scale-110 active:scale-95 transition-all border-[3px] border-white"
-          title="Watch & Earn"
+          to="/user/earnings"
+          className={`w-12 h-12 rounded-full bg-brand-gradient text-white flex items-center justify-center shadow-lg transition-all border-[3px] border-white active:scale-95 ${
+            isEarnings
+              ? "ring-4 ring-teal-500/30 scale-105 shadow-teal-500/50"
+              : "shadow-teal-500/30 hover:scale-110"
+          }`}
+          title="My Earnings"
         >
-          <PlusIcon className="w-6 h-6 stroke-[2.8]" />
+          <BanknotesIcon className="w-6 h-6 stroke-[2.2]" />
         </Link>
+        <span
+          className={`text-[9px] tracking-tight mt-0.5 font-bold ${
+            isEarnings ? "text-primary" : "text-gray-400"
+          }`}
+        >
+          Earnings
+        </span>
       </div>
 
       {/* 4. Message */}
@@ -87,7 +99,7 @@ const UserBottomBar = ({ onOpenMenu }) => {
         <div className="p-1 rounded-xl">
           <ChatBubbleLeftRightIcon className="w-5 h-5 stroke-[2]" />
         </div>
-        <span className="text-[10px] tracking-tight mt-0.5">মেসেজ</span>
+        <span className="text-[10px] tracking-tight mt-0.5">Messages</span>
       </Link>
 
       {/* 5. Menu Drawer Trigger */}
@@ -99,7 +111,7 @@ const UserBottomBar = ({ onOpenMenu }) => {
         <div className="p-1 rounded-xl">
           <Bars3Icon className="w-5 h-5 stroke-[2.3]" />
         </div>
-        <span className="text-[10px] tracking-tight mt-0.5">মেনু</span>
+        <span className="text-[10px] tracking-tight mt-0.5">Menu</span>
       </button>
     </div>
   );

@@ -1,294 +1,1541 @@
+const { Work, WorkSubmit } = require("./work.model");
+const ProfitLedger = require("./profitLedger.model");
+const User = require("../User/user.model");
+const Setting = require("../Settings/setting.model");
+const { deleteManyFromS3 } = require("../../util/s3");
+const {
+  notifyUser,
+  notifyMany,
+} = require("../Notification/notification.service");
 
-const { Work, WorkSubmit } = require('./work.model');
-const User = require('../User/user.model');
-const { notifyUser, notifyMany } = require('../Notification/notification.service');
-const createWork = async (workData) =>
-{
-    try {
-        const work = new Work(workData);
-        await work.save();
-        const price = work.price ? ` · রিওয়ার্ড ৳${work.price}` : "";
-        const users = await User.find({ status: "active" }).select("_id");
-        notifyMany(users.map((u) => u._id), {
-            category: "tasks",
-            type: "new_task",
-            title: "নতুন টাস্ক যোগ হয়েছে",
-            message: `নতুন কাজ যোগ হয়েছে${price}। আজই সম্পন্ন করুন!`,
-            link: "/social-works",
-        });
-        return work;
-    } catch (error) {
-        throw new Error('Error creating work: ' + error.message);
-    }
-}
-const createWorkSubmit = async (workSubmitData) =>
-{
-    try {
-        const workSubmit = new WorkSubmit(workSubmitData);
-        await workSubmit.save();
-        await Work.findByIdAndUpdate(workSubmit.workId, { $push: { workers: workSubmitData.userId } })
-        notifyUser(workSubmitData.userId, {
-            category: "tasks",
-            type: "task_submitted",
-            title: "কাজ সাবমিট হয়েছে",
-            message: "আপনার কাজটি রিভিউয়ের জন্য জমা হয়েছে। অ্যাডমিন অনুমোদন দিলেই রিওয়ার্ড পাবেন।",
-            link: "/social-works",
-        });
-        return workSubmit;
-    } catch (error) {
-        throw new Error('Error creating work submit: ' + error.message);
-    }
-}
-const completeWorkSubmit = async (workSubmitId, status) =>
-{
-    try {
-        const workSubmit = await WorkSubmit.findById(workSubmitId)
-            .populate('workId')
-
-        if (!workSubmit) {
-            throw new Error('Work submit not found');
-        }
-
-        // Flip the status first, and only if it is still pending. A second
-        // approval would otherwise credit the reward all over again.
-        const updatedWorkSubmit = await WorkSubmit.findOneAndUpdate(
-            { _id: workSubmitId, status: { $ne: "completed" } },
-            { status: "completed" },
-            { new: true }
-        );
-        if (!updatedWorkSubmit) {
-            throw new Error('This submission has already been approved');
-        }
-
-        const price = workSubmit.workId?.price || 0;
-        if (price > 0) {
-            const updatedUser = await User.findByIdAndUpdate(workSubmit.userId, {
-                $inc: { balance: price }
-            }, { new: true });
-
-            try {
-                const { recordTransaction } = require("../Transaction/transaction.service");
-                await recordTransaction({
-                    userId: workSubmit.userId,
-                    amount: price,
-                    type: "credit",
-                    category: "task",
-                    title: workSubmit.workId?.title || "Task Completed",
-                    taskTitle: workSubmit.workId?.title || "",
-                    status: "completed",
-                    referenceId: workSubmit._id,
-                    trxId: `TRX${String(workSubmit._id).slice(-7).toUpperCase()}`,
-                    image: workSubmit.proofImage || workSubmit.image || "",
-                    balanceBefore: updatedUser ? updatedUser.balance - price : 0,
-                    balanceAfter: updatedUser ? updatedUser.balance : price,
-                    skipNotification: true,
-                });
-            } catch (trxErr) {
-                console.error("Failed to record task transaction:", trxErr);
-            }
-        }
-        notifyUser(workSubmit.userId, {
-            category: "tasks",
-            type: "task_approved",
-            title: "কাজ অনুমোদিত হয়েছে!",
-            message: price > 0
-                ? `আপনার কাজের অনুমোদন পেয়েছেন এবং ৳${price} ব্যালেন্সে যোগ হয়েছে।`
-                : "আপনার কাজের অনুমোদন পেয়েছেন।",
-            link: "/social-works",
-        });
-        return updatedWorkSubmit;
-    }
-    catch (error) {
-        throw new Error('Error completing work submit: ' + error.message);
-    }
-}
-const getWorkById = async (workId) =>
-{
-    try {
-        const work = await Work.findById(workId);
-        if (!work) {
-            throw new Error('Work not found');
-        }
-        return work;
-    }
-    catch (error) {
-        throw new Error('Error fetching work: ' + error.message);
-    }
-}
-const getAllWorks = async (user) =>
-{
-    try {
-        const userRes = await User.findById(user);
-        if (!userRes) throw new Error('User not found');
-        if (userRes.role === 'admin') {
-            const works = await Work.find()
-                .sort({ status: 1, createdAt: -1 })
-                .select('-workers');
-
-            const submits = await WorkSubmit.aggregate([
-                { $match: { status: 'pending' } },
-                {
-                    $group: {
-                        _id: '$workId',
-                        count: { $sum: 1 }
-                    },
-                },
-            ]);
-
-            const worksWithSubmits = works.map((work) =>
-            {
-                const submit = submits.find((s) => s._id.toString() === work._id.toString());
-                return {
-                    ...work.toObject(),
-                    count: submit ? submit.count : 0,
-                };
-            });
-
-            return worksWithSubmits;
-        } else {
-            const works = await Work.find({
-                workers: { $nin: [user._id?.toString() || user.toString()] },
-            }).sort({ status: 1, createdAt: -1 });
-
-            return works;
-        }
-
-    } catch (error) {
-        throw new Error('Error fetching works: ' + error.message);
-    }
-};
 /**
- * List submissions for a status.
- *
- * Called without `page` it returns a plain array, which is what the user-facing
- * work history expects. Called with `page` it returns a paginated envelope,
- * including the total pending payout so the admin table can show it without
- * pulling every row.
+ * Standard utility: Fetch active platform commission percentage from Setting
  */
-const getAllWorkSubmits = async (status, options = {}) =>
-{
-    try {
-        const filter = { status };
-        const query = WorkSubmit.find(filter)
-            .sort({ createdAt: -1 })
-            .populate('workId')
-            .populate('userId', 'name username');
+const getCommissionRate = async () => {
+  try {
+    const setting = await Setting.findOne();
+    const percent =
+      typeof setting?.taskCommissionPercentage === "number"
+        ? setting.taskCommissionPercentage
+        : 10;
+    return percent / 100;
+  } catch {
+    return 0.1; // Default 10%
+  }
+};
 
-        if (!options.page) {
-            return await query;
+const getCommissionSettings = async () => {
+  try {
+    let setting = await Setting.findOne();
+    const percent =
+      typeof setting?.taskCommissionPercentage === "number"
+        ? setting.taskCommissionPercentage
+        : 10;
+    return { success: true, commissionRate: percent, setting };
+  } catch (err) {
+    return { success: true, commissionRate: 10, error: err.message };
+  }
+};
+
+const updateCommissionSettings = async (rate) => {
+  const num = Number(rate);
+  if (!Number.isFinite(num) || num < 0 || num > 100) {
+    throw new Error("Commission percentage must be a number between 0 and 100");
+  }
+
+  let setting = await Setting.findOne();
+  if (!setting) {
+    setting = await Setting.create({
+      name: "main",
+      siteName: "CNP-PROMO",
+      taskCommissionPercentage: num,
+    });
+  } else {
+    setting.taskCommissionPercentage = num;
+    await setting.save();
+  }
+
+  return {
+    success: true,
+    commissionRate: setting.taskCommissionPercentage,
+    setting,
+  };
+};
+
+/**
+ * Provider creates a task and funds it via Escrow
+ */
+const createWork = async (workData, userId) => {
+  try {
+    const targetQuantity = parseInt(workData.targetQuantity, 10);
+    const costPerUnit = parseFloat(workData.costPerUnit || workData.price);
+
+    if (!costPerUnit || costPerUnit <= 0) {
+      throw new Error("Cost per unit must be greater than 0");
+    }
+    if (!targetQuantity || targetQuantity <= 0) {
+      throw new Error("Target quantity must be at least 1");
+    }
+
+    const totalBudget = Math.round(targetQuantity * costPerUnit * 100) / 100;
+
+    // Atomically check and deduct escrow from provider's balance
+    const provider = await User.findOneAndUpdate(
+      { _id: userId, balance: { $gte: totalBudget } },
+      { $inc: { balance: -totalBudget } },
+      { new: true }
+    );
+
+    if (!provider) {
+      throw new Error(
+        `Insufficient balance. You need ৳${totalBudget.toFixed(
+          2
+        )} to fund this task.`
+      );
+    }
+
+    const work = new Work({
+      ...workData,
+      providerId: userId,
+      targetQuantity,
+      costPerUnit,
+      price: costPerUnit, // Backwards compat
+      totalBudget,
+      escrowRemaining: totalBudget,
+      taskUrl: (workData.taskUrl || workData.url || "").trim(),
+      url: (workData.taskUrl || workData.url || "").trim(),
+      status: "PENDING_APPROVAL",
+    });
+
+    await work.save();
+
+    // Notify Admins about pending task for moderation
+    const admins = await User.find({ role: "admin" }).select("_id");
+    if (admins.length > 0) {
+      notifyMany(
+        admins.map((a) => a._id),
+        {
+          category: "tasks",
+          type: "new_task_pending",
+          title: "New Task Awaiting Review",
+          message: `${provider.name || provider.username} created task "${
+            work.title
+          }" (Budget: ৳${totalBudget.toFixed(2)}).`,
+          link: "/admin/social-works",
         }
+      );
+    }
 
-        const page = parseInt(options.page) || 1;
-        const limit = parseInt(options.limit) || 50;
+    return work;
+  } catch (error) {
+    throw new Error("Error creating task: " + error.message);
+  }
+};
+
+/**
+ * Provider updates a task while it is still under review (PENDING_APPROVAL)
+ */
+const updateWork = async (taskId, updateData, userId) => {
+  try {
+    const task = await Work.findOne({ _id: taskId, providerId: userId });
+    if (!task) {
+      throw new Error("Task not found or unauthorized");
+    }
+
+    if (task.status !== "PENDING_APPROVAL") {
+      throw new Error("Task can only be edited while it is Under Review");
+    }
+
+    // Determine targetQuantity and costPerUnit
+    const targetQuantity = updateData.targetQuantity
+      ? parseInt(updateData.targetQuantity, 10)
+      : task.targetQuantity;
+    const costPerUnit =
+      updateData.costPerUnit !== undefined
+        ? parseFloat(updateData.costPerUnit)
+        : task.costPerUnit;
+
+    if (!costPerUnit || costPerUnit <= 0) {
+      throw new Error("Cost per unit must be greater than 0");
+    }
+    if (!targetQuantity || targetQuantity <= 0) {
+      throw new Error("Target quantity must be at least 1");
+    }
+
+    const newTotalBudget = Math.round(targetQuantity * costPerUnit * 100) / 100;
+    const delta = Math.round((newTotalBudget - task.totalBudget) * 100) / 100;
+
+    if (delta > 0) {
+      // Provider increased the budget — deduct difference from balance
+      const provider = await User.findOneAndUpdate(
+        { _id: userId, balance: { $gte: delta } },
+        { $inc: { balance: -delta } },
+        { new: true }
+      );
+      if (!provider) {
+        throw new Error(
+          `Insufficient balance. You need an additional ৳${delta.toFixed(
+            2
+          )} to increase this task's budget.`
+        );
+      }
+    } else if (delta < 0) {
+      // Provider reduced the budget — refund difference to balance
+      const refundAmount = Math.abs(delta);
+      await User.findByIdAndUpdate(userId, {
+        $inc: { balance: refundAmount },
+      });
+    }
+
+    // Apply field updates
+    if (updateData.title) task.title = updateData.title.trim();
+    if (updateData.description !== undefined)
+      task.description = updateData.description.trim();
+    if (updateData.taskUrl !== undefined) {
+      task.taskUrl = updateData.taskUrl.trim();
+      task.url = updateData.taskUrl.trim();
+    }
+    if (updateData.platform) task.platform = updateData.platform;
+    if (updateData.actionType) task.actionType = updateData.actionType;
+
+    if (updateData.properties) {
+      task.properties = {
+        ...task.properties,
+        ...updateData.properties,
+      };
+    }
+
+    if (updateData.proofConfig) {
+      task.proofConfig = {
+        ...task.proofConfig,
+        ...updateData.proofConfig,
+      };
+    }
+
+    task.targetQuantity = targetQuantity;
+    task.costPerUnit = costPerUnit;
+    task.price = costPerUnit;
+    task.totalBudget = newTotalBudget;
+    task.escrowRemaining = newTotalBudget;
+
+    await task.save();
+    return task;
+  } catch (error) {
+    throw new Error("Error updating task: " + error.message);
+  }
+};
+
+/**
+ * Worker & Public Feed: Fetch active tasks with hidden platform commission
+ */
+const getAllWorks = async (user, options = {}) => {
+  try {
+    const userRes = await User.findById(user._id || user);
+    if (!userRes) throw new Error("User not found");
+
+    const commissionRate = await getCommissionRate();
+
+    // Admin view: return all tasks with pending submit counts (Only when scope === "admin")
+    if (userRes.role === "admin" && options.scope === "admin") {
+      const filter = {};
+      if (options.status && options.status !== "all") {
+        filter.status = options.status;
+      }
+      if (options.platform && options.platform !== "all") {
+        filter.platform = options.platform;
+      }
+
+      const worksQuery = Work.find(filter)
+        .populate("providerId", "name username email avatar")
+        .sort({ createdAt: -1 });
+
+      const pendingSubmits = await WorkSubmit.aggregate([
+        { $match: { status: { $in: ["PENDING", "pending"] } } },
+        { $group: { _id: "$workId", count: { $sum: 1 } } },
+      ]);
+
+      if (options.page && options.limit) {
+        const page = parseInt(options.page, 10) || 1;
+        const limit = parseInt(options.limit, 10) || 50;
         const skip = (page - 1) * limit;
 
-        const [data, total, sum] = await Promise.all([
-            query.skip(skip).limit(limit),
-            WorkSubmit.countDocuments(filter),
-            WorkSubmit.aggregate([
-                { $match: filter },
-                // Derive the collection name from the model: the SocialWork model
-                // maps to `socialworks`, not `works` (that is the other Work model).
-                { $lookup: { from: Work.collection.name, localField: 'workId', foreignField: '_id', as: 'work' } },
-                { $unwind: { path: '$work', preserveNullAndEmptyArrays: true } },
-                { $group: { _id: null, amount: { $sum: { $ifNull: ['$work.price', 0] } } } },
-            ]),
+        const [works, total] = await Promise.all([
+          worksQuery.skip(skip).limit(limit),
+          Work.countDocuments(filter),
         ]);
 
-        return {
-            data,
-            total,
-            totalAmount: sum[0]?.amount || 0,
-            page,
-            pages: Math.ceil(total / limit),
-        };
-    } catch (error) {
-        throw new Error('Error fetching work submits: ' + error.message);
-    }
-}
-const getWorkSubmitById = async (workSubmitId, status) => {
-    try {
-        const query = { userId: workSubmitId };
-        if (status && status !== 'all') {
-            query.status = status;
-        }
-        const workSubmit = await WorkSubmit.find(query)
-            .populate('workId')
-            .sort({ createdAt: -1 });
+        const enriched = works.map((w) => {
+          const pending = pendingSubmits.find(
+            (s) => s._id.toString() === w._id.toString()
+          );
+          return {
+            ...w.toObject(),
+            count: pending ? pending.count : 0,
+          };
+        });
 
-        return workSubmit;
+        return {
+          data: enriched,
+          total,
+          page,
+          pages: Math.ceil(total / limit),
+        };
+      }
+
+      const works = await worksQuery;
+      return works.map((w) => {
+        const pending = pendingSubmits.find(
+          (s) => s._id.toString() === w._id.toString()
+        );
+        return {
+          ...w.toObject(),
+          count: pending ? pending.count : 0,
+        };
+      });
     }
-    catch (error) {
-        throw new Error('Error fetching work submit: ' + error.message);
+
+    // Worker marketplace feed query — using $and to safely combine filters
+    // Find all task IDs where this worker already has a pending or completed submission
+    const submittedWorkIds = await WorkSubmit.distinct("workId", {
+      userId: userRes._id,
+      status: { $in: ["PENDING", "pending", "APPROVED", "completed"] },
+    });
+
+    const conditions = [
+      { status: { $in: ["ACTIVE", "active"] } },
+      { providerId: { $ne: userRes._id } }, // Provider cannot see or perform their own task in worker feed
+      { workers: { $nin: [userRes._id] } }, // Task workers array check
+      { _id: { $nin: submittedWorkIds } }, // Direct WorkSubmit check guarantees no duplicate appearances
+      { $expr: { $lt: ["$completedQuantity", "$targetQuantity"] } },
+      {
+        $or: [
+          { deadline: null },
+          { deadline: { $exists: false } },
+          { deadline: { $gt: new Date() } },
+        ],
+      },
+    ];
+
+    if (options.platform && options.platform !== "all") {
+      conditions.push({ platform: options.platform.toLowerCase() });
     }
-}
-const updateWork = async (workId, workData) =>
-{
-    try {
-        const work = await Work.findByIdAndUpdate(workId, workData, { new: true });
-        if (!work) {
-            throw new Error('Work not found');
+    if (options.actionType && options.actionType !== "all") {
+      conditions.push({ actionType: options.actionType });
+    }
+    if (options.search && options.search.trim()) {
+      const q = options.search.trim();
+      conditions.push({
+        $or: [
+          { title: { $regex: q, $options: "i" } },
+          { description: { $regex: q, $options: "i" } },
+        ],
+      });
+    }
+
+    const filter = { $and: conditions };
+
+    let sortObj = { createdAt: -1 };
+    if (options.sortBy === "highest") {
+      sortObj = { costPerUnit: -1 };
+    } else if (options.sortBy === "lowest") {
+      sortObj = { costPerUnit: 1 };
+    }
+
+    const query = Work.find(filter).select("-workers").sort(sortObj);
+
+    // Helper to mask provider fees and show net earnings
+    const maskReward = (task) => {
+      const gross = task.costPerUnit || task.price || 0;
+      const netReward = Math.round(gross * (1 - commissionRate) * 100) / 100;
+      const obj = task.toObject();
+      delete obj.costPerUnit;
+      delete obj.totalBudget;
+      delete obj.escrowRemaining;
+      return {
+        ...obj,
+        reward: netReward,
+        price: netReward, // Backwards compat
+      };
+    };
+
+    if (options.page && options.limit) {
+      const page = parseInt(options.page, 10) || 1;
+      const limit = parseInt(options.limit, 10) || 50;
+      const skip = (page - 1) * limit;
+
+      const [works, total] = await Promise.all([
+        query.skip(skip).limit(limit),
+        Work.countDocuments(filter),
+      ]);
+
+      return {
+        data: works.map(maskReward),
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+      };
+    }
+
+    const works = await query;
+    return works.map(maskReward);
+  } catch (error) {
+    throw new Error("Error fetching tasks: " + error.message);
+  }
+};
+
+/**
+ * Provider: Fetch tasks created by authenticated user
+ */
+const getMyCreatedTasks = async (userId, options = {}) => {
+  try {
+    const filter = { providerId: userId };
+    if (options.status && options.status !== "all") {
+      filter.status = options.status;
+    }
+
+    const works = await Work.find(filter).sort({ createdAt: -1 });
+
+    const pendingSubmits = await WorkSubmit.aggregate([
+      {
+        $match: {
+          providerId: userId,
+          status: { $in: ["PENDING", "pending"] },
+        },
+      },
+      { $group: { _id: "$workId", count: { $sum: 1 } } },
+    ]);
+
+    return works.map((w) => {
+      const pending = pendingSubmits.find(
+        (s) => s._id.toString() === w._id.toString()
+      );
+      return {
+        ...w.toObject(),
+        pendingSubmissions: pending ? pending.count : 0,
+      };
+    });
+  } catch (error) {
+    throw new Error("Error fetching my tasks: " + error.message);
+  }
+};
+
+/**
+ * Provider: Cancel an active or pending task and refund unspent escrow
+ */
+const cancelWorkByProvider = async (taskId, userId) => {
+  try {
+    const task = await Work.findOne({ _id: taskId, providerId: userId });
+    if (!task) throw new Error("Task not found or unauthorized");
+
+    if (["COMPLETED", "CANCELLED", "REJECTED"].includes(task.status)) {
+      throw new Error(`Cannot cancel a task that is already ${task.status}`);
+    }
+
+    const refundAmount = Math.max(0, task.escrowRemaining || 0);
+
+    task.status = "CANCELLED";
+    task.escrowRemaining = 0;
+    await task.save();
+
+    // Refund unspent escrow back to provider's balance
+    if (refundAmount > 0) {
+      await User.findByIdAndUpdate(userId, {
+        $inc: { balance: refundAmount },
+      });
+    }
+
+    return {
+      message: "Task cancelled successfully",
+      refundedAmount: refundAmount,
+      task,
+    };
+  } catch (error) {
+    throw new Error("Error cancelling task: " + error.message);
+  }
+};
+
+/**
+ * Get single task details
+ */
+const getWorkById = async (workId, user) => {
+  try {
+    const work = await Work.findById(workId).populate(
+      "providerId",
+      "name username avatar"
+    );
+    if (!work) throw new Error("Task not found");
+
+    const commissionRate = await getCommissionRate();
+    const gross = work.costPerUnit || work.price || 0;
+    const netReward = Math.round(gross * (1 - commissionRate) * 100) / 100;
+
+    const isOwnerOrAdmin =
+      user &&
+      (user.role === "admin" ||
+        work.providerId?._id?.toString() === user._id?.toString());
+
+    const obj = work.toObject();
+    obj.reward = netReward;
+
+    if (!isOwnerOrAdmin) {
+      delete obj.costPerUnit;
+      delete obj.totalBudget;
+      delete obj.escrowRemaining;
+      obj.price = netReward;
+    }
+
+    if (user?._id) {
+      const existingSubmission = await WorkSubmit.findOne({
+        workId,
+        userId: user._id,
+        status: { $in: ["PENDING", "pending", "APPROVED", "completed"] },
+      });
+      if (existingSubmission) {
+        obj.alreadySubmitted = true;
+        obj.submissionStatus = existingSubmission.status;
+      }
+    }
+
+    return obj;
+  } catch (error) {
+    throw new Error("Error fetching task: " + error.message);
+  }
+};
+
+/**
+ * Worker: Submit completed task proof
+ */
+const createWorkSubmit = async (data, workerId) => {
+  try {
+    const task = await Work.findById(data.workId);
+    if (!task) throw new Error("Task not found");
+
+    if (!["ACTIVE", "active"].includes(task.status)) {
+      throw new Error("This task is not currently active");
+    }
+
+    // Guard #5: Provider cannot submit to own task
+    if (task.providerId.toString() === workerId.toString()) {
+      throw new Error("You cannot submit proof for your own task");
+    }
+
+    // Guard #7: Check deadline
+    if (task.deadline && new Date() > new Date(task.deadline)) {
+      throw new Error("This task has passed its deadline");
+    }
+
+    // Guard #9: Check retry limit for previously rejected workers
+    const previousRejections = await WorkSubmit.countDocuments({
+      workId: task._id,
+      userId: workerId,
+      status: { $in: ["REJECTED", "rejected"] },
+    });
+    const maxRetries = typeof task.maxRetries === "number" ? task.maxRetries : 1;
+    if (previousRejections > maxRetries) {
+      throw new Error(
+        `You have exceeded the maximum retry limit (${maxRetries + 1} attempts) for this task`
+      );
+    }
+
+    // Guard #6: Check real capacity (completed + pending = filled slots)
+    const pendingCount = await WorkSubmit.countDocuments({
+      workId: task._id,
+      status: { $in: ["PENDING", "pending"] },
+    });
+    if (task.completedQuantity + pendingCount >= task.targetQuantity) {
+      throw new Error(
+        "This task has no available slots right now. Try again later."
+      );
+    }
+
+    // Guard #1: Explicitly check if worker already submitted this task
+    const existingSubmit = await WorkSubmit.findOne({
+      workId: task._id,
+      userId: workerId,
+      status: { $in: ["PENDING", "pending", "APPROVED", "completed"] },
+    });
+    if (existingSubmit) {
+      throw new Error(
+        existingSubmit.status.toUpperCase() === "PENDING"
+          ? "You already have a pending submission under review for this task"
+          : "You have already completed this task"
+      );
+    }
+
+    // Atomic duplicate prevention — push worker only if not already present
+    const atomicTask = await Work.findOneAndUpdate(
+      {
+        _id: task._id,
+        status: { $in: ["ACTIVE", "active"] },
+        workers: { $nin: [workerId] },
+      },
+      { $push: { workers: workerId } },
+      { new: true }
+    );
+
+    if (!atomicTask) {
+      throw new Error(
+        "You have already submitted proof for this task or the task is no longer available"
+      );
+    }
+
+    const commissionRate = await getCommissionRate();
+    const gross = task.costPerUnit || task.price || 0;
+    const platformFee = Math.round(gross * commissionRate * 100) / 100;
+    const netAmount = Math.round((gross - platformFee) * 100) / 100;
+
+    const proofData = data.proofData || {
+      text: data.answers?.join(", ") || data.text || "",
+      screenshots:
+        data.screenshots || (data.proofImage ? [data.proofImage] : []),
+      watchedSeconds: data.duration || 0,
+    };
+
+    const workSubmit = new WorkSubmit({
+      workId: task._id,
+      providerId: task.providerId,
+      userId: workerId,
+      proofData,
+      answers: data.answers || [],
+      duration: data.duration || 0,
+      grossAmount: gross,
+      netAmount,
+      platformFee,
+      status: "PENDING",
+      attemptNumber: previousRejections + 1,
+    });
+
+    await workSubmit.save();
+
+    // Notify provider about new submission
+    if (task.providerId) {
+      notifyUser(task.providerId, {
+        category: "tasks",
+        type: "task_submitted",
+        title: "New Task Submission",
+        message: `A worker submitted proof for "${task.title}". Review and approve.`,
+        link: `/user/social-works/task/${task._id}/submissions`,
+      });
+    }
+
+    return workSubmit;
+  } catch (error) {
+    throw new Error("Error submitting work: " + error.message);
+  }
+};
+
+/**
+ * Provider / Admin: Review worker submission (APPROVE or REJECT)
+ */
+const providerReviewSubmission = async (
+  submitId,
+  user,
+  { status, rejectionReason }
+) => {
+  try {
+    const submit = await WorkSubmit.findById(submitId).populate("workId");
+    if (!submit) throw new Error("Submission not found");
+
+    const isOwner =
+      submit.providerId &&
+      submit.providerId.toString() === user._id.toString();
+    const isAdmin = user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      throw new Error("Unauthorized to review this submission");
+    }
+
+    if (status === "APPROVED" || status === "completed") {
+      // Atomic state change: only succeeds if currently pending
+      const updatedSubmit = await WorkSubmit.findOneAndUpdate(
+        { _id: submitId, status: { $in: ["PENDING", "pending"] } },
+        { status: "APPROVED", reviewedAt: new Date() },
+        { new: true }
+      ).populate("workId");
+
+      if (!updatedSubmit) {
+        throw new Error("This submission has already been reviewed");
+      }
+
+      // 1. Credit Worker Balance with Net Amount
+      if (updatedSubmit.netAmount > 0) {
+        await User.findByIdAndUpdate(updatedSubmit.userId, {
+          $inc: { balance: updatedSubmit.netAmount },
+        });
+      }
+
+      // 2. Guard #2: Atomic escrow deduction with floor guard — prevents negative escrow
+      const task = await Work.findOneAndUpdate(
+        {
+          _id: updatedSubmit.workId._id,
+          escrowRemaining: { $gte: updatedSubmit.grossAmount },
+        },
+        {
+          $inc: {
+            escrowRemaining: -updatedSubmit.grossAmount,
+            completedQuantity: 1,
+          },
+        },
+        { new: true }
+      );
+
+      if (!task) {
+        // Guard #4: Compensating rollback — revert submission and refund worker
+        await WorkSubmit.findByIdAndUpdate(submitId, {
+          status: "PENDING",
+          reviewedAt: null,
+        });
+        if (updatedSubmit.netAmount > 0) {
+          await User.findByIdAndUpdate(updatedSubmit.userId, {
+            $inc: { balance: -updatedSubmit.netAmount },
+          });
         }
-        return work;
-    }
-    catch (error) {
-        throw new Error('Error updating work: ' + error.message);
-    }
-}
-const updateWorkSubmit = async (workSubmitId, workSubmitData) =>
-{
-    try {
-        const workSubmit = await WorkSubmit.findByIdAndUpdate(workSubmitId, workSubmitData, { new: true });
-        if (!workSubmit) {
-            throw new Error('Work submit not found');
+        throw new Error(
+          "Insufficient escrow remaining. The task may have already reached its budget limit."
+        );
+      }
+
+      // 3. Guard #8: Auto-complete task if target reached + auto-reject orphaned PENDING submissions
+      if (task.completedQuantity >= task.targetQuantity) {
+        task.status = "COMPLETED";
+        await task.save();
+
+        // Find and auto-reject any remaining PENDING submissions
+        const orphanedSubmits = await WorkSubmit.find({
+          workId: task._id,
+          status: { $in: ["PENDING", "pending"] },
+        });
+
+        if (orphanedSubmits.length > 0) {
+          await WorkSubmit.updateMany(
+            { workId: task._id, status: { $in: ["PENDING", "pending"] } },
+            {
+              status: "REJECTED",
+              rejectionReason:
+                "Task completed — target quantity reached. Submission auto-closed.",
+              reviewedAt: new Date(),
+            }
+          );
+
+          // Re-open worker slots for auto-rejected workers
+          const orphanedWorkerIds = orphanedSubmits.map((s) => s.userId);
+          await Work.findByIdAndUpdate(task._id, {
+            $pull: { workers: { $in: orphanedWorkerIds } },
+          });
+
+          // Notify auto-rejected workers
+          orphanedSubmits.forEach((s) => {
+            notifyUser(s.userId, {
+              category: "tasks",
+              type: "task_auto_closed",
+              title: "Task Completed",
+              message: `The task "${task.title}" reached its target. Your pending submission was automatically closed.`,
+              link: "/user/social-works/submissions",
+            });
+          });
         }
-        return workSubmit;
-    }
-    catch (error) {
-        throw new Error('Error updating work submit: ' + error.message);
-    }
-}
-const deleteWork = async (workId) =>
-{
-    try {
-        const isAnySubmitExist = await WorkSubmit.find({ workId: workId, status: "pending" });
-        if (isAnySubmitExist.length > 0) {
-            throw new Error(`Work has ${isAnySubmitExist.length} pending submits cannot be deleted`);
+
+        // Trigger S3 cleanup asynchronously if target reached and no open disputes
+        setImmediate(async () => {
+          try {
+            await cleanupTaskProofImages(task._id, { force: false });
+          } catch (err) {
+            console.error("[Auto S3 Cleanup Error]", err.message);
+          }
+        });
+      }
+
+      // 4. Record in Platform Profit Ledger
+      await ProfitLedger.create({
+        taskId: updatedSubmit.workId._id,
+        submissionId: updatedSubmit._id,
+        providerId: updatedSubmit.providerId,
+        workerId: updatedSubmit.userId,
+        grossAmount: updatedSubmit.grossAmount,
+        netAmount: updatedSubmit.netAmount,
+        platformFee: updatedSubmit.platformFee,
+      });
+
+      // 5. Notify Worker
+      notifyUser(updatedSubmit.userId, {
+        category: "tasks",
+        type: "task_approved",
+        title: "Task Approved! 🎉",
+        message: `Your work on "${
+          updatedSubmit.workId?.title
+        }" was approved! ৳${updatedSubmit.netAmount.toFixed(
+          2
+        )} has been credited to your balance.`,
+        link: "/user/social-works/submissions",
+      });
+
+      return updatedSubmit;
+    } else if (status === "REJECTED" || status === "rejected") {
+      const reason =
+        rejectionReason || "Submission did not satisfy task requirements.";
+      const updatedSubmit = await WorkSubmit.findOneAndUpdate(
+        { _id: submitId, status: { $in: ["PENDING", "pending"] } },
+        {
+          status: "REJECTED",
+          rejectionReason: reason,
+          reviewedAt: new Date(),
+        },
+        { new: true }
+      ).populate("workId");
+
+      if (!updatedSubmit) {
+        throw new Error("This submission has already been reviewed");
+      }
+
+      // Re-open worker slot by pulling worker from task.workers array
+      await Work.findByIdAndUpdate(updatedSubmit.workId._id, {
+        $pull: { workers: updatedSubmit.userId },
+      });
+
+      // Check if task is already completed/cancelled and this was the last pending submission
+      setImmediate(async () => {
+        try {
+          await cleanupTaskProofImages(updatedSubmit.workId._id, { force: false });
+        } catch (err) {
+          // Silent catch for background worker
         }
-        const work = await Work.findByIdAndDelete(workId);
-        if (!work) {
-            throw new Error('Work not found');
+      });
+
+      // Notify Worker
+      notifyUser(updatedSubmit.userId, {
+        category: "tasks",
+        type: "task_rejected",
+        title: "Submission Rejected",
+        message: `Your submission for "${
+          updatedSubmit.workId?.title
+        }" was rejected. Reason: ${reason}`,
+        link: "/user/social-works/submissions",
+      });
+
+      return updatedSubmit;
+    } else {
+      throw new Error("Invalid review action");
+    }
+  } catch (error) {
+    throw new Error("Error reviewing submission: " + error.message);
+  }
+};
+
+/**
+ * Admin: Moderate Task (APPROVE or REJECT with Instant Escrow Refund)
+ */
+const adminModerateTask = async (taskId, { action, rejectionReason }) => {
+  try {
+    const task = await Work.findById(taskId);
+    if (!task) throw new Error("Task not found");
+
+    if (action === "APPROVE") {
+      task.status = "ACTIVE";
+      task.rejectionReason = null;
+      await task.save();
+
+      // Notify Provider
+      if (task.providerId) {
+        notifyUser(task.providerId, {
+          category: "tasks",
+          type: "task_active",
+          title: "Task Approved & Live! 🚀",
+          message: `Your task "${task.title}" has been approved by admin and is now active for workers.`,
+          link: "/user/social-works/my-tasks",
+        });
+      }
+
+      // Broadcast to active platform workers
+      const activeUsers = await User.find({ status: "active" }).select("_id");
+      notifyMany(
+        activeUsers.map((u) => u._id),
+        {
+          category: "tasks",
+          type: "new_task",
+          title: "New Task Available!",
+          message: `New task: "${task.title}". Complete it now to earn rewards!`,
+          link: "/user/social-works",
         }
-        return work;
+      );
+
+      return task;
+    } else if (action === "REJECT") {
+      const reason =
+        rejectionReason || "Violated platform community guidelines.";
+
+      const updatedTask = await Work.findOneAndUpdate(
+        { _id: taskId, status: { $ne: "REJECTED" } },
+        { status: "REJECTED", rejectionReason: reason },
+        { new: true }
+      );
+
+      if (!updatedTask) throw new Error("Task already rejected");
+
+      // 🌟 Instant Escrow Refund to Provider's Balance
+      if (updatedTask.providerId && updatedTask.escrowRemaining > 0) {
+        await User.findByIdAndUpdate(updatedTask.providerId, {
+          $inc: { balance: updatedTask.escrowRemaining },
+        });
+
+        notifyUser(updatedTask.providerId, {
+          category: "tasks",
+          type: "task_rejected_refunded",
+          title: "Task Rejected & Escrow Refunded 💸",
+          message: `Your task "${
+            updatedTask.title
+          }" was rejected (${reason}). ৳${updatedTask.escrowRemaining.toFixed(
+            2
+          )} has been refunded to your balance.`,
+          link: "/user/social-works/my-tasks",
+        });
+      }
+
+      return updatedTask;
+    } else {
+      throw new Error("Invalid moderation action");
     }
-    catch (error) {
-        throw new Error('Error deleting work: ' + error.message);
+  } catch (error) {
+    throw new Error("Error moderating task: " + error.message);
+  }
+};
+
+/**
+ * Get Submissions for a specific task (Task Owner or Admin)
+ */
+const getTaskSubmissions = async (taskId, user) => {
+  try {
+    const task = await Work.findById(taskId);
+    if (!task) throw new Error("Task not found");
+
+    const isOwner =
+      task.providerId &&
+      task.providerId.toString() === user._id.toString();
+    const isAdmin = user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      throw new Error("Unauthorized to view submissions for this task");
     }
-}
-const deleteWorkSubmit = async (workSubmitId) =>
-{
-    try {
-        const workSubmit = await WorkSubmit.findByIdAndDelete(workSubmitId);
-        if (!workSubmit) {
-            throw new Error('Work submit not found');
+
+    const submits = await WorkSubmit.find({ workId: taskId })
+      .populate("userId", "name username email avatar")
+      .sort({ createdAt: -1 });
+
+    return {
+      task,
+      submits,
+    };
+  } catch (error) {
+    throw new Error("Error fetching submissions: " + error.message);
+  }
+};
+
+/**
+ * Submissions history (Admin paginated stream or filtered search)
+ */
+const getAllWorkSubmits = async (status, options = {}, user) => {
+  try {
+    const filter = {};
+    if (status && status !== "all") {
+      if (["pending", "completed", "rejected"].includes(status)) {
+        filter.status = { $in: [status, status.toUpperCase()] };
+      } else {
+        filter.status = status;
+      }
+    }
+
+    const query = WorkSubmit.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("workId")
+      .populate("userId", "name username email avatar")
+      .populate("providerId", "name username email avatar");
+
+    if (!options.page) {
+      return await query;
+    }
+
+    const page = parseInt(options.page, 10) || 1;
+    const limit = parseInt(options.limit, 10) || 50;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      query.skip(skip).limit(limit),
+      WorkSubmit.countDocuments(filter),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+    };
+  } catch (error) {
+    throw new Error("Error fetching submits: " + error.message);
+  }
+};
+
+/**
+ * Worker: Get own submission history
+ */
+const getWorkSubmitById = async (userId, status) => {
+  try {
+    const query = { userId };
+    if (status && status !== "all") {
+      query.status = { $in: [status, status.toUpperCase()] };
+    }
+    const submits = await WorkSubmit.find(query)
+      .populate("workId")
+      .sort({ createdAt: -1 });
+
+    return submits;
+  } catch (error) {
+    throw new Error("Error fetching user submits: " + error.message);
+  }
+};
+
+/**
+ * Admin: Marketplace Analytics & Metrics
+ */
+const getAdminAnalytics = async () => {
+  try {
+    const [profitAgg, volumeAgg, escrowAgg, pendingCount, completedCount] =
+      await Promise.all([
+        ProfitLedger.aggregate([
+          { $group: { _id: null, totalProfit: { $sum: "$platformFee" } } },
+        ]),
+        ProfitLedger.aggregate([
+          { $group: { _id: null, totalVolume: { $sum: "$grossAmount" } } },
+        ]),
+        Work.aggregate([
+          {
+            $match: {
+              status: { $in: ["ACTIVE", "active", "PENDING_APPROVAL"] },
+            },
+          },
+          { $group: { _id: null, totalEscrow: { $sum: "$escrowRemaining" } } },
+        ]),
+        Work.countDocuments({ status: "PENDING_APPROVAL" }),
+        WorkSubmit.countDocuments({
+          status: { $in: ["APPROVED", "completed"] },
+        }),
+      ]);
+
+    return {
+      totalPlatformProfit: profitAgg[0]?.totalProfit || 0,
+      totalMarketplaceVolume: volumeAgg[0]?.totalVolume || 0,
+      activeEscrowHeld: escrowAgg[0]?.totalEscrow || 0,
+      pendingModerationCount: pendingCount || 0,
+      completedSubmissionsCount: completedCount || 0,
+    };
+  } catch (error) {
+    throw new Error("Error fetching analytics: " + error.message);
+  }
+};
+
+/**
+ * Delete a Task (Admin only with validation)
+ */
+const deleteWork = async (workId) => {
+  try {
+    const pendingSubmits = await WorkSubmit.countDocuments({
+      workId,
+      status: { $in: ["PENDING", "pending"] },
+    });
+    if (pendingSubmits > 0) {
+      throw new Error(
+        `Cannot delete task: it has ${pendingSubmits} pending submissions awaiting review.`
+      );
+    }
+
+    const task = await Work.findById(workId);
+    if (!task) throw new Error("Task not found");
+
+    // Refund remaining escrow to provider if task wasn't already completed or refunded
+    if (
+      task.providerId &&
+      task.escrowRemaining > 0 &&
+      !["REJECTED", "COMPLETED", "CANCELLED"].includes(task.status)
+    ) {
+      await User.findByIdAndUpdate(task.providerId, {
+        $inc: { balance: task.escrowRemaining },
+      });
+    }
+
+    await Work.findByIdAndDelete(workId);
+    return {
+      message:
+        "Task deleted and remaining escrow returned if applicable.",
+    };
+  } catch (error) {
+    throw new Error("Error deleting task: " + error.message);
+  }
+};
+
+/**
+ * Worker: File a dispute/appeal on a rejected submission
+ */
+const fileDispute = async (submitId, workerId, reason) => {
+  try {
+    if (!reason || reason.trim().length < 10) {
+      throw new Error(
+        "Please provide a detailed reason for your appeal (at least 10 characters)"
+      );
+    }
+
+    const submit = await WorkSubmit.findOne({
+      _id: submitId,
+      userId: workerId,
+    }).populate("workId");
+
+    if (!submit) throw new Error("Submission not found or unauthorized");
+
+    if (!["REJECTED", "rejected"].includes(submit.status)) {
+      throw new Error("Only rejected submissions can be disputed");
+    }
+
+    if (submit.disputed) {
+      throw new Error("You have already filed a dispute for this submission");
+    }
+
+    if (submit.disputeVerdict) {
+      throw new Error("This submission already has a resolved dispute");
+    }
+
+    submit.disputed = true;
+    submit.disputeReason = reason.trim();
+    submit.disputedAt = new Date();
+    await submit.save();
+
+    // Notify Admins
+    const admins = await User.find({ role: "admin" }).select("_id");
+    if (admins.length > 0) {
+      notifyMany(
+        admins.map((a) => a._id),
+        {
+          category: "tasks",
+          type: "dispute_filed",
+          title: "⚠️ New Dispute Filed",
+          message: `A worker disputed their rejection on task "${
+            submit.workId?.title || "Unknown"
+          }". Review required.`,
+          link: "/admin/social-works",
         }
-        return workSubmit;
+      );
     }
-    catch (error) {
-        throw new Error('Error deleting work submit: ' + error.message);
+
+    return submit;
+  } catch (error) {
+    throw new Error("Error filing dispute: " + error.message);
+  }
+};
+
+/**
+ * Admin: Get all disputed submissions for review
+ */
+const getDisputedSubmissions = async () => {
+  try {
+    const disputes = await WorkSubmit.find({
+      disputed: true,
+      disputeVerdict: null,
+    })
+      .populate("workId")
+      .populate("userId", "name username email avatar balance")
+      .populate("providerId", "name username email avatar balance")
+      .sort({ disputedAt: -1 });
+
+    return disputes;
+  } catch (error) {
+    throw new Error("Error fetching disputes: " + error.message);
+  }
+};
+
+/**
+ * Admin: Resolve a dispute
+ * - WORKER_WINS: Force-approve submission + fine provider 2x grossAmount
+ * - PROVIDER_WINS: Dismiss appeal + fine worker 2x netAmount
+ */
+const resolveDispute = async (submitId, adminUser, { verdict, adminNote }) => {
+  try {
+    if (!["WORKER_WINS", "PROVIDER_WINS"].includes(verdict)) {
+      throw new Error("Invalid verdict. Must be WORKER_WINS or PROVIDER_WINS");
     }
-}
+
+    const submit = await WorkSubmit.findById(submitId).populate("workId");
+    if (!submit) throw new Error("Submission not found");
+
+    if (!submit.disputed) {
+      throw new Error("This submission has no active dispute");
+    }
+
+    if (submit.disputeVerdict) {
+      throw new Error("This dispute has already been resolved");
+    }
+
+    const task = submit.workId;
+    if (!task) throw new Error("Associated task not found");
+
+    if (verdict === "WORKER_WINS") {
+      // ── Worker was right, submission is valid ──
+      // 1. Force-approve the submission
+      submit.status = "APPROVED";
+      submit.reviewedAt = new Date();
+
+      // 2. Credit worker with netAmount
+      if (submit.netAmount > 0) {
+        await User.findByIdAndUpdate(submit.userId, {
+          $inc: { balance: submit.netAmount },
+        });
+      }
+
+      // 3. Deduct from task escrow
+      await Work.findOneAndUpdate(
+        {
+          _id: task._id,
+          escrowRemaining: { $gte: submit.grossAmount },
+        },
+        {
+          $inc: {
+            escrowRemaining: -submit.grossAmount,
+            completedQuantity: 1,
+          },
+        }
+      );
+
+      // 4. Record platform profit
+      await ProfitLedger.create({
+        taskId: task._id,
+        submissionId: submit._id,
+        providerId: submit.providerId,
+        workerId: submit.userId,
+        grossAmount: submit.grossAmount,
+        netAmount: submit.netAmount,
+        platformFee: submit.platformFee,
+      });
+
+      // 5. Fine provider 2x grossAmount
+      const fineAmount =
+        Math.round(submit.grossAmount * 2 * 100) / 100;
+      await User.findByIdAndUpdate(submit.providerId, {
+        $inc: { balance: -fineAmount },
+      });
+
+      // 6. Update dispute metadata
+      submit.disputeVerdict = "WORKER_WINS";
+      submit.disputeResolvedAt = new Date();
+      submit.disputeAdminNote = adminNote || "";
+      submit.disputeFine = fineAmount;
+      submit.disputeFinedUser = submit.providerId;
+      await submit.save();
+
+      // Check if task completed after dispute force-approval
+      const updatedTask = await Work.findById(task._id);
+      if (
+        updatedTask &&
+        updatedTask.completedQuantity >= updatedTask.targetQuantity &&
+        updatedTask.status !== "COMPLETED"
+      ) {
+        updatedTask.status = "COMPLETED";
+        await updatedTask.save();
+      }
+
+      // Asynchronously trigger S3 cleanup for completed task if all disputes settled
+      setImmediate(async () => {
+        try {
+          await cleanupTaskProofImages(task._id, { force: false });
+        } catch (err) {
+          console.error("[Auto S3 Cleanup Error after Dispute]", err.message);
+        }
+      });
+
+      // 7. Notify Worker (won)
+      notifyUser(submit.userId, {
+        category: "tasks",
+        type: "dispute_won",
+        title: "Dispute Resolved in Your Favor! 🎉",
+        message: `Admin reviewed your dispute on "${task.title}" and ruled in your favor. ৳${submit.netAmount.toFixed(
+          2
+        )} has been credited to your balance.`,
+        link: "/user/social-works/submissions",
+      });
+
+      // 8. Notify Provider (fined)
+      notifyUser(submit.providerId, {
+        category: "tasks",
+        type: "dispute_lost_fined",
+        title: "⚠️ Dispute Lost — Fine Applied",
+        message: `Admin ruled that your rejection of a submission on "${task.title}" was invalid. A penalty of ৳${fineAmount.toFixed(
+          2
+        )} (2× task rate) has been deducted from your balance.`,
+        link: "/user/social-works/my-tasks",
+      });
+
+      return submit;
+    } else {
+      // ── PROVIDER_WINS: Worker's appeal was invalid ──
+      // 1. Fine worker 2x netAmount
+      const fineAmount = Math.round(submit.netAmount * 2 * 100) / 100;
+      await User.findByIdAndUpdate(submit.userId, {
+        $inc: { balance: -fineAmount },
+      });
+
+      // 2. Update dispute metadata
+      submit.disputeVerdict = "PROVIDER_WINS";
+      submit.disputeResolvedAt = new Date();
+      submit.disputeAdminNote = adminNote || "";
+      submit.disputeFine = fineAmount;
+      submit.disputeFinedUser = submit.userId;
+      await submit.save();
+
+      // Asynchronously trigger S3 cleanup if task is completed and this was the last unresolved dispute
+      setImmediate(async () => {
+        try {
+          await cleanupTaskProofImages(task._id, { force: false });
+        } catch (err) {
+          console.error("[Auto S3 Cleanup Error after Dispute]", err.message);
+        }
+      });
+
+      // 3. Notify Worker (lost + fined)
+      notifyUser(submit.userId, {
+        category: "tasks",
+        type: "dispute_lost_fined",
+        title: "⚠️ Dispute Dismissed — Fine Applied",
+        message: `Admin reviewed your dispute on "${task.title}" and ruled against you. A penalty of ৳${fineAmount.toFixed(
+          2
+        )} (2× reward) has been deducted from your balance for filing an invalid appeal.`,
+        link: "/user/social-works/submissions",
+      });
+
+      // 4. Notify Provider (vindicated)
+      notifyUser(submit.providerId, {
+        category: "tasks",
+        type: "dispute_won",
+        title: "Dispute Dismissed ✅",
+        message: `A worker's dispute on "${task.title}" was reviewed and dismissed by admin. Your rejection was upheld.`,
+        link: "/user/social-works/my-tasks",
+      });
+
+      return submit;
+    }
+  } catch (error) {
+    throw new Error("Error resolving dispute: " + error.message);
+  }
+};
+
+/**
+ * Clean up all uploaded proof screenshots on AWS S3 for a completed task
+ * Guard conditions:
+ * 1. Task target reached or status is COMPLETED / CANCELLED
+ * 2. All worker submissions are in a terminal state (zero PENDING submissions)
+ * 3. Zero active unresolved disputes
+ * 4. Task has not already had its storage purged (unless force = true)
+ *
+ * @param {string|ObjectId} taskId
+ * @param {object} [options] - { force: boolean }
+ * @returns {Promise<{ success: boolean, cleaned: boolean, reason?: string, deletedCount: number }>}
+ */
+const cleanupTaskProofImages = async (taskId, options = { force: false }) => {
+  try {
+    const task = await Work.findById(taskId);
+    if (!task) {
+      return {
+        success: false,
+        cleaned: false,
+        reason: "Task not found",
+        deletedCount: 0,
+      };
+    }
+
+    // 1. Guard against double cleanup
+    if (task.storageCleaned && !options.force) {
+      return {
+        success: true,
+        cleaned: false,
+        reason: "Storage already cleaned for this task",
+        deletedCount: 0,
+      };
+    }
+
+    // 2. Eligibility checks (unless force is true)
+    if (!options.force) {
+      const isCompleted =
+        ["COMPLETED", "completed", "CANCELLED", "cancelled"].includes(
+          task.status
+        ) || task.completedQuantity >= task.targetQuantity;
+
+      if (!isCompleted) {
+        return {
+          success: false,
+          cleaned: false,
+          reason: "Task is not yet completed or target quantity not reached",
+          deletedCount: 0,
+        };
+      }
+
+      // Check for any remaining PENDING submissions
+      const pendingCount = await WorkSubmit.countDocuments({
+        workId: task._id,
+        status: { $in: ["PENDING", "pending"] },
+      });
+      if (pendingCount > 0) {
+        return {
+          success: false,
+          cleaned: false,
+          reason: `Task still has ${pendingCount} pending submission(s) awaiting review`,
+          deletedCount: 0,
+        };
+      }
+
+      // Check for any active unresolved disputes
+      const openDisputes = await WorkSubmit.countDocuments({
+        workId: task._id,
+        disputed: true,
+        disputeVerdict: null,
+      });
+      if (openDisputes > 0) {
+        return {
+          success: false,
+          cleaned: false,
+          reason: `Task has ${openDisputes} active dispute(s) pending admin verdict`,
+          deletedCount: 0,
+        };
+      }
+    }
+
+    // 3. Fetch all submissions for this task that have screenshots
+    const submissions = await WorkSubmit.find({
+      workId: task._id,
+      $or: [
+        { "proofData.screenshots.0": { $exists: true } },
+        { proofImage: { $exists: true, $ne: null } },
+      ],
+    });
+
+    const allUrls = [];
+    submissions.forEach((sub) => {
+      if (Array.isArray(sub.proofData?.screenshots)) {
+        sub.proofData.screenshots.forEach((url) => {
+          if (url && typeof url === "string") allUrls.push(url);
+        });
+      }
+      if (sub.proofImage && typeof sub.proofImage === "string") {
+        allUrls.push(sub.proofImage);
+      }
+    });
+
+    let deletedCount = 0;
+    if (allUrls.length > 0) {
+      const s3Res = await deleteManyFromS3(allUrls);
+      deletedCount = s3Res.deletedCount || allUrls.length;
+      console.log(
+        `[S3 Cleanup] Task ${task._id} ("${task.title}"): Successfully purged ${deletedCount} proof screenshots from S3.`
+      );
+    }
+
+    // 4. Update all submissions: clear screenshots array and flag as cleaned
+    await WorkSubmit.updateMany(
+      { workId: task._id },
+      {
+        $set: {
+          "proofData.screenshots": [],
+          "proofData.screenshotsCleaned": true,
+          "proofData.cleanedAt": new Date(),
+          proofImage: null,
+        },
+      }
+    );
+
+    // 5. Update task document
+    task.storageCleaned = true;
+    task.storageCleanedAt = new Date();
+    task.storageCleanedCount = deletedCount;
+    if (task.status !== "COMPLETED" && task.status !== "CANCELLED") {
+      task.status = "COMPLETED";
+    }
+    await task.save();
+
+    return {
+      success: true,
+      cleaned: true,
+      deletedCount,
+      submissionsUpdated: submissions.length,
+    };
+  } catch (error) {
+    console.error(`[S3 Cleanup Error] Task ${taskId}:`, error.message);
+    return {
+      success: false,
+      cleaned: false,
+      reason: error.message,
+      deletedCount: 0,
+    };
+  }
+};
+
+/**
+ * Admin sweep utility: Sweep all completed tasks whose storage has not yet been cleaned,
+ * and clean up their S3 screenshots if all submissions and disputes are finalized.
+ */
+const adminCleanupAllCompletedTasks = async () => {
+  try {
+    const candidateTasks = await Work.find({
+      $or: [
+        { status: "COMPLETED" },
+        { status: "completed" },
+        { status: "CANCELLED" },
+        { $expr: { $gte: ["$completedQuantity", "$targetQuantity"] } },
+      ],
+      storageCleaned: { $ne: true },
+    }).select("_id title status completedQuantity targetQuantity");
+
+    let totalCleanedTasks = 0;
+    let totalImagesDeleted = 0;
+    const skippedTasks = [];
+
+    for (const task of candidateTasks) {
+      const res = await cleanupTaskProofImages(task._id, { force: false });
+      if (res.cleaned) {
+        totalCleanedTasks++;
+        totalImagesDeleted += res.deletedCount || 0;
+      } else {
+        skippedTasks.push({
+          taskId: task._id,
+          title: task.title,
+          reason: res.reason,
+        });
+      }
+    }
+
+    return {
+      scannedCount: candidateTasks.length,
+      cleanedCount: totalCleanedTasks,
+      totalImagesDeleted,
+      skippedCount: skippedTasks.length,
+      skippedTasks,
+    };
+  } catch (error) {
+    throw new Error("Error during batch S3 cleanup: " + error.message);
+  }
+};
 
 module.exports = {
-    createWork,
-    createWorkSubmit,
-    getWorkById,
-    getAllWorks,
-    getAllWorkSubmits,
-    getWorkSubmitById,
-    updateWork,
-    updateWorkSubmit,
-    deleteWork,
-    deleteWorkSubmit,
-    completeWorkSubmit
-}
+  createWork,
+  updateWork,
+  getAllWorks,
+  getMyCreatedTasks,
+  cancelWorkByProvider,
+  getWorkById,
+  createWorkSubmit,
+  providerReviewSubmission,
+  adminModerateTask,
+  getTaskSubmissions,
+  getAllWorkSubmits,
+  getWorkSubmitById,
+  getAdminAnalytics,
+  deleteWork,
+  fileDispute,
+  getDisputedSubmissions,
+  resolveDispute,
+  cleanupTaskProofImages,
+  adminCleanupAllCompletedTasks,
+  getCommissionSettings,
+  updateCommissionSettings,
+};

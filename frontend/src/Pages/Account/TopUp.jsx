@@ -285,58 +285,51 @@ const TopUp = () => {
 
   // 🌟 Balance Card Component (Rendered on top for mobile, sidebar on desktop)
   const renderBalanceCard = () => (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2b0852] via-[#481282] to-[#671fb8] text-white p-6 sm:p-7 shadow-xl shadow-purple-900/20 border border-purple-400/20">
-      {/* Glow backgrounds */}
-      <div className="absolute -top-10 -right-10 w-44 h-44 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-indigo-500/30 rounded-full blur-2xl pointer-events-none" />
+    <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#d2fbf0] via-[#e2fbf6] to-[#d6f7ff] p-5 sm:p-7 shadow-xs border border-teal-100/90">
+      {/* Ambient glows */}
+      <div className="absolute -top-10 -right-10 w-44 sm:w-56 h-44 sm:h-56 bg-teal-400/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-10 -left-10 w-44 sm:w-56 h-44 sm:h-56 bg-sky-400/15 rounded-full blur-2xl pointer-events-none" />
 
       <div className="relative z-10 flex items-start justify-between">
-        <div className="space-y-1.5 max-w-[65%]">
-          <div className="flex items-center gap-2 text-purple-200 text-xs font-semibold">
+        <div className="space-y-1.5 max-w-[75%]">
+          <div className="flex items-center gap-2 text-teal-800 text-xs font-bold tracking-wide uppercase">
             <span>Current Balance</span>
             <button
               type="button"
               onClick={() => setShowBalance(!showBalance)}
-              className="hover:text-white transition-colors p-0.5 rounded-lg hover:bg-white/10"
+              className="hover:text-teal-950 transition-colors p-0.5 rounded-lg hover:bg-teal-500/10"
               title={showBalance ? "ব্যালেন্স লুকান" : "ব্যালেন্স দেখুন"}
             >
               {showBalance ? (
-                <EyeIcon className="w-4 h-4 text-purple-200 hover:text-white" />
+                <EyeIcon className="w-4 h-4 text-teal-700 hover:text-teal-950" />
               ) : (
-                <EyeSlashIcon className="w-4 h-4 text-purple-300" />
+                <EyeSlashIcon className="w-4 h-4 text-teal-600" />
               )}
             </button>
           </div>
 
-          <div className="text-3xl sm:text-4xl font-black tracking-tight text-white flex items-baseline gap-1">
-            <span>৳</span>
+          <div className="text-3xl sm:text-4xl font-black tracking-tight text-gray-900 flex items-baseline gap-1">
+            <span className="text-teal-700">৳</span>
             <span>{showBalance ? formatCurrency(userBalance) : "••••••"}</span>
           </div>
 
-          <div className="text-[11px] font-medium text-purple-200/90 pt-0.5">
+          <div className="text-[11px] font-medium text-gray-600 pt-0.5">
             Minimum Top-Up: ৳{formatCurrency(currentMethod.minAmount)}
           </div>
         </div>
 
-        {/* 3D Purple Wallet Visual */}
-        <div className="relative shrink-0 -mt-2 -mr-1">
-          <img
-            src="/wallet_3d_illustration.png"
-            alt="Wallet 3D"
-            className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-2xl select-none pointer-events-none transform hover:scale-105 transition-transform"
-            onError={(e) => {
-              e.target.style.display = "none";
-            }}
-          />
+        {/* Right Icon Badge (Clean frosted icon) */}
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/80 backdrop-blur-md border border-teal-200/70 flex items-center justify-center text-teal-700 shadow-sm shrink-0">
+          <CreditCardIcon className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.8]" />
         </div>
       </div>
 
       {/* Pending Balance Capsule */}
       <div className="mt-5 relative z-10">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-black/25 backdrop-blur-md border border-white/10 text-xs text-purple-100">
-          <ClockIcon className="w-4 h-4 text-purple-300" />
-          <span className="font-medium">Pending Top-Up</span>
-          <span className="font-bold text-white ml-2">৳{formatCurrency(pendingBalance)}</span>
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/85 backdrop-blur-md border border-teal-100 shadow-xs text-xs text-gray-700">
+          <ClockIcon className="w-4 h-4 text-amber-600" />
+          <span className="font-medium text-gray-600">Pending Top-Up</span>
+          <span className="font-bold text-gray-900 ml-2">৳{formatCurrency(pendingBalance)}</span>
         </div>
       </div>
     </div>

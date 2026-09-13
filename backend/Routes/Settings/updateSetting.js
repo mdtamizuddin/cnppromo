@@ -97,6 +97,12 @@ const sanitize = (input = {}) => {
             clean.bonus = bonus;
         }
     }
+    if (input.taskCommissionPercentage !== undefined) {
+        const n = Number(input.taskCommissionPercentage);
+        if (Number.isFinite(n) && n >= 0 && n <= 100) {
+            clean.taskCommissionPercentage = n;
+        }
+    }
 
     return clean;
 };

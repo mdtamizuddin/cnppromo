@@ -199,19 +199,19 @@ const PaymentGateway = () => {
     <div className="bg-[#f8faff] min-h-screen pb-24 pt-4 sm:pt-6">
       <div className="container mx-auto px-4 max-w-5xl space-y-5">
         {/* 🏷️ Page Header */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b0c2a] via-[#151954] to-[#0b0c2a] text-white p-6 sm:p-8 shadow-xl border border-indigo-900/30">
-          <div className="absolute -right-10 -top-10 w-72 h-72 bg-teal-500/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute left-1/4 bottom-0 w-56 h-56 bg-blue-600/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#d2fbf0] via-[#e2fbf6] to-[#d6f7ff] p-5 sm:p-8 border border-teal-100/90 shadow-xs">
+          <div className="absolute -right-10 -top-10 w-72 sm:w-80 h-72 sm:h-80 bg-teal-400/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute left-1/4 bottom-0 w-64 h-64 bg-sky-400/15 rounded-full blur-2xl pointer-events-none" />
 
           <div className="relative flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur border border-white/15 flex items-center justify-center shadow-lg">
-              <BanknotesIcon className="w-7 h-7 text-teal-300" />
+            <div className="w-14 h-14 rounded-2xl bg-white/80 backdrop-blur-md border border-teal-200/80 flex items-center justify-center shadow-xs">
+              <BanknotesIcon className="w-7 h-7 text-teal-700" />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-lg sm:text-xl font-black tracking-tight">
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight text-[#0b0c2a]">
                 পেমেন্ট গেটওয়ে
               </h1>
-              <p className="text-[11px] sm:text-xs text-gray-400">
+              <p className="text-[11px] sm:text-xs text-gray-600 font-medium">
                 উইথড্রয়ালের জন্য আপনার নিজস্ব অ্যাকাউন্ট সেট করুন
               </p>
             </div>
@@ -219,35 +219,35 @@ const PaymentGateway = () => {
 
           {/* Stats */}
           <div className="relative mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white/[0.06] border border-white/10 rounded-2xl p-3.5">
-              <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
+            <div className="bg-white/85 border border-teal-100 rounded-2xl p-3.5 shadow-2xs">
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
                 মোট মেথড
               </p>
-              <p className="text-xl font-black text-white mt-0.5">
+              <p className="text-xl font-black text-gray-900 mt-0.5">
                 {gateways.length}
               </p>
             </div>
-            <div className="bg-white/[0.06] border border-white/10 rounded-2xl p-3.5">
-              <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider flex items-center gap-1">
-                <ArrowDownTrayIcon className="w-3 h-3" /> টপ-আপ
+            <div className="bg-white/85 border border-teal-100 rounded-2xl p-3.5 shadow-2xs">
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                <ArrowDownTrayIcon className="w-3 h-3 text-emerald-600" /> টপ-আপ
               </p>
-              <p className="text-xl font-black text-emerald-400 mt-0.5">
+              <p className="text-xl font-black text-emerald-700 mt-0.5">
                 {gateways.filter((g) => g.isDepositSupported !== false).length}
               </p>
             </div>
-            <div className="bg-white/[0.06] border border-white/10 rounded-2xl p-3.5">
-              <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider flex items-center gap-1">
-                <ArrowUpTrayIcon className="w-3 h-3" /> উইথড্র
+            <div className="bg-white/85 border border-teal-100 rounded-2xl p-3.5 shadow-2xs">
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                <ArrowUpTrayIcon className="w-3 h-3 text-rose-600" /> উইথড্র
               </p>
-              <p className="text-xl font-black text-rose-400 mt-0.5">
+              <p className="text-xl font-black text-rose-700 mt-0.5">
                 {gateways.filter((g) => g.isWithdrawSupported !== false).length}
               </p>
             </div>
-            <div className="bg-white/[0.06] border border-white/10 rounded-2xl p-3.5">
-              <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider flex items-center gap-1">
-                <CheckCircleIcon className="w-3 h-3" /> সংরক্ষিত
+            <div className="bg-white/85 border border-teal-100 rounded-2xl p-3.5 shadow-2xs">
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                <CheckCircleIcon className="w-3 h-3 text-amber-600" /> সংরক্ষিত
               </p>
-              <p className="text-xl font-black text-amber-300 mt-0.5">
+              <p className="text-xl font-black text-amber-700 mt-0.5">
                 {savedCount}
               </p>
             </div>

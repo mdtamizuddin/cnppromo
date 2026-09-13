@@ -117,9 +117,9 @@ const AllWorks = () => {
       {/* Title & Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-[#5a32fa] text-[11px] font-bold tracking-wide mb-1">
-            <SparklesIcon className="w-3.5 h-3.5" />
-            কাজের ডিরেক্টরি
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-800 border border-teal-200 text-[11px] font-bold tracking-wide mb-1">
+            <SparklesIcon className="w-3.5 h-3.5 text-teal-600" />
+            <span>কাজের ডিরেক্টরি</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-[#0b0c2a]">
             প্ল্যাটফর্ম ভিত্তিক কাজের তালিকা
@@ -129,13 +129,13 @@ const AllWorks = () => {
           </p>
         </div>
 
-        <Link
+        <button
           to="/user/social-works"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-bold transition-all border border-teal-200"
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-700 hover:to-sky-700 text-white text-xs font-bold transition-all shadow-md shadow-teal-600/20 active:scale-95 self-start sm:self-auto"
         >
-          <PlayCircleIcon className="w-4 h-4 text-teal-600" />
-          <span>Watch to Earn Tasks →</span>
-        </Link>
+          <PlayCircleIcon className="w-4 h-4" />
+          <span>Social Tasks Marketplace →</span>
+        </button>
       </div>
 
       {/* 🎴 9-Card Category Grid */}
@@ -147,7 +147,7 @@ const AllWorks = () => {
             className="group"
           >
             <Card
-              className={`p-6 rounded-3xl border border-gray-100 bg-gradient-to-br ${item.bg} bg-white shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full relative overflow-hidden`}
+              className={`p-6 rounded-3xl border border-gray-100 hover:border-teal-200 bg-gradient-to-br ${item.bg} bg-white shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full relative overflow-hidden`}
             >
               {/* Top Row: Icon + Badge */}
               <div className="flex items-start justify-between gap-2 mb-4">
@@ -162,7 +162,7 @@ const AllWorks = () => {
               {/* Title & Desc */}
               <div className="space-y-1.5">
                 <h3
-                  className="font-black text-base sm:text-lg text-[#0b0c2a] group-hover:text-[#5a32fa] transition-colors leading-tight"
+                  className="font-black text-base sm:text-lg text-[#0b0c2a] group-hover:text-teal-700 transition-colors leading-tight"
                 >
                   {item.name}
                 </h3>
@@ -172,9 +172,9 @@ const AllWorks = () => {
               </div>
 
               {/* Bottom Action Strip */}
-              <div className="mt-5 pt-3.5 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-[#5a32fa]">
+              <div className="mt-5 pt-3.5 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-teal-700">
                 <span className="group-hover:underline">গাইড ও কাজ দেখুন</span>
-                <div className="w-7 h-7 rounded-full bg-indigo-50 group-hover:bg-[#5a32fa] group-hover:text-white text-[#5a32fa] flex items-center justify-center transition-all">
+                <div className="w-7 h-7 rounded-full bg-teal-50 group-hover:bg-teal-600 group-hover:text-white text-teal-700 flex items-center justify-center transition-all">
                   <ArrowRightIcon className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                 </div>
               </div>
@@ -184,39 +184,39 @@ const AllWorks = () => {
       </div>
 
       {/* 💡 Advisory Banner / Expert Guidelines */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-900 via-[#151954] to-purple-950 text-white shadow-xl border border-indigo-800/40 space-y-4">
+      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#064e3b] via-[#0d5c58] to-[#042f2e] text-white shadow-xl border border-teal-500/25 space-y-4">
         <div className="flex items-center gap-2 text-amber-300 font-black text-sm sm:text-base">
           <LightBulbIcon className="w-5 h-5 text-amber-400 shrink-0" />
           <span>বিশেষ কাজের পরামর্শ ও সাফল্য অর্জন নির্দেশিকা:</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 space-y-1.5">
+          <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/15 space-y-1.5">
             <p className="font-bold text-amber-300 flex items-center gap-1.5">
               <CheckBadgeIcon className="w-4 h-4 text-amber-400" />
               ১. প্রথম ৩টি সাইট অগ্রাধিকার দিন
             </p>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-teal-100/90 leading-relaxed">
               TikTok, YouTube (Workercash), এবং Facebook প্ল্যাটফর্মে নিয়মিত কাজ করলে সবচেয়ে দ্রুত ও বেশি আয় করতে পারবেন।
             </p>
           </div>
 
-          <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 space-y-1.5">
-            <p className="font-bold text-emerald-300 flex items-center gap-1.5">
-              <CheckBadgeIcon className="w-4 h-4 text-emerald-400" />
+          <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/15 space-y-1.5">
+            <p className="font-bold text-teal-300 flex items-center gap-1.5">
+              <CheckBadgeIcon className="w-4 h-4 text-teal-400" />
               ২. দৈনিক ৩০০-৫০০৳ উপার্জনের সুযোগ
             </p>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-teal-100/90 leading-relaxed">
               ভিডিও নির্দেশিকা অনুসারে মনোযোগ সহকারে কাজ সম্পন্ন করলে সহজেই প্রতিদিন নির্দিষ্ট আয়ের লক্ষ্য পূরণ হবে।
             </p>
           </div>
 
-          <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 space-y-1.5">
-            <p className="font-bold text-sky-300 flex items-center gap-1.5">
-              <CheckBadgeIcon className="w-4 h-4 text-sky-400" />
+          <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/15 space-y-1.5">
+            <p className="font-bold text-cyan-300 flex items-center gap-1.5">
+              <CheckBadgeIcon className="w-4 h-4 text-cyan-400" />
               ৩. মাল্টি-লেভেল রেফারেল গুণক
             </p>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-teal-100/90 leading-relaxed">
               আপনার টিম তৈরি করে ৬-জেনারেশন রেফারেল কমিশন উপভোগ করুন। টিম মেম্বারদের কাজ থেকেও আপনার ব্যালেন্সে যোগ হবে বোনাস।
             </p>
           </div>

@@ -222,8 +222,8 @@ app.get("/api/v1/statistic", async (req, res) => {
   }
 });
 
-// Update settings (Admin only)
-app.put("/api/v1/setting", authChecker, roleChecker(['admin']), async (req, res) => {
+// Update settings (Admin / Moderator)
+app.put("/api/v1/setting", authChecker, roleChecker(['admin', 'moderator']), async (req, res) => {
   try {
     const response = await updateSetting(req.body);
     res.send(response);

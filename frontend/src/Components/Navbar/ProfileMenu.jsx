@@ -7,7 +7,6 @@ import { ChevronDownIcon, PowerIcon } from "@heroicons/react/24/solid";
 import {
   CurrencyBangladeshiIcon,
   EnvelopeIcon,
-  UserCircleIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import Cookie from "js-cookie";
@@ -16,7 +15,6 @@ const items = [
   { label: "Account", icon: CurrencyBangladeshiIcon, to: "/user/account" },
   { label: "Message", icon: EnvelopeIcon, to: "/user/message" },
   { label: "Settings", icon: Cog6ToothIcon, to: "/user/settings" },
-  { label: "Work History", icon: UserCircleIcon, to: "/user/work-history" },
 ];
 
 const ProfileMenu = ({ user }) => {
