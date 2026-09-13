@@ -62,12 +62,46 @@ const transactionSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["completed", "pending", "failed"],
+      enum: ["completed", "pending", "rejected", "failed"],
       default: "completed",
+      index: true,
+    },
+    method: {
+      type: String,
+      default: "",
+    },
+    account: {
+      type: String,
+      default: "",
+    },
+    image: {
+      type: String,
+      default: "",
+    },
+    referenceId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+    referredUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    gen: {
+      type: Number,
+    },
+    taskTitle: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true }
 );
+
+transactionSchema.index({ user: 1, createdAt: -1 });
+transactionSchema.index({ user: 1, type: 1, createdAt: -1 });
+transactionSchema.index({ user: 1, category: 1, createdAt: -1 });
+transactionSchema.index({ user: 1, referenceId: 1 }, { sparse: true });
 
 const Transaction = mongoose.models.Transaction || mongoose.model("Transaction", transactionSchema);
 module.exports = Transaction;

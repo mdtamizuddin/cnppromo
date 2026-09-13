@@ -41,6 +41,29 @@ const createWithDraw = async (data) =>
             await Withdraw.findByIdAndDelete(withDraw._id);
             throw new Error("Insufficient balance")
         }
+
+        try {
+            const { recordTransaction } = require("../Transaction/transaction.service");
+            await recordTransaction({
+                userId: user,
+                amount: numericAmount,
+                type: "debit",
+                category: "withdraw",
+                title: "Withdrawal Request",
+                status: "pending",
+                referenceId: withDraw._id,
+                trxId: `TRX${String(withDraw._id).slice(-7).toUpperCase()}`,
+                method: withDraw.method,
+                account: withDraw.account,
+                image: withDraw.image,
+                balanceBefore: debited.balance + numericAmount,
+                balanceAfter: debited.balance,
+                skipNotification: true,
+            });
+        } catch (trxErr) {
+            console.error("Failed to record withdraw transaction:", trxErr);
+        }
+
         // userData.balance = userData.balance - amount;
         // await userData.save();
         notifyUser(user, {
@@ -145,6 +168,21 @@ const updateData = async (id, data) =>
     try {
         const before = await Withdraw.findById(id);
         await Withdraw.findByIdAndUpdate(id, data, { new: true });
+
+        try {
+            const { updateTransactionByReference } = require("../Transaction/transaction.service");
+            const updatePayload = {};
+            if (data.status) {
+                updatePayload.status = data.status === "completed" ? "completed" : data.status === "rejected" ? "rejected" : "pending";
+                updatePayload.title = data.status === "completed" ? "Withdrawal Payment" : "Withdrawal Request";
+            }
+            if (data.note) updatePayload.note = data.note;
+            if (data.image) updatePayload.image = data.image;
+            await updateTransactionByReference(id, updatePayload);
+        } catch (trxErr) {
+            console.error("Failed to update withdraw transaction:", trxErr);
+        }
+
         if (before && data.status === "completed") {
             notifyUser(before.user, {
                 category: "payments",
@@ -171,9 +209,22 @@ const rejectWithdraw = async (id) =>
         }
         data.status = "rejected"
         await data.save();
-        await User.findByIdAndUpdate(data.user, {
+        const updatedUser = await User.findByIdAndUpdate(data.user, {
             $inc: { balance: data.amount }
-        })
+        }, { new: true });
+
+        try {
+            const { updateTransactionByReference } = require("../Transaction/transaction.service");
+            await updateTransactionByReference(data._id, {
+                status: "rejected",
+                title: "Withdrawal Request (Rejected)",
+                balanceBefore: updatedUser ? updatedUser.balance - data.amount : 0,
+                balanceAfter: updatedUser ? updatedUser.balance : 0,
+            });
+        } catch (trxErr) {
+            console.error("Failed to reject withdraw transaction:", trxErr);
+        }
+
         notifyUser(data.user, {
             category: "payments",
             type: "withdraw_rejected",

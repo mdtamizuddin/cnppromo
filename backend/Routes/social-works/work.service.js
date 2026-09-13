@@ -62,9 +62,30 @@ const completeWorkSubmit = async (workSubmitId, status) =>
 
         const price = workSubmit.workId?.price || 0;
         if (price > 0) {
-            await User.findByIdAndUpdate(workSubmit.userId, {
+            const updatedUser = await User.findByIdAndUpdate(workSubmit.userId, {
                 $inc: { balance: price }
             }, { new: true });
+
+            try {
+                const { recordTransaction } = require("../Transaction/transaction.service");
+                await recordTransaction({
+                    userId: workSubmit.userId,
+                    amount: price,
+                    type: "credit",
+                    category: "task",
+                    title: workSubmit.workId?.title || "Task Completed",
+                    taskTitle: workSubmit.workId?.title || "",
+                    status: "completed",
+                    referenceId: workSubmit._id,
+                    trxId: `TRX${String(workSubmit._id).slice(-7).toUpperCase()}`,
+                    image: workSubmit.proofImage || workSubmit.image || "",
+                    balanceBefore: updatedUser ? updatedUser.balance - price : 0,
+                    balanceAfter: updatedUser ? updatedUser.balance : price,
+                    skipNotification: true,
+                });
+            } catch (trxErr) {
+                console.error("Failed to record task transaction:", trxErr);
+            }
         }
         notifyUser(workSubmit.userId, {
             category: "tasks",

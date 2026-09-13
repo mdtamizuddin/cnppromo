@@ -59,278 +59,58 @@ const Earnings = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [copiedId, setCopiedId] = useState(false);
 
-  // 1. Fetch Withdrawals API
-  const { data: withdrawalsData, isLoading: isWithdrawLoading } = useQuery({
-    queryKey: ["user-withdrawals", user?._id],
+  // Fetch unified Earnings Feed from backend with server-side pagination & filtering
+  const {
+    data: feedResponse,
+    isLoading: isFeedLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: [
+      "earnings-feed",
+      user?._id,
+      currentPage,
+      mainTab,
+      statusFilter,
+      searchQuery,
+    ],
     queryFn: async () => {
-      const res = await api.get(`/withdraw?user=${user?._id}&limit=100`);
-      return Array.isArray(res.data) ? res.data : res.data?.data || [];
+      const res = await api.get(`/transaction/feed`, {
+        params: {
+          page: currentPage,
+          limit: PAGE_SIZE,
+          mainTab,
+          statusFilter,
+          search: searchQuery.trim(),
+        },
+      });
+      return res.data;
     },
     enabled: !!user?._id,
+    keepPreviousData: true,
   });
 
-  // 2. Fetch External Withdrawals API
-  const { data: extWithdrawalsData } = useQuery({
-    queryKey: ["user-ext-withdrawals", user?._id],
-    queryFn: async () => {
-      const res = await api.get(`/external-withdraw/user/${user?._id}`);
-      return Array.isArray(res.data) ? res.data : res.data?.data || [];
-    },
-    enabled: !!user?._id,
-  });
-
-  // 3. Fetch Referral Transactions API
-  const { data: referData, isLoading: isReferLoading } = useQuery({
-    queryKey: ["earnings-refer-history", user?._id],
-    queryFn: async () => {
-      const res = await api.get(`/refer/user/${user?._id}`);
-      return Array.isArray(res.data) ? res.data : [];
-    },
-    enabled: !!user?._id,
-  });
-
-  // 4. Fetch Social Work Submissions API
-  const { data: workSubmitsData } = useQuery({
-    queryKey: ["user-work-submits", user?._id],
-    queryFn: async () => {
-      const res = await api.get(`/social-works/submit/${user?._id}`);
-      return Array.isArray(res.data) ? res.data : res.data?.data || [];
-    },
-    enabled: !!user?._id,
-  });
-
-  // 5. Fetch TopUp / Deposit Transactions API
-  const { data: topupData } = useQuery({
-    queryKey: ["user-topup-history", user?._id],
-    queryFn: async () => {
-      const res = await api.get(`/topup?user=${user?._id}&limit=100`);
-      return Array.isArray(res.data) ? res.data : res.data?.data || [];
-    },
-    enabled: !!user?._id,
-  });
-
-  // 5b. Fetch Admin / Manual Adjustments Transactions API
-  const { data: manualTransactionsData } = useQuery({
-    queryKey: ["user-manual-transactions", user?._id],
-    queryFn: async () => {
-      const res = await api.get(`/transaction/user/${user?._id}`);
-      return Array.isArray(res.data) ? res.data : res.data?.data || [];
-    },
-    enabled: !!user?._id,
-  });
-
-  // 6. Merge all real API responses into a unified transaction stream
-  const allTransactions = useMemo(() => {
-    const list = [];
-
-    // Map withdrawals
-    if (withdrawalsData && Array.isArray(withdrawalsData)) {
-      withdrawalsData.forEach((w) => {
-        const isCompleted = w.status === "completed";
-        const isPending = w.status === "pending";
-        const isRejected = w.status === "rejected";
-
-        list.push({
-          id: w._id,
-          trxId: `TRX${String(w._id).slice(-7).toUpperCase()}`,
-          rawType: "withdrawal",
-          title: isCompleted
-            ? "Withdrawal Payment"
-            : isPending
-            ? "Withdrawal Request"
-            : "Withdrawal Request",
-          amount: Number(w.amount || 0),
-          flow: "debit",
-          status: isCompleted ? "Paid" : isPending ? "Pending" : "Rejected",
-          statusCode: isCompleted ? "success" : isPending ? "pending" : "rejected",
-          createdAt: w.createdAt,
-          updatedAt: w.updatedAt,
-          method: w.method,
-          account: w.account,
-          image: w.image,
-          note: w.note || (isCompleted ? `Payment has been sent successfully to the user ${w.method} number. Please check and confirm.` : ""),
-          adminUser: "Admin User",
-          user: w.user || user,
-        });
-      });
-    }
-
-    // Map external withdrawals
-    if (extWithdrawalsData && Array.isArray(extWithdrawalsData)) {
-      extWithdrawalsData.forEach((ew) => {
-        const isCompleted = ew.status === "completed" || ew.status === "approved";
-        const isPending = ew.status === "pending";
-
-        list.push({
-          id: ew._id,
-          trxId: `TRX${String(ew._id).slice(-7).toUpperCase()}`,
-          rawType: "withdrawal",
-          title: isCompleted
-            ? "External Withdrawal Payment"
-            : isPending
-            ? "External Withdrawal Request"
-            : "External Withdrawal Request",
-          amount: Number(ew.amount || 0),
-          flow: "debit",
-          status: isCompleted ? "Paid" : isPending ? "Pending" : "Rejected",
-          statusCode: isCompleted ? "success" : isPending ? "pending" : "rejected",
-          createdAt: ew.createdAt,
-          updatedAt: ew.updatedAt,
-          method: ew.method || ew.gateway || "Payment Gateway",
-          account: ew.account || ew.walletNumber,
-          image: ew.image,
-          note: ew.note || (isCompleted ? "Payment processed via External Gateway." : ""),
-          adminUser: "Admin User",
-          user: user,
-        });
-      });
-    }
-
-    // Map referral bonuses
-    if (referData && Array.isArray(referData)) {
-      referData.forEach((r) => {
-        list.push({
-          id: r._id,
-          trxId: `TRX${String(r._id).slice(-7).toUpperCase()}`,
-          rawType: "referral",
-          title: "Referral Bonus",
-          amount: Number(r.amount || (r.gen === 1 ? 50 : 20)),
-          flow: "credit",
-          status: "Credit",
-          statusCode: "success",
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
-          gen: r.gen || 1,
-          referredUser: r.user,
-          user: user,
-        });
-      });
-    }
-
-    // Map submitted social works
-    if (workSubmitsData && Array.isArray(workSubmitsData)) {
-      workSubmitsData.forEach((ws) => {
-        const isCompleted = ws.status === "completed" || ws.status === "approved";
-        const isPending = ws.status === "pending";
-        const taskReward = Number(ws.amount || ws.workId?.reward || ws.workId?.amount || 20);
-
-        list.push({
-          id: ws._id,
-          trxId: `TRX${String(ws._id).slice(-7).toUpperCase()}`,
-          rawType: "task",
-          title: ws.workId?.title || "Task Completed",
-          amount: taskReward,
-          flow: "credit",
-          status: isCompleted ? "Credit" : isPending ? "Pending" : "Rejected",
-          statusCode: isCompleted ? "success" : isPending ? "pending" : "rejected",
-          createdAt: ws.createdAt,
-          updatedAt: ws.updatedAt,
-          taskTitle: ws.workId?.title,
-          image: ws.proofImage || ws.image,
-          user: user,
-        });
-      });
-    }
-
-    // Map topups / deposits
-    if (topupData && Array.isArray(topupData)) {
-      topupData.forEach((tp) => {
-        const isCompleted = tp.status === "completed" || tp.status === "approved";
-        const isPending = tp.status === "pending";
-
-        list.push({
-          id: tp._id,
-          trxId: `TRX${String(tp._id).slice(-7).toUpperCase()}`,
-          rawType: "topup",
-          title: isCompleted ? "Wallet TopUp Completed" : isPending ? "Wallet TopUp Pending" : "Wallet TopUp Rejected",
-          amount: Number(tp.amount || 0),
-          flow: "credit",
-          status: isCompleted ? "Credit" : isPending ? "Pending" : "Rejected",
-          statusCode: isCompleted ? "success" : isPending ? "pending" : "rejected",
-          createdAt: tp.createdAt,
-          updatedAt: tp.updatedAt,
-          method: tp.method,
-          account: tp.account || tp.trxNumber,
-          image: tp.image,
-          user: user,
-        });
-      });
-    }
-
-    // Map manual transactions / admin balance adjustments
-    if (manualTransactionsData && Array.isArray(manualTransactionsData)) {
-      manualTransactionsData.forEach((tx) => {
-        const isCredit = tx.type === "credit";
-        list.push({
-          id: tx._id,
-          trxId: tx.trxId || `TRX${String(tx._id).slice(-7).toUpperCase()}`,
-          rawType: tx.category || (isCredit ? "admin_credit" : "admin_debit"),
-          title: tx.title || (isCredit ? "Admin Balance Credit" : "Admin Balance Deduction"),
-          amount: Number(tx.amount || 0),
-          flow: isCredit ? "credit" : "debit",
-          status: isCredit ? "Credit" : "Debit",
-          statusCode: isCredit ? "success" : "rejected",
-          createdAt: tx.createdAt,
-          updatedAt: tx.updatedAt,
-          method: "Admin Adjustment",
-          account: tx.adminUser?.name || "System Admin",
-          note: tx.note || (isCredit ? "Amount credited by admin" : "Amount deducted by admin"),
-          adminUser: tx.adminUser?.name || "Admin",
-          user: user,
-          balanceBefore: tx.balanceBefore,
-          balanceAfter: tx.balanceAfter,
-        });
-      });
-    }
-
-    // Sort strictly by createdAt descending
-    return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [withdrawalsData, extWithdrawalsData, referData, workSubmitsData, topupData, manualTransactionsData, user]);
-
-  // 7. Filters
-  const filteredTransactions = useMemo(() => {
-    return allTransactions.filter((item) => {
-      // Main tab filter
-      if (mainTab === "withdrawals" && item.rawType !== "withdrawal") {
-        return false;
-      }
-
-      // Status chip filter
-      if (statusFilter !== "All") {
-        if (statusFilter === "Credit" && item.flow !== "credit") return false;
-        if (statusFilter === "Debit" && item.flow !== "debit") return false;
-        if (statusFilter === "Pending" && item.statusCode !== "pending") return false;
-        if (statusFilter === "Success" && item.status !== "Paid" && item.status !== "Credit") return false;
-        if (statusFilter === "Rejected" && item.statusCode !== "rejected") return false;
-      }
-
-      // Search Query
-      if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        const matchTrx = item.trxId.toLowerCase().includes(q);
-        const matchTitle = item.title.toLowerCase().includes(q);
-        const matchMethod = item.method?.toLowerCase().includes(q);
-        const matchUsername = item.referredUser?.username?.toLowerCase().includes(q);
-        const matchName = item.referredUser?.name?.toLowerCase().includes(q);
-        if (!matchTrx && !matchTitle && !matchMethod && !matchUsername && !matchName) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [allTransactions, mainTab, statusFilter, searchQuery]);
-
-  // 8. Pagination calculation
-  const totalItems = filteredTransactions.length;
-  const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
-  const paginatedList = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredTransactions.slice(start, start + PAGE_SIZE);
-  }, [filteredTransactions, currentPage]);
+  const paginatedList = feedResponse?.data || [];
+  const totalItems = feedResponse?.total || 0;
+  const totalPages = feedResponse?.totalPages || 1;
 
   // Auto-select the first transaction on desktop if none selected
-  const activeTransaction = selectedTransaction || (filteredTransactions.length > 0 ? filteredTransactions[0] : null);
+  const activeTransaction =
+    selectedTransaction || (paginatedList.length > 0 ? paginatedList[0] : null);
+
+  // Dynamic sliding window page numbers
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxButtons = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+    let end = Math.min(totalPages, start + maxButtons - 1);
+    if (end - start + 1 < maxButtons) {
+      start = Math.max(1, end - maxButtons + 1);
+    }
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   const copyText = (text) => {
     if (!text) return;
@@ -385,17 +165,11 @@ const Earnings = () => {
 
   // Helper for item icon
   const renderItemIcon = (item) => {
-    if (item.rawType === "withdrawal") {
-      if (item.status === "Paid") {
+    if (item.rawType === "withdraw" || item.rawType === "withdrawal") {
+      if (item.status === "Paid" || item.statusCode === "success") {
         return (
           <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
             <CheckCircleSolid className="w-6 h-6 text-emerald-500" />
-          </div>
-        );
-      } else if (item.status === "Pending") {
-        return (
-          <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
-            <ArrowDownTrayIcon className="w-5 h-5 text-blue-500" />
           </div>
         );
       } else {
@@ -417,7 +191,7 @@ const Earnings = () => {
           <ArrowsRightLeftIcon className="w-5 h-5 text-primary" />
         </div>
       );
-    } else if (item.rawType === "admin_credit" || item.rawType === "admin_debit" || item.rawType === "admin_adjustment") {
+    } else if (item.rawType?.includes("admin")) {
       return (
         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${item.flow === "credit" ? "bg-emerald-50 text-emerald-500" : "bg-red-50 text-red-500"}`}>
           <WalletIcon className="w-5 h-5" />
@@ -432,7 +206,7 @@ const Earnings = () => {
     }
   };
 
-  if (isWithdrawLoading || isReferLoading) {
+  if (isFeedLoading && !feedResponse) {
     return <Loader />;
   }
 
@@ -551,14 +325,14 @@ const Earnings = () => {
               <WalletIcon className="w-4 h-4" />
             </div>
             <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider">
-              {item.rawType === "withdrawal" ? "Withdrawal Information" : "Transaction Information"}
+              {item.rawType === "withdrawal" || item.rawType === "withdraw" ? "Withdrawal Information" : "Transaction Information"}
             </h3>
           </div>
 
           <div className="space-y-2.5 text-xs">
             <div className="flex justify-between items-center">
               <span className="text-gray-500 font-medium">
-                {item.rawType === "withdrawal" ? "Withdrawal Amount" : "Transaction Amount"}
+                {item.rawType === "withdrawal" || item.rawType === "withdraw" ? "Withdrawal Amount" : "Transaction Amount"}
               </span>
               <span className="font-bold text-gray-900">৳{formatCurrency(item.amount)}</span>
             </div>
@@ -617,7 +391,7 @@ const Earnings = () => {
         </div>
 
         {/* Section 3: Admin Action / Real Payment Proof */}
-        {(item.image || item.note || item.rawType === "withdrawal") && (
+        {(item.image || item.note || item.rawType === "withdrawal" || item.rawType === "withdraw") && (
           <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm space-y-3.5">
             <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
               <div className="w-7 h-7 rounded-xl bg-primary-light text-primary flex items-center justify-center">
@@ -937,8 +711,7 @@ const Earnings = () => {
                     ‹
                   </button>
 
-                  {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                    const pageNum = i + 1;
+                  {getPageNumbers().map((pageNum) => {
                     const active = currentPage === pageNum;
                     return (
                       <button

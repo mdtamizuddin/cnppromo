@@ -68,4 +68,21 @@ router.get("/my", async (req, res) => {
   }
 });
 
+// Unified earnings / transactions feed with server-side pagination
+router.get("/feed", async (req, res) => {
+  try {
+    const targetUserId =
+      req.query.user && (req.user.role === "admin" || req.user.role === "moderator")
+        ? req.query.user
+        : req.user._id;
+
+    const result = await transactionService.getUserEarningsFeed(targetUserId, req.query);
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Failed to fetch earnings feed",
+    });
+  }
+});
+
 module.exports = router;
