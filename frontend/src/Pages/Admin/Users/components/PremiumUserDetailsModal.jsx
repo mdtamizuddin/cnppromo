@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { XMarkIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
+import { useNavigate } from "react-router-dom";
+import { XMarkIcon, DocumentDuplicateIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { Button, Input, Select, Option } from "@material-tailwind/react";
 import moment from "moment";
 import toast from "react-hot-toast";
@@ -10,6 +11,7 @@ import DeleteConfirmModal from "../../../../Components/DeleteConfirmModal";
 const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
   if (!user) return null;
 
+  const navigate = useNavigate();
   const { user: admin } = useSelector((state) => state.user);
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
@@ -103,6 +105,12 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoToCheckBalance = () => {
+    onClose();
+    const query = encodeURIComponent(user.username || user.email);
+    navigate(`/admin/check?search=${query}`);
   };
 
   const isPending = user.status === "pending";
@@ -237,7 +245,18 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
                 </div>
                 <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
                   <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Balance</span>
-                  <span className="text-gray-900 font-bold text-base">৳ {user.balance}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-gray-900 font-bold text-base">৳ {user.balance}</span>
+                    <button
+                      type="button"
+                      onClick={handleGoToCheckBalance}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200 text-xs font-bold transition-all shadow-xs"
+                      title="Update balance on Check & Balance page"
+                    >
+                      <BanknotesIcon className="w-3.5 h-3.5 text-teal-600" />
+                      <span>Update Balance</span>
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
                   <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Joined Date</span>
@@ -267,16 +286,26 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
                  <Button color="blue" onClick={handleUpdate} className="normal-case">Save Changes</Button>
                </div>
             ) : (
-              <div className="flex-1 flex justify-between items-center gap-2">
-                <Button variant="text" color="red" className="normal-case hover:bg-red-50" onClick={() => setDeleteOpen(true)}>
-                  Delete User
-                </Button>
+              <div className="flex-1 flex flex-wrap justify-between items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="filled"
+                    className="normal-case bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm"
+                    onClick={handleGoToCheckBalance}
+                  >
+                    <BanknotesIcon className="w-4 h-4" />
+                    Check & Balance
+                  </Button>
+                  <Button variant="text" color="red" className="normal-case hover:bg-red-50 text-xs" onClick={() => setDeleteOpen(true)}>
+                    Delete User
+                  </Button>
+                </div>
                 {user.lock ? (
-                  <Button variant="filled" color="green" className="normal-case shadow-none" onClick={() => handleLockUnlock(false)}>
+                  <Button variant="filled" color="green" className="normal-case shadow-none text-xs" onClick={() => handleLockUnlock(false)}>
                     Unlock Profile
                   </Button>
                 ) : (
-                  <Button variant="outlined" color="red" className="normal-case border-red-100 text-red-500 hover:bg-red-50" onClick={() => handleLockUnlock(true)}>
+                  <Button variant="outlined" color="red" className="normal-case border-red-100 text-red-500 hover:bg-red-50 text-xs" onClick={() => handleLockUnlock(true)}>
                     Lock Profile
                   </Button>
                 )}

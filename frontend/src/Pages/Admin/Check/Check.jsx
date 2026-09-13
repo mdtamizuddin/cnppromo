@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   Card,
@@ -42,6 +43,7 @@ const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 2000, 5000];
 
 export default function Check() {
   const { settings } = useSelector((state) => state.user);
+  const [searchParams] = useSearchParams();
 
   const [searchText, setSearchText] = useState("");
   const [lastSearched, setLastSearched] = useState("");
@@ -57,6 +59,19 @@ export default function Check() {
   const [amountInput, setAmountInput] = useState("");
   const [noteInput, setNoteInput] = useState("");
   const [copiedField, setCopiedField] = useState(null);
+
+  useEffect(() => {
+    const q =
+      searchParams.get("search") ||
+      searchParams.get("query") ||
+      searchParams.get("user") ||
+      searchParams.get("username") ||
+      searchParams.get("email");
+    if (q) {
+      setSearchText(q);
+      handleSearch(q);
+    }
+  }, [searchParams]);
 
   const handleCopy = (text, fieldName) => {
     if (!text) return;
@@ -206,7 +221,7 @@ export default function Check() {
   ];
 
   return (
-    <div className="container mx-auto px-3 sm:px-6 py-6 max-w-7xl">
+    <div className="container mx-auto px-2.5 sm:px-6 py-4 sm:py-6 max-w-7xl">
       {/* Page Header */}
       <PageHeader
         icon={BanknotesIcon}
@@ -218,7 +233,7 @@ export default function Check() {
             <Button
               variant="outlined"
               size="sm"
-              className="flex items-center gap-2 border-gray-300 text-gray-700 normal-case hover:bg-gray-50"
+              className="flex items-center justify-center gap-2 border-gray-300 text-gray-700 normal-case hover:bg-gray-50 w-full sm:w-auto text-xs py-2 sm:py-2.5"
               onClick={handleRefresh}
               disabled={isLoading || updating}
             >
@@ -230,13 +245,13 @@ export default function Check() {
       />
 
       {/* Search Bar Card */}
-      <Card className="p-4 sm:p-5 mb-6 shadow-sm border border-gray-100 rounded-2xl bg-white">
+      <Card className="p-3.5 sm:p-5 mb-5 sm:mb-6 shadow-sm border border-gray-100 rounded-2xl sm:rounded-3xl bg-white">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSearch();
           }}
-          className="flex flex-col sm:flex-row items-center gap-3 w-full"
+          className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 w-full"
         >
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -246,8 +261,8 @@ export default function Check() {
               type="text"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Search by Username (e.g. johndoe) or Email (e.g. user@gmail.com)..."
-              className="w-full pl-10 pr-10 py-3 text-sm bg-gray-50/70 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-gray-900 placeholder-gray-400"
+              placeholder="Search by Username or Email..."
+              className="w-full pl-10 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm bg-gray-50/70 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-gray-900 placeholder-gray-400"
             />
             {searchText && (
               <button
@@ -262,7 +277,7 @@ export default function Check() {
           <Button
             type="submit"
             disabled={isLoading || !searchText.trim()}
-            className="w-full sm:w-auto shrink-0 px-6 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 normal-case rounded-xl flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition-all font-semibold"
+            className="w-full sm:w-auto shrink-0 px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 normal-case rounded-xl flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition-all font-semibold text-xs sm:text-sm"
           >
             {isLoading ? (
               <>
@@ -319,44 +334,42 @@ export default function Check() {
           {/* Top Row: Profile Card & Balance Action Card */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* User Profile Overview (Left: 5 cols) */}
-            <Card className="lg:col-span-5 p-5 sm:p-6 shadow-sm border border-gray-100 rounded-3xl bg-white flex flex-col justify-between">
+            <Card className="lg:col-span-5 p-4 sm:p-6 shadow-sm border border-gray-100 rounded-2xl sm:rounded-3xl bg-white flex flex-col justify-between">
               <div>
                 {/* Profile Top: Avatar + Name + Status */}
-                <div className="flex items-start gap-4 pb-5 border-b border-gray-100">
+                <div className="flex items-start gap-3 sm:gap-4 pb-4 sm:pb-5 border-b border-gray-100">
                   <div className="relative shrink-0">
                     <img
                       src={user.avatar || "/default-avater.png"}
                       alt={user.name}
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-gray-100 shadow-sm"
+                      className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-gray-100 shadow-sm"
                       onError={(e) => {
                         e.target.src = "/default-avater.png";
                       }}
                     />
                     <span
-                      className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                        user.status === "active"
-                          ? "bg-emerald-500"
-                          : user.status === "pending"
+                      className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-white ${user.status === "active"
+                        ? "bg-emerald-500"
+                        : user.status === "pending"
                           ? "bg-amber-500"
                           : "bg-red-500"
-                      }`}
+                        }`}
                       title={`Status: ${user.status}`}
                     />
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h2 className="text-lg font-bold text-gray-900 truncate">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                      <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">
                         {user.name}
                       </h2>
                       <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
-                          user.status === "active"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
-                            : user.status === "pending"
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${user.status === "active"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
+                          : user.status === "pending"
                             ? "bg-amber-50 text-amber-700 border border-amber-200/50"
                             : "bg-red-50 text-red-700 border border-red-200/50"
-                        }`}
+                          }`}
                       >
                         {user.status || "active"}
                       </span>
@@ -368,7 +381,7 @@ export default function Check() {
                       </span>
                       <button
                         onClick={() => handleCopy(user.username, "Username")}
-                        className="text-gray-400 hover:text-teal-600 transition-colors"
+                        className="text-gray-400 hover:text-teal-600 transition-colors p-0.5"
                         title="Copy Username"
                       >
                         {copiedField === "Username" ? (
@@ -380,15 +393,15 @@ export default function Check() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100 capitalize">
+                      <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100 capitalize">
                         {user.role || "User"}
                       </span>
                       {user.lock ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-100">
+                        <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-100">
                           <LockClosedIcon className="w-3 h-3" /> Locked
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
                           <LockOpenIcon className="w-3 h-3" /> Unlocked
                         </span>
                       )}
@@ -397,16 +410,16 @@ export default function Check() {
                 </div>
 
                 {/* Details Grid */}
-                <div className="py-4 space-y-3 text-xs">
+                <div className="py-3 sm:py-4 space-y-2.5 sm:space-y-3 text-xs">
                   <div className="flex items-center justify-between py-1.5 border-b border-gray-50">
-                    <span className="text-gray-500 flex items-center gap-2">
+                    <span className="text-gray-500 flex items-center gap-2 shrink-0">
                       <EnvelopeIcon className="w-4 h-4 text-gray-400" /> Email
                     </span>
-                    <span className="font-medium text-gray-900 flex items-center gap-1.5 truncate max-w-[200px]">
-                      {user.email}
+                    <span className="font-medium text-gray-900 flex items-center gap-1.5 truncate max-w-[170px] sm:max-w-[220px]">
+                      <span className="truncate">{user.email}</span>
                       <button
                         onClick={() => handleCopy(user.email, "Email")}
-                        className="text-gray-400 hover:text-teal-600 transition-colors"
+                        className="text-gray-400 hover:text-teal-600 transition-colors shrink-0 p-0.5"
                         title="Copy Email"
                       >
                         {copiedField === "Email" ? (
@@ -419,15 +432,15 @@ export default function Check() {
                   </div>
 
                   <div className="flex items-center justify-between py-1.5 border-b border-gray-50">
-                    <span className="text-gray-500 flex items-center gap-2">
+                    <span className="text-gray-500 flex items-center gap-2 shrink-0">
                       <PhoneIcon className="w-4 h-4 text-gray-400" /> Phone / WA
                     </span>
-                    <span className="font-medium text-gray-900 flex items-center gap-1.5">
-                      {user.phone || "Not set"}
+                    <span className="font-medium text-gray-900 flex items-center gap-1.5 truncate">
+                      <span>{user.phone || "Not set"}</span>
                       {user.phone && (
                         <button
                           onClick={() => handleCopy(user.phone, "Phone")}
-                          className="text-gray-400 hover:text-teal-600 transition-colors"
+                          className="text-gray-400 hover:text-teal-600 transition-colors shrink-0 p-0.5"
                           title="Copy Phone"
                         >
                           {copiedField === "Phone" ? (
@@ -441,40 +454,31 @@ export default function Check() {
                   </div>
 
                   <div className="flex items-center justify-between py-1.5 border-b border-gray-50">
-                    <span className="text-gray-500 flex items-center gap-2">
+                    <span className="text-gray-500 flex items-center gap-2 shrink-0">
                       <UserGroupIcon className="w-4 h-4 text-gray-400" /> Referrer
                     </span>
-                    <span className="font-semibold text-gray-800">
+                    <span className="font-semibold text-gray-800 truncate max-w-[180px]">
                       {user.reffer?.username ? `@${user.reffer.username}` : "Direct Signup (None)"}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between py-1.5 border-b border-gray-50">
-                    <span className="text-gray-500 flex items-center gap-2">
+                    <span className="text-gray-500 flex items-center gap-2 shrink-0">
                       <CalendarDaysIcon className="w-4 h-4 text-gray-400" /> Joined Date
                     </span>
                     <span className="font-medium text-gray-700">
                       {user.createdAt ? moment(user.createdAt).format("MMM DD, YYYY") : "N/A"}
                     </span>
                   </div>
-
-                  <div className="flex items-center justify-between py-1.5">
-                    <span className="text-gray-500 flex items-center gap-2">
-                      <ShieldCheckIcon className="w-4 h-4 text-gray-400" /> Account Activated
-                    </span>
-                    <span className="font-medium text-gray-700">
-                      {user.activatedAt ? moment(user.activatedAt).format("MMM DD, YYYY") : "Pending"}
-                    </span>
-                  </div>
                 </div>
               </div>
 
               {/* User ID Badge footer */}
-              <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
-                <span>User ID: <span className="font-mono text-gray-600">{user._id}</span></span>
+              <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-1.5 text-[11px] text-gray-400">
+                <span className="truncate max-w-[220px]">User ID: <span className="font-mono text-gray-600 select-all">{user._id}</span></span>
                 <button
                   onClick={() => handleCopy(user._id, "User ID")}
-                  className="text-teal-600 hover:underline flex items-center gap-1 font-medium"
+                  className="text-teal-600 hover:underline flex items-center gap-1 font-medium shrink-0"
                 >
                   <DocumentDuplicateIcon className="w-3.5 h-3.5" /> Copy ID
                 </button>
@@ -482,17 +486,17 @@ export default function Check() {
             </Card>
 
             {/* Balance & Fund Adjustment Manager (Right: 7 cols) */}
-            <Card className="lg:col-span-7 p-5 sm:p-6 shadow-sm border border-gray-100 rounded-3xl bg-white flex flex-col justify-between">
+            <Card className="lg:col-span-7 p-4 sm:p-6 shadow-sm border border-gray-100 rounded-2xl sm:rounded-3xl bg-white flex flex-col justify-between">
               <div>
                 {/* Balance Hero Box */}
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-gray-900 via-[#0d1b2a] to-[#1b263b] text-white shadow-lg mb-6 relative overflow-hidden">
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-gray-900 via-[#0d1b2a] to-[#1b263b] text-white shadow-lg mb-4 sm:mb-6 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-                  <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                     <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-teal-300/80 flex items-center gap-1.5 mb-1">
-                        <BanknotesIcon className="w-4 h-4 text-teal-400" /> Current User Balance
+                      <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-teal-300/80 flex items-center gap-1.5 mb-1">
+                        <BanknotesIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-400" /> Current User Balance
                       </span>
-                      <div className="text-3xl sm:text-4xl font-black tracking-tight text-white font-mono flex items-baseline gap-1.5">
+                      <div className="text-2xl sm:text-4xl font-black tracking-tight text-white font-mono flex items-baseline gap-1.5">
                         <span className="text-teal-400">৳</span>
                         {currentBalance.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
@@ -501,141 +505,138 @@ export default function Check() {
                       </div>
                     </div>
                     <div className="shrink-0 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-xl bg-white/10 text-emerald-300 font-medium backdrop-blur-md border border-white/10">
-                        <CheckCircleIcon className="w-4 h-4 text-emerald-400" /> Auto-Logged on Ledger
+                      <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-white/10 text-emerald-300 font-medium backdrop-blur-md border border-white/10">
+                        <CheckCircleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" /> Auto-Logged on Ledger
                       </span>
                     </div>
                   </div>
                 </div>
 
-                  <form onSubmit={handleCreditSubmit} className="space-y-4">
-                    {/* Operation Type Switcher (Add vs Deduct) */}
-                    <div className="flex items-center gap-2 p-1 rounded-xl bg-gray-100 w-full sm:w-max">
-                      <button
-                        type="button"
-                        onClick={() => setCreditType("add")}
-                        className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                          creditType === "add"
-                            ? "bg-emerald-600 text-white shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
+                <form onSubmit={handleCreditSubmit} className="space-y-3.5 sm:space-y-4">
+                  {/* Operation Type Switcher (Add vs Deduct) */}
+                  <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-gray-100 w-full sm:w-max">
+                    <button
+                      type="button"
+                      onClick={() => setCreditType("add")}
+                      className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all ${creditType === "add"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
                         }`}
-                      >
-                        <PlusIcon className="w-3.5 h-3.5 stroke-[3]" />
-                        Credit / Send Money (+)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCreditType("deduct")}
-                        className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                          creditType === "deduct"
-                            ? "bg-red-600 text-white shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
+                    >
+                      <PlusIcon className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Credit / Send (+)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCreditType("deduct")}
+                      className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all ${creditType === "deduct"
+                        ? "bg-red-600 text-white shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
                         }`}
-                      >
-                        <MinusIcon className="w-3.5 h-3.5 stroke-[3]" />
-                        Deduct Money (-)
-                      </button>
-                    </div>
+                    >
+                      <MinusIcon className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Deduct (-)</span>
+                    </button>
+                  </div>
 
-                    {/* Amount Input */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                        {creditType === "add" ? "Amount to Send / Add (৳)" : "Amount to Deduct (৳)"}
-                      </label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 font-bold">
-                          ৳
-                        </span>
-                        <input
-                          type="number"
-                          step="any"
-                          min="0"
-                          value={amountInput}
-                          onChange={(e) => setAmountInput(e.target.value)}
-                          placeholder="Enter amount (e.g. 500)"
-                          className="w-full pl-8 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-gray-900 font-semibold"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Quick Amount Chips */}
-                    <div>
-                      <span className="text-[11px] font-semibold text-gray-400 block mb-1.5">
-                        Quick Amounts:
+                  {/* Amount Input */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                      {creditType === "add" ? "Amount to Send / Add (৳)" : "Amount to Deduct (৳)"}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 font-bold">
+                        ৳
                       </span>
-                      <div className="flex flex-wrap gap-2">
-                        {QUICK_AMOUNTS.map((amt) => (
-                          <button
-                            key={amt}
-                            type="button"
-                            onClick={() => handleQuickAmount(amt)}
-                            className="px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 hover:bg-teal-50 hover:text-teal-700 text-gray-700 border border-gray-200/60 transition-colors"
-                          >
-                            +৳{amt}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Transaction Note / Reason Input */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                        <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-gray-500" />
-                        Transaction Note / Purpose (Visible to User)
-                      </label>
                       <input
-                        type="text"
-                        value={noteInput}
-                        onChange={(e) => setNoteInput(e.target.value)}
-                        placeholder="e.g. Monthly Performance Bonus, Task Reward, Correction..."
-                        className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-gray-900"
+                        type="number"
+                        step="any"
+                        min="0"
+                        value={amountInput}
+                        onChange={(e) => setAmountInput(e.target.value)}
+                        placeholder="Enter amount (e.g. 500)"
+                        className="w-full pl-8 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-gray-900 font-semibold"
                       />
                     </div>
+                  </div>
 
-                    {/* Real-time preview calculation box */}
-                    {parsedAmount > 0 && (
-                      <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2 text-gray-700">
-                          <span className="font-semibold">Current: ৳{currentBalance}</span>
-                          <span>{creditType === "add" ? "+" : "-"}</span>
-                          <span className="font-bold text-teal-700">৳{parsedAmount}</span>
-                        </div>
-                        <div className="font-bold text-teal-900 flex items-center gap-1.5">
-                          <span>Resulting Balance:</span>
-                          <span className="text-sm font-black font-mono">
-                            ৳{calculatedCreditBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
+                  {/* Quick Amount Chips */}
+                  <div>
+                    <span className="text-[11px] font-semibold text-gray-400 block mb-1.5">
+                      Quick Amounts:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                      {QUICK_AMOUNTS.map((amt) => (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => handleQuickAmount(amt)}
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 hover:bg-teal-50 hover:text-teal-700 text-gray-700 border border-gray-200/60 active:scale-95 transition-all"
+                        >
+                          +৳{amt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Transaction Note / Reason Input */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-gray-500" />
+                      Transaction Note / Purpose (Visible to User)
+                    </label>
+                    <input
+                      type="text"
+                      value={noteInput}
+                      onChange={(e) => setNoteInput(e.target.value)}
+                      placeholder="e.g. Performance Bonus, Task Reward, Correction..."
+                      className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-gray-900"
+                    />
+                  </div>
+
+                  {/* Real-time preview calculation box */}
+                  {parsedAmount > 0 && (
+                    <div className="p-3 rounded-xl bg-teal-50/70 border border-teal-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 text-xs">
+                      <div className="flex items-center gap-1.5 text-gray-700">
+                        <span className="font-semibold">Current: ৳{currentBalance}</span>
+                        <span>{creditType === "add" ? "+" : "-"}</span>
+                        <span className="font-bold text-teal-700">৳{parsedAmount}</span>
                       </div>
-                    )}
+                      <div className="font-bold text-teal-900 flex items-center gap-1.5">
+                        <span>Resulting:</span>
+                        <span className="text-sm font-black font-mono">
+                          ৳{calculatedCreditBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
-                    <Button
-                      type="submit"
-                      disabled={updating || !parsedAmount}
-                      className={`w-full py-3 rounded-xl normal-case font-bold shadow-sm transition-all flex items-center justify-center gap-2 ${
-                        creditType === "add"
-                          ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-                          : "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700"
+                  <Button
+                    type="submit"
+                    disabled={updating || !parsedAmount}
+                    className={`w-full py-2.5 sm:py-3 rounded-xl normal-case font-bold shadow-sm transition-all flex items-center justify-center gap-2 text-xs sm:text-sm ${creditType === "add"
+                      ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                      : "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700"
                       }`}
-                    >
-                      {updating ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Processing Transaction...
-                        </>
-                      ) : (
-                        <>
-                          <BanknotesIcon className="w-4 h-4" />
-                          {creditType === "add"
-                            ? `Send & Credit ৳${parsedAmount || 0} (Point to Transaction)`
-                            : `Deduct ৳${parsedAmount || 0} (Point to Transaction)`}
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </div>
-              </Card>
-            </div>
+                  >
+                    {updating ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Processing Transaction...
+                      </>
+                    ) : (
+                      <>
+                        <BanknotesIcon className="w-4 h-4" />
+                        {creditType === "add"
+                          ? `Send & Credit ৳${parsedAmount || 0}`
+                          : `Deduct ৳${parsedAmount || 0}`}
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </div>
+            </Card>
+          </div>
 
           {/* Row 2: User's Recent Balance Transactions Table */}
           <TableCard
@@ -659,70 +660,147 @@ export default function Check() {
             {isTxLoading ? (
               <div className="p-8 text-center text-xs text-gray-400">Loading transactions...</div>
             ) : userTransactions.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full table-auto text-left text-xs">
-                  <TableHead
-                    columns={[
-                      "Trx ID",
-                      "Type",
-                      "Amount",
-                      "Balance (Before → After)",
-                      "Note / Reason",
-                      "Issued By",
-                      "Date & Time",
-                    ]}
-                  />
-                  <tbody className="divide-y divide-gray-100">
-                    {userTransactions.slice(0, 15).map((tx) => {
-                      const isCredit = tx.type === "credit";
-                      return (
-                        <tr key={tx._id} className="hover:bg-gray-50/70 transition-colors">
-                          <td className="px-4 py-3 font-mono font-bold text-gray-800">
-                            <span className="flex items-center gap-1">
-                              {tx.trxId}
-                              <button
-                                onClick={() => handleCopy(tx.trxId, "Trx ID")}
-                                className="text-gray-400 hover:text-teal-600 transition-colors"
-                              >
-                                <DocumentDuplicateIcon className="w-3.5 h-3.5" />
-                              </button>
+              <>
+                {/* 📱 Mobile View: Responsive Transaction Cards (Shown on small screens) */}
+                <div className="divide-y divide-gray-100 md:hidden">
+                  {userTransactions.slice(0, 15).map((tx) => {
+                    const isCredit = tx.type === "credit";
+                    const hasBalance =
+                      tx.balanceBefore != null &&
+                      tx.balanceAfter != null &&
+                      !(tx.balanceBefore === 0 && tx.balanceAfter === 0);
+
+                    return (
+                      <div key={tx._id} className="p-3.5 space-y-2.5 hover:bg-gray-50/70 transition-colors">
+                        {/* Top: Status Badge + Date */}
+                        <div className="flex items-center justify-between text-xs">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-md font-bold text-[10px] uppercase ${
+                              isCredit
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-red-50 text-red-700 border border-red-200"
+                            }`}
+                          >
+                            {isCredit ? "Credit (+)" : "Debit (-)"}
+                          </span>
+                          <span className="text-[11px] text-gray-400 font-medium">
+                            {moment(tx.createdAt).format("DD MMM YYYY, hh:mm A")}
+                          </span>
+                        </div>
+
+                        {/* Middle: Trx ID + Big Amount */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1 font-mono text-xs text-gray-700 font-semibold">
+                            <span>{tx.trxId}</span>
+                            <button
+                              onClick={() => handleCopy(tx.trxId, "Trx ID")}
+                              className="text-gray-400 hover:text-teal-600 p-0.5"
+                              title="Copy Trx ID"
+                            >
+                              <DocumentDuplicateIcon className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <span className={`text-base font-black font-mono ${isCredit ? "text-emerald-600" : "text-red-600"}`}>
+                            {isCredit ? "+" : "-"}৳{tx.amount?.toLocaleString()}
+                          </span>
+                        </div>
+
+                        {/* Bottom Info: Balance Transition + Note */}
+                        <div className="pt-1 border-t border-gray-100/60 flex flex-wrap items-center justify-between gap-1 text-[11px] text-gray-500">
+                          <div>
+                            <span className="text-gray-400">Balance: </span>
+                            {hasBalance ? (
+                              <span className="font-mono text-gray-700">
+                                ৳{tx.balanceBefore} → <strong className="text-gray-900">৳{tx.balanceAfter}</strong>
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 font-medium">N/A</span>
+                            )}
+                          </div>
+                          {tx.note && (
+                            <span className="text-gray-600 italic truncate max-w-[170px]" title={tx.note}>
+                              {tx.note}
                             </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`px-2.5 py-0.5 rounded-md font-bold text-[10px] uppercase ${
-                                isCredit
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 🖥️ Desktop / Tablet View: Full Data Table (Shown on md+ screens) */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full table-auto text-left text-xs min-w-[680px]">
+                    <TableHead
+                      columns={[
+                        "Trx ID",
+                        "Type",
+                        "Amount",
+                        "Balance (Before → After)",
+                        "Note / Reason",
+                        "Issued By",
+                        "Date & Time",
+                      ]}
+                    />
+                    <tbody className="divide-y divide-gray-100">
+                      {userTransactions.slice(0, 15).map((tx) => {
+                        const isCredit = tx.type === "credit";
+                        return (
+                          <tr key={tx._id} className="hover:bg-gray-50/70 transition-colors">
+                            <td className="px-4 py-3 font-mono font-bold text-gray-800">
+                              <span className="flex items-center gap-1">
+                                {tx.trxId}
+                                <button
+                                  onClick={() => handleCopy(tx.trxId, "Trx ID")}
+                                  className="text-gray-400 hover:text-teal-600 transition-colors"
+                                >
+                                  <DocumentDuplicateIcon className="w-3.5 h-3.5" />
+                                </button>
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`px-2.5 py-0.5 rounded-md font-bold text-[10px] uppercase ${isCredit
                                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                   : "bg-red-50 text-red-700 border border-red-200"
-                              }`}
-                            >
-                              {isCredit ? "Credit (+)" : "Debit (-)"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 font-black font-mono text-sm">
-                            <span className={isCredit ? "text-emerald-600" : "text-red-600"}>
-                              {isCredit ? "+" : "-"}৳{tx.amount?.toLocaleString()}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 font-mono text-gray-500">
-                            ৳{tx.balanceBefore ?? 0} →{" "}
-                            <strong className="text-gray-900">৳{tx.balanceAfter ?? 0}</strong>
-                          </td>
-                          <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">
-                            {tx.note || <span className="text-gray-400 italic">No note</span>}
-                          </td>
-                          <td className="px-4 py-3 text-gray-600 font-medium">
-                            {tx.adminUser?.name || "Admin"}
-                          </td>
-                          <td className="px-4 py-3 text-gray-500 font-medium">
-                            {moment(tx.createdAt).format("DD MMM YYYY, hh:mm A")}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                                  }`}
+                              >
+                                {isCredit ? "Credit (+)" : "Debit (-)"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 font-black font-mono text-sm">
+                              <span className={isCredit ? "text-emerald-600" : "text-red-600"}>
+                                {isCredit ? "+" : "-"}৳{tx.amount?.toLocaleString()}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 font-mono text-gray-500">
+                              {tx.balanceBefore != null &&
+                              tx.balanceAfter != null &&
+                              !(tx.balanceBefore === 0 && tx.balanceAfter === 0) ? (
+                                <>
+                                  ৳{tx.balanceBefore} →{" "}
+                                  <strong className="text-gray-900">৳{tx.balanceAfter}</strong>
+                                </>
+                              ) : (
+                                <span className="text-gray-400 font-sans font-medium text-xs">N/A</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">
+                              {tx.note || <span className="text-gray-400 italic">No note</span>}
+                            </td>
+                            <td className="px-4 py-3 text-gray-600 font-medium">
+                              {tx.adminUser?.name || "Admin"}
+                            </td>
+                            <td className="px-4 py-3 text-gray-500 font-medium">
+                              {moment(tx.createdAt).format("DD MMM YYYY, hh:mm A")}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             ) : (
               <div className="p-8 text-center text-xs text-gray-400">
                 No manual balance transactions recorded yet for this user.
@@ -791,8 +869,57 @@ export default function Check() {
               </div>
             }
           >
-            <div className="overflow-x-auto">
-              <table className="w-full table-auto text-left">
+            {/* 📱 Mobile View: Generation Distribution Cards */}
+            <div className="divide-y divide-gray-100 sm:hidden">
+              {generations.map(({ key, name, badge, color }) => {
+                const count = genCounts[key];
+                const rate = genRates[key];
+                const tierValue = count * rate;
+                const percent = totalReferrals > 0 ? ((count / totalReferrals) * 100).toFixed(1) : "0.0";
+
+                return (
+                  <div key={key} className="p-3.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color}`}>
+                          {badge}
+                        </span>
+                        <span className="font-bold text-gray-900 text-xs">{name}</span>
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                        ৳{rate} <span className="text-[10px] text-gray-400 font-normal">/ refer</span>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-0.5">
+                      <span className="text-gray-500">
+                        Referrals: <strong className="text-gray-900 font-mono font-bold">{count} users</strong>
+                      </span>
+                      <span className="font-black text-teal-700 font-mono text-sm">
+                        ৳{tierValue.toLocaleString()}
+                      </span>
+                    </div>
+
+                    {/* Percentage bar */}
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className="h-full bg-teal-500 rounded-full"
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-mono text-gray-500 w-10 text-right font-medium">
+                        {percent}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 🖥️ Desktop View: Full Generation Table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full table-auto text-left min-w-[550px]">
                 <TableHead
                   columns={[
                     "Tier / Level",
