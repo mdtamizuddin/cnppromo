@@ -22,65 +22,83 @@ export function TableWithStripedRows() {
     })
 
     if (isLoading) {
-        <Loader />
+        return <Loader />
     }
     return (
-        <Card className="h-full rounded-none w-full overflow-auto mt-5 container mx-auto p-5">
-            <h1 className='text-xl py-5'>Total {data?.total}</h1>
-            <table className="w-full  table-auto text-left">
-                <thead>
-                    <tr>
-                        {TABLE_HEAD.map((head) => (
-                            <th key={head} className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
-                                <Typography
-                                    variant="small"
-                                    color="blue-gray"
-                                    className="font-normal leading-none opacity-70"
-                                >
+        <Card className="h-full rounded-2xl w-full overflow-hidden mt-5 container mx-auto p-4 md:p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                <h1 className='text-lg md:text-xl font-bold text-gray-900'>Total Referrals: {data?.total || data?.data?.length || 0}</h1>
+            </div>
+
+            {/* 📱 Mobile View: Referral History Cards */}
+            <div className="divide-y divide-gray-100 md:hidden">
+                {data?.data?.length === 0 ? (
+                    <div className="p-8 text-center text-gray-400 font-medium">No Data Available</div>
+                ) : (
+                    data?.data?.map(({ user, reffer, commition, gen, createdAt }, index) => (
+                        <div key={index} className="p-3.5 space-y-2 hover:bg-blue-50/20 transition-colors">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-gray-900">{user?.name || "Anonymous"}</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                    Gen {gen}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>Referrer: <strong className="text-gray-700 font-medium">{reffer?.name || "Direct"}</strong></span>
+                                <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                                    +{commition} TK
+                                </span>
+                            </div>
+
+                            <div className="text-[11px] text-gray-400 pt-1 border-t border-gray-50">
+                                {moment(createdAt).format('DD/MM/YYYY hh:mm A')}
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* 🖥️ Desktop View: Table */}
+            <div className="hidden md:block overflow-x-auto">
+                <table className="w-full min-w-[650px] table-auto text-left">
+                    <thead>
+                        <tr>
+                            {TABLE_HEAD.map((head) => (
+                                <th key={head} className="border-b border-gray-200 bg-gray-50 p-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                     {head}
-                                </Typography>
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {
-                        data?.data?.length === 0 && <tr><td colSpan={5} className="p-4 text-center">No Data Available</td></tr>
-                    }
-                    {data?.data?.map(({ user, reffer, commition, gen, createdAt }, index) => (
-                        <tr key={index} className="even:bg-blue-gray-50/50">
-                            <td className="p-4">
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {moment(createdAt).format('DD/MM/YYYY')}
-                                </Typography>
-                            </td>
-                            <td className="p-4">
-
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {reffer?.name}
-                                </Typography>
-                            </td>
-                            <td className="p-4">
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {user?.name}
-                                </Typography>
-                            </td>
-
-                            <td className="p-4">
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {commition}TK
-                                </Typography>
-                            </td>
-                            <td className="p-4">
-                                <Typography variant="small" color="blue-gray" className="font-normal">
-                                    {gen}
-                                </Typography>
-                            </td>
-
+                                </th>
+                            ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {data?.data?.length === 0 && (
+                            <tr><td colSpan={5} className="p-6 text-center text-gray-400">No Data Available</td></tr>
+                        )}
+                        {data?.data?.map(({ user, reffer, commition, gen, createdAt }, index) => (
+                            <tr key={index} className="hover:bg-blue-50/30 transition-colors">
+                                <td className="p-3.5 text-xs text-gray-600">
+                                    {moment(createdAt).format('DD/MM/YYYY')}
+                                </td>
+                                <td className="p-3.5 text-xs font-medium text-gray-900">
+                                    {reffer?.name || "Direct"}
+                                </td>
+                                <td className="p-3.5 text-xs font-semibold text-gray-900">
+                                    {user?.name}
+                                </td>
+                                <td className="p-3.5 text-xs font-bold text-emerald-600">
+                                    {commition} TK
+                                </td>
+                                <td className="p-3.5 text-xs">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                        {gen}
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </Card>
     );
 }

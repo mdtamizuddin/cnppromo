@@ -108,9 +108,34 @@ export function TableWithStripedRows() {
       </div>
 
       {/* Table */}
-      <Card className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden p-5 sm:p-6 space-y-4">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <Card className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden p-4 sm:p-6 space-y-4">
+        {/* 📱 Mobile View: Generation Cards */}
+        <div className="divide-y divide-gray-100 sm:hidden">
+          {generations.map((row, index) => (
+            <div key={index} className="p-3.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${row.badge}`}>
+                  {row.name}
+                </span>
+                <span className="font-bold text-xs text-gray-700">
+                  কমিশন: ৳{row.rate} <span className="text-[10px] text-gray-400 font-normal">/ জন</span>
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs pt-0.5">
+                <span className="text-gray-500">
+                  মোট মেম্বার: <strong className="text-gray-900 font-mono">{row.count} জন</strong>
+                </span>
+                <span className="font-black text-emerald-600 text-sm font-mono">
+                  ৳{row.totalEarned}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 🖥️ Desktop View: Full Table */}
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[550px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/70 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                 <th className="py-3.5 px-4 rounded-l-xl">জেনারেশন লেভেল</th>

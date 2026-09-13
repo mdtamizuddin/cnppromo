@@ -63,9 +63,67 @@ export function TableWithStripedRows() {
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      {/* 📱 Mobile View: Referral Member Cards */}
+      <div className="divide-y divide-gray-100 md:hidden">
+        {filteredData.length === 0 ? (
+          <div className="py-10 text-center text-gray-400 flex flex-col items-center justify-center space-y-2">
+            <UserGroupIcon className="w-10 h-10 text-gray-300" />
+            <p className="font-semibold text-gray-500">এখনো কোনো রেফারেল রেকর্ড পাওয়া যায়নি</p>
+            <p className="text-[11px] text-gray-400">
+              আপনার রেফারেল লিংক শেয়ার করে বন্ধুদের ইনভাইট করুন।
+            </p>
+          </div>
+        ) : (
+          filteredData.map(({ user: referredUser, reffer, commition, gen, createdAt }, index) => (
+            <div key={index} className="p-3.5 space-y-2.5 hover:bg-gray-50/70 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-gray-900 text-sm flex items-center gap-1">
+                    {referredUser?.name || referredUser?.username || "Member"}
+                    <CheckBadgeIcon className="w-4 h-4 text-primary shrink-0" />
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-primary-light text-primary font-bold text-[10px] border border-teal-100">
+                    Gen {gen || 1}
+                  </span>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs">
+                  +৳{commition}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-gray-500">
+                <span className="flex items-center gap-1">
+                  <CalendarIcon className="w-3.5 h-3.5 text-gray-400" />
+                  {moment(createdAt).format("DD MMM, YYYY")}
+                </span>
+                {referredUser?.email && (
+                  <span className="font-mono text-gray-400 truncate max-w-[180px]">
+                    {referredUser?.email}
+                  </span>
+                )}
+              </div>
+
+              {referredUser?.phone && (
+                <div className="pt-1 border-t border-gray-100 flex items-center justify-between text-xs">
+                  <span className="text-gray-400 text-[11px]">WhatsApp / Phone:</span>
+                  <a
+                    href={`https://wa.me/${referredUser?.phone}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-green-50 text-[#128C7E] hover:bg-green-100 font-bold text-xs border border-green-200 transition-colors"
+                  >
+                    <span>💬 {referredUser?.phone}</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* 🖥️ Desktop View: Full Table */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-left border-collapse min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/70 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
               <th className="py-3.5 px-4 rounded-l-xl">তারিখ ও সময়</th>
