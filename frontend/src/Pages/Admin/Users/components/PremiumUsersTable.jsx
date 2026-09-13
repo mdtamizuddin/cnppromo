@@ -177,8 +177,94 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
           </div>
         </div>
 
-        {/* Data Table */}
-        <div className="overflow-x-auto">
+        {/* 📱 Mobile View: User Cards */}
+        <div className="divide-y divide-gray-100 md:hidden">
+          {isLoading && allUsers.length === 0 ? (
+            <div className="text-center p-8 text-gray-400 font-medium">Loading users...</div>
+          ) : allUsers.length === 0 ? (
+            <div className="text-center p-8 text-gray-400 font-medium">No users found</div>
+          ) : (
+            allUsers.map((user) => (
+              <div key={user._id} className="p-3.5 space-y-2.5 hover:bg-blue-50/20 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={user.avatar || "/default-avater.png"}
+                      alt={user.name}
+                      className="w-9 h-9 rounded-full object-cover border border-gray-200 cursor-pointer"
+                      onClick={() => setSelectedUser(user)}
+                    />
+                    <div className="flex flex-col">
+                      <span
+                        className="text-xs font-bold text-gray-900 truncate max-w-[150px] cursor-pointer hover:text-blue-600"
+                        onClick={() => handleCopy(user.name, "Name")}
+                      >
+                        {user.name}
+                      </span>
+                      <span
+                        className="text-[11px] text-gray-400 cursor-pointer hover:text-blue-600"
+                        onClick={() => handleCopy(user.username, "Username")}
+                      >
+                        #{user.username}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-100" title="Max Devices">
+                      📱 {user.maxActiveSessions ?? 5}
+                    </span>
+                    <span className="text-xs font-bold text-gray-900 font-mono">
+                      ৳ {user.balance}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] bg-gray-50/70 p-2 rounded-lg border border-gray-100">
+                  <div className="truncate">
+                    <span className="text-gray-400 block text-[10px]">Email</span>
+                    <span
+                      className="text-gray-700 font-medium truncate block cursor-pointer hover:text-blue-600"
+                      onClick={() => handleCopy(user.email, "Email")}
+                    >
+                      {user.email || "N/A"}
+                    </span>
+                  </div>
+                  <div className="truncate">
+                    <span className="text-gray-400 block text-[10px]">Phone</span>
+                    <span
+                      className="text-gray-700 font-medium truncate block cursor-pointer hover:text-blue-600"
+                      onClick={() => handleCopy(user.phone, "Phone")}
+                    >
+                      {user.phone || "N/A"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-gray-100/60 text-[11px] text-gray-400">
+                  <div className="flex flex-col text-[10px]">
+                    <span>Ref: <strong className="text-gray-600">{user.reffer ? user.reffer.name : "Direct"}</strong></span>
+                    <span>
+                      {status === "active" ? "Activated: " : "Joined: "}
+                      {moment(user.activatedAt || user.createdAt).format("DD MMM YYYY")}
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outlined"
+                    color="blue"
+                    className="py-1 px-3 normal-case text-xs shadow-none hover:shadow-md"
+                    onClick={() => setSelectedUser(user)}
+                  >
+                    Review
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* 🖥️ Desktop View: Full Data Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[800px] table-auto text-left whitespace-nowrap">
             <thead>
               <tr>
@@ -216,7 +302,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
                             className="text-xs text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
                             onClick={() => handleCopy(user.username, "Username")}
                           >
-                            {user.username}
+                            #{user.username}
                           </span>
                         </div>
                       </div>

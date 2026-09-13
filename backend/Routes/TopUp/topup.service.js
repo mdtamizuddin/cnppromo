@@ -15,6 +15,27 @@ const createWithDraw = async (data) => {
 
         const withDraw = new Withdraw(data);
         await withDraw.save();
+
+        try {
+            const { recordTransaction } = require("../Transaction/transaction.service");
+            await recordTransaction({
+                userId: user,
+                amount: amount,
+                type: "credit",
+                category: "topup",
+                title: "Wallet TopUp Pending",
+                status: "pending",
+                referenceId: withDraw._id,
+                trxId: withDraw.trx || `TRX${String(withDraw._id).slice(-7).toUpperCase()}`,
+                method: withDraw.method,
+                account: withDraw.account,
+                image: withDraw.image,
+                skipNotification: true,
+            });
+        } catch (trxErr) {
+            console.error("Failed to record topup transaction:", trxErr);
+        }
+
         notifyUser(user, {
             category: "payments",
             type: "topup_request",
@@ -110,6 +131,22 @@ const updateData = async (id, data) => {
     try {
         const before = await Withdraw.findById(id);
         await Withdraw.findByIdAndUpdate(id, data, { new: true });
+
+        try {
+            const { updateTransactionByReference } = require("../Transaction/transaction.service");
+            const updatePayload = {};
+            if (data.status) {
+                updatePayload.status = data.status;
+                if (data.status === "completed") updatePayload.title = "Wallet TopUp Completed";
+                if (data.status === "rejected") updatePayload.title = "Wallet TopUp Rejected";
+            }
+            if (data.note) updatePayload.note = data.note;
+            if (data.image) updatePayload.image = data.image;
+            await updateTransactionByReference(id, updatePayload);
+        } catch (trxErr) {
+            console.error("Failed to update topup transaction:", trxErr);
+        }
+
         if (before && data.status === "rejected") {
             notifyUser(before.user, {
                 category: "payments",
@@ -134,10 +171,23 @@ const rejectWithdraw = async (id) => {
             throw new Error("Data not found")
         }
         data.status = "completed"
-                await data.save();
-        await User.findByIdAndUpdate(data.user, {
+        await data.save();
+        const updatedUser = await User.findByIdAndUpdate(data.user, {
             $inc: { balance: data.amount }
-        })
+        }, { new: true });
+
+        try {
+            const { updateTransactionByReference } = require("../Transaction/transaction.service");
+            await updateTransactionByReference(data._id, {
+                status: "completed",
+                title: "Wallet TopUp Completed",
+                balanceBefore: updatedUser ? updatedUser.balance - data.amount : 0,
+                balanceAfter: updatedUser ? updatedUser.balance : data.amount,
+            });
+        } catch (trxErr) {
+            console.error("Failed to complete topup transaction:", trxErr);
+        }
+
         notifyUser(data.user, {
             category: "payments",
             type: "topup_accepted",

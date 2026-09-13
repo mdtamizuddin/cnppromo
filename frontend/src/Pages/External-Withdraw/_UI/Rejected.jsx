@@ -64,6 +64,7 @@ const Pending = () => {
           ),
           rowExpandable: (record) => true,
         }}
+        scroll={{ x: 600 }}
         rowKey={(record) => record._id}
         dataSource={data}
       />

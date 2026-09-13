@@ -192,6 +192,7 @@ const Pending = () => {
           ),
           rowExpandable: (record) => record?.video || record?.image,
         }}
+        scroll={{ x: 600 }}
         rowKey={(record) => record._id}
         dataSource={data}
       />

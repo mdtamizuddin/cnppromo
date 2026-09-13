@@ -117,8 +117,112 @@ const PremiumExternalWithdrawTable = () => {
           </div>
         </div>
 
-        {/* Table Content */}
-        <div className="overflow-x-auto">
+        {/* 📱 Mobile View: External Withdrawal Cards */}
+        <div className="divide-y divide-gray-100 md:hidden">
+          {allWithdraws.map((withdraw) => (
+            <div key={withdraw._id} className="p-3.5 space-y-2.5 hover:bg-blue-50/20 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <img
+                    src={withdraw.user?.avatar || "/default-avater.png"}
+                    alt="avatar"
+                    className="w-8 h-8 rounded-full border border-gray-200 object-cover cursor-pointer"
+                    onClick={() => setSelectedWithdraw(withdraw)}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-gray-900 truncate max-w-[140px]">{withdraw.user?.name}</span>
+                    <span
+                      className="text-[11px] text-gray-400 hover:text-blue-600 cursor-pointer"
+                      onClick={() => {
+                        navigator.clipboard.writeText(withdraw.user?.username);
+                        toast.success("Copied username");
+                      }}
+                    >
+                      #{withdraw.user?.username}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {withdraw.video ? (
+                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold tracking-wide uppercase border border-indigo-100">Video</span>
+                  ) : withdraw.image ? (
+                    <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 rounded-full text-[10px] font-bold tracking-wide uppercase border border-cyan-100">Image</span>
+                  ) : (
+                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold tracking-wide uppercase border border-gray-200">None</span>
+                  )}
+                  <Chip
+                    size="sm"
+                    variant="ghost"
+                    value={withdraw.status}
+                    color={withdraw.status === "completed" ? "green" : withdraw.status === "pending" ? "amber" : "red"}
+                    className="capitalize text-[10px]"
+                    icon={
+                      withdraw.status === "completed" ? <CheckCircleIcon className="w-3.5 h-3.5" /> :
+                      withdraw.status === "rejected" ? <XCircleIcon className="w-3.5 h-3.5" /> :
+                      <ClockIcon className="w-3.5 h-3.5" />
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <img
+                    src={logoProvider(withdraw.method?.toLowerCase())}
+                    alt={withdraw.method}
+                    className="w-4 h-4 object-contain"
+                    onError={(e) => (e.target.style.display = "none")}
+                  />
+                  <span className="text-gray-700 font-medium capitalize">{withdraw.method}</span>
+                  <span
+                    className="text-gray-400 font-mono text-[11px] hover:text-blue-500 cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(withdraw.account);
+                      toast.success("Copied account number");
+                    }}
+                  >
+                    ({withdraw.account})
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-gray-100/60 text-[11px] text-gray-400">
+                <span>{moment(withdraw.createdAt).format("DD MMM YYYY, hh:mm A")}</span>
+                <Button
+                  size="sm"
+                  variant="outlined"
+                  color="blue"
+                  className="py-1 px-3 normal-case text-xs shadow-none hover:shadow-md"
+                  onClick={() => setSelectedWithdraw(withdraw)}
+                >
+                  {withdraw.status === "pending" ? "Review" : "View"}
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          {/* Mobile Observer target */}
+          <div ref={ref} className="py-3 text-center">
+            {isFetchingNextPage ? (
+              <div className="flex justify-center items-center gap-2">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs text-gray-500 font-medium animate-pulse">Loading more...</span>
+              </div>
+            ) : hasNextPage ? (
+              <span className="text-xs text-gray-400">Scroll down for more</span>
+            ) : allWithdraws.length > 0 ? (
+              <span className="text-xs text-gray-400">You've reached the end</span>
+            ) : !isLoading && (
+              <div className="flex flex-col items-center justify-center py-6">
+                <CurrencyDollarIcon className="w-10 h-10 text-gray-300 mb-1" />
+                <span className="text-xs text-gray-500">No requests found matching your criteria.</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 🖥️ Desktop View: Full Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[800px] table-auto text-left whitespace-nowrap">
             <thead>
               <tr>

@@ -20,5 +20,6 @@ router.use('/notification', authChecker, activeChecker, require('./Notification/
 router.use('/review', require('./Review/review.controller'))
 router.use('/payment-proof', require('./PaymentProof/proof.controller'))
 router.use('/gateway', require('./Gateway/gateway.controller'))
+router.use('/transaction', authChecker, activeChecker, require('./Transaction/transaction.controller'))
 
 module.exports = router

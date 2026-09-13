@@ -1,10 +1,8 @@
-import { Spin } from "antd";
+import { Spin, Table, Image } from "antd";
 import React from "react";
 import { useQuery } from "react-query";
 import { useSelector } from "react-redux";
 import { api } from "../../../util/axios";
-
-import { Table } from "antd";
 import moment from "moment";
 const Pending = () => {
   const { user } = useSelector((state) => state.user);
@@ -78,6 +76,7 @@ const Pending = () => {
           ),
           rowExpandable: (record) => record?.video || record?.image,
         }}
+        scroll={{ x: 600 }}
         rowKey={(record) => record._id}
         dataSource={data}
       />

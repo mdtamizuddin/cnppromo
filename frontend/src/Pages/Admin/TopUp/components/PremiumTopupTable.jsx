@@ -125,8 +125,114 @@ const PremiumTopupTable = () => {
           </div>
         </div>
 
-        {/* Table Content */}
-        <div className="overflow-x-auto">
+        {/* 📱 Mobile View: TopUp Cards */}
+        <div className="divide-y divide-gray-100 md:hidden">
+          {allTopups.map((topup) => (
+            <div key={topup._id} className="p-3.5 space-y-2.5 hover:bg-blue-50/20 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <img
+                    src={topup.user?.avatar || "/default-avater.png"}
+                    alt="avatar"
+                    className="w-8 h-8 rounded-full border border-gray-200 object-cover cursor-pointer"
+                    onClick={() => setSelectedTopup(topup)}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-gray-900 truncate max-w-[140px]">{topup.user?.name}</span>
+                    <span
+                      className="text-[11px] text-gray-400 hover:text-blue-600 cursor-pointer"
+                      onClick={() => {
+                        navigator.clipboard.writeText(topup.user?.username);
+                        toast.success("Copied username");
+                      }}
+                    >
+                      #{topup.user?.username}
+                    </span>
+                  </div>
+                </div>
+                <Chip
+                  size="sm"
+                  variant="ghost"
+                  value={topup.status}
+                  color={topup.status === "completed" ? "green" : topup.status === "pending" ? "amber" : "red"}
+                  className="capitalize text-[10px]"
+                  icon={
+                    topup.status === "completed" ? <CheckCircleIcon className="w-3.5 h-3.5" /> :
+                    topup.status === "rejected" ? <XCircleIcon className="w-3.5 h-3.5" /> :
+                    <ClockIcon className="w-3.5 h-3.5" />
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-1 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <img src={logoProvider(topup.method?.toLowerCase())} alt={topup.method} className="w-4 h-4 object-contain" />
+                  <span className="text-gray-700 font-medium">{topup.method}</span>
+                  <span
+                    className="text-gray-400 font-mono text-[11px] hover:text-blue-500 cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(topup.account);
+                      toast.success("Copied account");
+                    }}
+                  >
+                    ({topup.account})
+                  </span>
+                </div>
+                <span className="text-base font-black text-gray-900 font-mono">৳ {topup.amount}</span>
+              </div>
+
+              {topup.trx && (
+                <div className="flex items-center gap-1 text-[11px] text-gray-500">
+                  <span className="text-gray-400">TRX:</span>
+                  <span
+                    className="font-mono text-gray-700 font-bold hover:text-blue-600 cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(topup.trx);
+                      toast.success("Copied TRX ID");
+                    }}
+                  >
+                    {topup.trx}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-1 border-t border-gray-100/60 text-[11px] text-gray-400">
+                <span>{moment(topup.createdAt).format("DD MMM YYYY, hh:mm A")}</span>
+                <Button
+                  size="sm"
+                  variant="outlined"
+                  color="blue"
+                  className="py-1 px-3 normal-case text-xs"
+                  onClick={() => setSelectedTopup(topup)}
+                >
+                  {topup.status === "pending" ? "Review" : "View"}
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          {/* Mobile Observer target */}
+          <div ref={ref} className="py-3 text-center">
+            {isFetchingNextPage ? (
+              <div className="flex justify-center items-center gap-2">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs text-gray-500 font-medium animate-pulse">Loading more...</span>
+              </div>
+            ) : hasNextPage ? (
+              <span className="text-xs text-gray-400">Scroll down for more</span>
+            ) : allTopups.length > 0 ? (
+              <span className="text-xs text-gray-400">You've reached the end</span>
+            ) : !isLoading && (
+              <div className="flex flex-col items-center justify-center py-6">
+                <CurrencyDollarIcon className="w-10 h-10 text-gray-300 mb-1" />
+                <span className="text-xs text-gray-500">No topups found matching your criteria.</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 🖥️ Desktop View: Full Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[800px] table-auto text-left whitespace-nowrap">
             <thead>
               <tr>
@@ -218,7 +324,7 @@ const PremiumTopupTable = () => {
               })}
               
               {/* Intersection Observer target for infinite scroll */}
-              <tr ref={ref}>
+              <tr>
                 <td colSpan="6" className="py-4 text-center">
                   {isFetchingNextPage ? (
                     <div className="flex justify-center items-center gap-2">

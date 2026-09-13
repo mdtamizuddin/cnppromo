@@ -458,8 +458,8 @@ const updateUser = async (req, res) => {
             return res.status(400).send({ message: "No updatable fields provided" });
         }
         const prevUser =
-            update.level !== undefined
-                ? await User.findById(req.params.id).select("level")
+            (update.level !== undefined || update.balance !== undefined)
+                ? await User.findById(req.params.id).select("level balance")
                 : null;
         const user = await User.findByIdAndUpdate(req.params.id, update, {
             new: true,
@@ -476,6 +476,25 @@ const updateUser = async (req, res) => {
                 message: `আপনার লেভেল ${prevUser.level || 1} থেকে ${update.level}-এ উন্নীত হয়েছে। নতুন কমিশন হার ও বোনাস আনলক হয়েছে।`,
                 link: "/level",
             });
+        }
+        if (prevUser && update.balance !== undefined && Number(prevUser.balance) !== Number(update.balance)) {
+            const diff = Number(update.balance) - Number(prevUser.balance);
+            try {
+                const { recordTransaction } = require("../Transaction/transaction.service");
+                await recordTransaction({
+                    userId: user._id,
+                    amount: Math.abs(diff),
+                    type: diff > 0 ? "credit" : "debit",
+                    category: diff > 0 ? "admin_credit" : "admin_debit",
+                    title: diff > 0 ? "Admin Balance Credit" : "Admin Balance Deduction",
+                    note: req.body.note || `Balance set to ৳${update.balance}`,
+                    adminId: req.user?._id,
+                    balanceBefore: prevUser.balance,
+                    balanceAfter: user.balance,
+                });
+            } catch (txErr) {
+                console.error("Failed to record balance update transaction:", txErr);
+            }
         }
         res.send({
             message: "User updated successfully",
@@ -861,7 +880,7 @@ const activeAnUser = async (req, res) => {
             const upline = await User.findById(currentRefferId);
             if (!upline) break;
 
-            await createRefer({
+            const referRecord = await createRefer({
                 user: user._id,
                 reffer: upline._id,
                 gen,
@@ -871,9 +890,31 @@ const activeAnUser = async (req, res) => {
             if (commition > 0) {
                 // Always $inc — an in-memory read/modify/write would race with
                 // concurrent payouts to the same upline.
-                await User.findByIdAndUpdate(upline._id, {
+                const updatedUpline = await User.findByIdAndUpdate(upline._id, {
                     $inc: { balance: commition }
-                });
+                }, { new: true });
+
+                try {
+                    const { recordTransaction } = require("../Transaction/transaction.service");
+                    await recordTransaction({
+                        userId: upline._id,
+                        amount: commition,
+                        type: "credit",
+                        category: "referral",
+                        title: `Referral Bonus (Gen ${gen})`,
+                        status: "completed",
+                        referenceId: referRecord?._id,
+                        trxId: `TRX${String(referRecord?._id).slice(-7).toUpperCase()}`,
+                        referredUser: user._id,
+                        gen,
+                        balanceBefore: updatedUpline ? updatedUpline.balance - commition : 0,
+                        balanceAfter: updatedUpline ? updatedUpline.balance : commition,
+                        skipNotification: true,
+                    });
+                } catch (trxErr) {
+                    console.error("Failed to record referral transaction:", trxErr);
+                }
+
                 notifyUser(upline._id, {
                     category: "referrals",
                     type: "refer_commission",

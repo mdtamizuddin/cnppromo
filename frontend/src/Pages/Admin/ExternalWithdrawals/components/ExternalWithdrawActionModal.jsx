@@ -1,16 +1,28 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button, Chip, Textarea } from "@material-tailwind/react";
-import { XMarkIcon, DocumentDuplicateIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, DocumentDuplicateIcon, CheckCircleIcon, XCircleIcon, ClockIcon, BanknotesIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import moment from "moment";
 import { api } from "../../../../util/axios";
 import logoProvider from "../../Users/_Ui/logoProvider";
 
 const ExternalWithdrawActionModal = ({ withdraw, onClose, refetch }) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [rejectLoading, setRejectLoading] = useState(false);
   const [reason, setReason] = useState("");
   const [showRejectInput, setShowRejectInput] = useState(false);
+
+  const handleGoToCheckBalance = () => {
+    onClose();
+    const query = encodeURIComponent(withdraw.user?.username || withdraw.user?.email || "");
+    if (query) {
+      navigate(`/admin/check?search=${query}`);
+    } else {
+      navigate(`/admin/check`);
+    }
+  };
 
   const isPending = withdraw.status === "pending";
 
@@ -103,6 +115,17 @@ const ExternalWithdrawActionModal = ({ withdraw, onClose, refetch }) => {
                 {withdraw.status}
               </span>
             </div>
+            
+            <button
+              type="button"
+              onClick={handleGoToCheckBalance}
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-bold transition-all shadow-xs group"
+              title="Check user details & balance"
+            >
+              <BanknotesIcon className="w-4 h-4 text-teal-600 group-hover:scale-110 transition-transform" />
+              <span>Check & Balance</span>
+            </button>
+
             {withdraw.status === "rejected" && withdraw.reason && (
                <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-800 text-center">
                  <span className="font-semibold block mb-1">Rejection Reason:</span>

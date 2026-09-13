@@ -81,184 +81,281 @@ export default function Table({ moderator = false })
           </div>
         </div>
       </CardHeader>
-      <CardBody className="overflow-scroll px-0">
-        <table className="w-full  table-auto text-left">
-          <thead>
-            <tr>
-              {TABLE_HEAD.map((head) => (
-                <th
-                  key={head}
-                  className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4"
-                >
-                  <Typography
-                    variant="small"
-                    color="blue-gray"
-                    className="font-normal leading-none opacity-70"
-                  >
-                    {head}
-                  </Typography>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data?.users?.map(
-              (
-                user,
-                index,
-              ) =>
-              {
-                const isLast = index === data?.users?.length - 1;
-                const classes = isLast
-                  ? "p-4"
-                  : "p-4 border-b border-blue-gray-50";
+      <CardBody className="p-0">
+        {/* 📱 Mobile View: Admin / Moderator Cards */}
+        <div className="divide-y divide-gray-100 md:hidden">
+          {data?.users?.map((user) => (
+            <div key={user?._id || user?.name} className="p-3.5 space-y-2.5 hover:bg-blue-50/20 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Avatar
+                    src={user?.avatar || "/default-avater.png"}
+                    alt={user?.name}
+                    size="sm"
+                    className="border border-gray-200 bg-gray-50 object-contain p-0.5"
+                  />
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900">{user?.name}</h4>
+                    <span
+                      className="text-[11px] text-gray-400 cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => {
+                        navigator.clipboard.writeText(user?.username);
+                        toast.success("Username copied");
+                      }}
+                    >
+                      #{user?.username}
+                    </span>
+                  </div>
+                </div>
 
-                return (
-                  <tr key={user?.name}>
-                    <td className={classes}>
-                      <div className="flex items-center gap-3">
-                        {
-                          user?.role === "moderator" ?
-                            <Popover trigger={"click"}
-                              title={`Give Users Access to ${user?.name}`}
-                              content={<GiveUserAccess user={user} 
-                              refetch={refetch}
-                              />}
-                            >
+                <div className="flex items-center gap-1.5">
+                  <Chip
+                    size="sm"
+                    variant="ghost"
+                    value={user?.status}
+                    className="text-[10px] capitalize"
+                    color={
+                      user?.status === "active"
+                        ? "green"
+                        : user?.status === "pending"
+                        ? "amber"
+                        : "red"
+                    }
+                  />
+                  <IconButton
+                    variant="text"
+                    size="sm"
+                    onClick={() => {
+                      setOpen(true);
+                      setSelectedUser(user);
+                    }}
+                  >
+                    <PencilIcon className="h-4 w-4 text-blue-600" />
+                  </IconButton>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-[11px] bg-gray-50/70 p-2 rounded-lg border border-gray-100">
+                <div className="truncate">
+                  <span className="text-gray-400 block text-[10px]">Email</span>
+                  <span className="text-gray-700 font-medium truncate block">{user?.email || "N/A"}</span>
+                </div>
+                <div className="truncate">
+                  <span className="text-gray-400 block text-[10px]">WhatsApp</span>
+                  {user?.phone ? (
+                    <a
+                      href={`https://wa.me/${user.phone}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-emerald-600 font-medium hover:underline block truncate"
+                    >
+                      {user.phone}
+                    </a>
+                  ) : (
+                    <span className="text-gray-400">N/A</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-gray-100/60 text-[11px] text-gray-500">
+                <div className="flex items-center gap-1.5">
+                  {user?.paymentMethod && (
+                    <img
+                      src={logoProvider(user.paymentMethod.toLowerCase())}
+                      alt={user.paymentMethod}
+                      className="w-4 h-4 object-contain"
+                    />
+                  )}
+                  <span>{user?.account || "No account"}</span>
+                </div>
+                <span className="text-gray-400 text-[10px]">
+                  Ref: <strong className="text-gray-600">{user?.referer ? user.referer.name : "Direct"}</strong>
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 🖥️ Desktop View: Full Table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full min-w-[800px] table-auto text-left">
+            <thead>
+              <tr>
+                {TABLE_HEAD.map((head) => (
+                  <th
+                    key={head}
+                    className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4"
+                  >
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="font-normal leading-none opacity-70"
+                    >
+                      {head}
+                    </Typography>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data?.users?.map(
+                (
+                  user,
+                  index,
+                ) =>
+                {
+                  const isLast = index === data?.users?.length - 1;
+                  const classes = isLast
+                    ? "p-4"
+                    : "p-4 border-b border-blue-gray-50";
+
+                  return (
+                    <tr key={user?.name}>
+                      <td className={classes}>
+                        <div className="flex items-center gap-3">
+                          {
+                            user?.role === "moderator" ?
+                              <Popover trigger={"click"}
+                                title={`Give Users Access to ${user?.name}`}
+                                content={<GiveUserAccess user={user} 
+                                refetch={refetch}
+                                />}
+                              >
+                                <Avatar
+                                  src={"/default-avater.png"}
+                                  alt={user?.name}
+                                  size="md"
+                                  className="border border-blue-gray-50 bg-blue-gray-50/50 object-contain p-1"
+                                />
+                              </Popover>
+                              :
                               <Avatar
                                 src={"/default-avater.png"}
                                 alt={user?.name}
                                 size="md"
                                 className="border border-blue-gray-50 bg-blue-gray-50/50 object-contain p-1"
                               />
-                            </Popover>
-                            :
-                            <Avatar
-                              src={"/default-avater.png"}
-                              alt={user?.name}
-                              size="md"
-                              className="border border-blue-gray-50 bg-blue-gray-50/50 object-contain p-1"
-                            />
-                        }
-                        <div>
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-bold"
-                          >
-                            {user?.name}
-                          </Typography>
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="cursor-pointer hover:text-primary"
-                            onClick={() =>
-                            {
-                              navigator.clipboard.writeText(user?.username)
-                              toast.success("Username Copyed")
-                            }}
-                          >
-                            {user?.username}
-                          </Typography>
+                          }
+                          <div>
+                            <Typography
+                              variant="small"
+                              color="blue-gray"
+                              className="font-bold"
+                            >
+                              {user?.name}
+                            </Typography>
+                            <Typography
+                              variant="small"
+                              color="blue-gray"
+                              className="cursor-pointer hover:text-primary"
+                              onClick={() =>
+                              {
+                                navigator.clipboard.writeText(user?.username)
+                                toast.success("Username Copyed")
+                              }}
+                            >
+                              {user?.username}
+                            </Typography>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className={classes}>
-                      <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="font-normal"
-                      >
-                        {user?.email}
-                      </Typography>
-                    </td>
-                    <td className={classes}>
-                      <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="font-normal"
-                      >
-                        <a href={`https://wa.me/${user?.phone}`} target="_blank">
-                          {user?.phone}
-                        </a>
-                      </Typography>
-                    </td>
-                    <td className={classes}>
-                      <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="font-normal"
-                      >
-                        {user?.referer ? user?.referer?.name : "N/A"}
-                      </Typography>
-                    </td>
+                      </td>
+                      <td className={classes}>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-normal"
+                        >
+                          {user?.email}
+                        </Typography>
+                      </td>
+                      <td className={classes}>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-normal"
+                        >
+                          <a href={`https://wa.me/${user?.phone}`} target="_blank">
+                            {user?.phone}
+                          </a>
+                        </Typography>
+                      </td>
+                      <td className={classes}>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-normal"
+                        >
+                          {user?.referer ? user?.referer?.name : "N/A"}
+                        </Typography>
+                      </td>
 
-                    <td className={classes}>
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-12 rounded-md border border-blue-gray-50 p-1">
-                          <Avatar
-                            src={
-                              logoProvider(user?.paymentMethod?.toLowerCase())
-                            }
+                      <td className={classes}>
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-12 rounded-md border border-blue-gray-50 p-1">
+                            <Avatar
+                              src={
+                                logoProvider(user?.paymentMethod?.toLowerCase())
+                              }
+                              size="sm"
+                              alt={user?.paymentMethod}
+                              variant="square"
+                              className="h-full w-full object-contain p-1"
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <Typography
+                              variant="small"
+                              color="blue-gray"
+                              className="font-normal capitalize"
+                            >
+                              {user?.account}
+                            </Typography>
+                            <Typography
+                              variant="small"
+                              color="blue-gray"
+                              className="font-normal opacity-70 uppercase"
+                            >
+                              {user?.trx}
+                            </Typography>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={classes}>
+                        <div className="w-max">
+                          <Chip
                             size="sm"
-                            alt={user?.paymentMethod}
-                            variant="square"
-                            className="h-full w-full object-contain p-1"
+                            variant="ghost"
+                            value={user?.status}
+                            color={
+                              user?.status === "active"
+                                ? "green"
+                                : user?.status === "pending"
+                                  ? "amber"
+                                  : "red"
+                            }
                           />
                         </div>
-                        <div className="flex flex-col">
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-normal capitalize"
+                      </td>
+                      <td className={classes}>
+                        <Tooltip content="Edit User">
+                          <IconButton variant="text"
+                            onClick={() =>
+                            {
+                              setOpen(true)
+                              setSelectedUser(user)
+                            }}
                           >
-                            {user?.account}
-                          </Typography>
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-normal opacity-70 uppercase"
-                          >
-                            {user?.trx}
-                          </Typography>
-                        </div>
-                      </div>
-                    </td>
-                    <td className={classes}>
-                      <div className="w-max">
-                        <Chip
-                          size="sm"
-                          variant="ghost"
-                          value={user?.status}
-                          color={
-                            user?.status === "active"
-                              ? "green"
-                              : user?.status === "pending"
-                                ? "amber"
-                                : "red"
-                          }
-                        />
-                      </div>
-                    </td>
-                    <td className={classes}>
-                      <Tooltip content="Edit User">
-                        <IconButton variant="text"
-                          onClick={() =>
-                          {
-                            setOpen(true)
-                            setSelectedUser(user)
-                          }}
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </IconButton>
-                      </Tooltip>
-                    </td>
-                  </tr>
-                );
-              },
-            )}
-          </tbody>
-        </table>
+                            <PencilIcon className="h-4 w-4" />
+                          </IconButton>
+                        </Tooltip>
+                      </td>
+                    </tr>
+                  );
+                },
+              )}
+            </tbody>
+          </table>
+        </div>
       </CardBody>
       <CardFooter className="flex items-center justify-between border-t border-blue-gray-50 p-4">
         <Button variant="outlined" size="sm"
