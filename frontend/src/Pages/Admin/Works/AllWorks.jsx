@@ -129,13 +129,13 @@ const AllWorks = () => {
           </p>
         </div>
 
-        <Link
+        <button
           to="/user/social-works"
           className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-700 hover:to-sky-700 text-white text-xs font-bold transition-all shadow-md shadow-teal-600/20 active:scale-95 self-start sm:self-auto"
         >
           <PlayCircleIcon className="w-4 h-4" />
           <span>Social Tasks Marketplace →</span>
-        </Link>
+        </button>
       </div>
 
       {/* 🎴 9-Card Category Grid */}

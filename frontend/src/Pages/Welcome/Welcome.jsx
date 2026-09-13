@@ -259,7 +259,7 @@ const Welcome = () => {
           <div className="absolute -right-10 -top-10 w-72 sm:w-96 h-72 sm:h-96 bg-teal-400/20 rounded-full blur-3xl pointer-events-none"></div>
           <div className="absolute left-1/4 -bottom-10 w-64 sm:w-80 h-64 sm:h-80 bg-sky-400/15 rounded-full blur-3xl pointer-events-none"></div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center relative z-10">
+          <div className="grid grid-cols-1 items-center relative z-10">
 
             {/* Left Content */}
             <div className="lg:col-span-8 space-y-5 sm:space-y-6">
@@ -335,18 +335,6 @@ const Welcome = () => {
                     </Button>
                   </Link>
                 </div>
-              </div>
-            </div>
-
-            {/* Right 3D Wallet Graphic - Hidden on mobile */}
-            <div className="hidden lg:flex lg:col-span-4 justify-center">
-              <div className="relative w-44 sm:w-56 lg:w-64 aspect-square flex items-center justify-center">
-                <div className="absolute inset-0 bg-teal-400/15 rounded-full blur-2xl pointer-events-none"></div>
-                <img
-                  src="/wallet_3d_illustration.png"
-                  alt="CNP PROMO Wallet"
-                  className="w-full h-full object-contain drop-shadow-[0_15px_30px_rgba(13,148,136,0.25)] hover:scale-105 transition-transform duration-500 relative z-10"
-                />
               </div>
             </div>
 
