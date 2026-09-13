@@ -9,6 +9,7 @@ const LINK_MAP = {
   "/account/topup": { user: "/user/account", admin: "/admin/topup" },
   "/social-works": { user: "/user/social-works", admin: "/admin/social-works" },
   "/level": { user: "/user/level", admin: "/admin/dashboard" },
+  "/earnings": { user: "/user/earnings", admin: "/admin/earnings" },
 };
 
 export const resolveNotificationLink = (link, role) => {

@@ -109,6 +109,16 @@ const Earnings = () => {
     enabled: !!user?._id,
   });
 
+  // 5b. Fetch Admin / Manual Adjustments Transactions API
+  const { data: manualTransactionsData } = useQuery({
+    queryKey: ["user-manual-transactions", user?._id],
+    queryFn: async () => {
+      const res = await api.get(`/transaction/user/${user?._id}`);
+      return Array.isArray(res.data) ? res.data : res.data?.data || [];
+    },
+    enabled: !!user?._id,
+  });
+
   // 6. Merge all real API responses into a unified transaction stream
   const allTransactions = useMemo(() => {
     const list = [];
@@ -247,9 +257,35 @@ const Earnings = () => {
       });
     }
 
+    // Map manual transactions / admin balance adjustments
+    if (manualTransactionsData && Array.isArray(manualTransactionsData)) {
+      manualTransactionsData.forEach((tx) => {
+        const isCredit = tx.type === "credit";
+        list.push({
+          id: tx._id,
+          trxId: tx.trxId || `TRX${String(tx._id).slice(-7).toUpperCase()}`,
+          rawType: tx.category || (isCredit ? "admin_credit" : "admin_debit"),
+          title: tx.title || (isCredit ? "Admin Balance Credit" : "Admin Balance Deduction"),
+          amount: Number(tx.amount || 0),
+          flow: isCredit ? "credit" : "debit",
+          status: isCredit ? "Credit" : "Debit",
+          statusCode: isCredit ? "success" : "rejected",
+          createdAt: tx.createdAt,
+          updatedAt: tx.updatedAt,
+          method: "Admin Adjustment",
+          account: tx.adminUser?.name || "System Admin",
+          note: tx.note || (isCredit ? "Amount credited by admin" : "Amount deducted by admin"),
+          adminUser: tx.adminUser?.name || "Admin",
+          user: user,
+          balanceBefore: tx.balanceBefore,
+          balanceAfter: tx.balanceAfter,
+        });
+      });
+    }
+
     // Sort strictly by createdAt descending
     return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [withdrawalsData, extWithdrawalsData, referData, workSubmitsData, topupData, user]);
+  }, [withdrawalsData, extWithdrawalsData, referData, workSubmitsData, topupData, manualTransactionsData, user]);
 
   // 7. Filters
   const filteredTransactions = useMemo(() => {
@@ -379,6 +415,12 @@ const Earnings = () => {
       return (
         <div className="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center">
           <ArrowsRightLeftIcon className="w-5 h-5 text-primary" />
+        </div>
+      );
+    } else if (item.rawType === "admin_credit" || item.rawType === "admin_debit" || item.rawType === "admin_adjustment") {
+      return (
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${item.flow === "credit" ? "bg-emerald-50 text-emerald-500" : "bg-red-50 text-red-500"}`}>
+          <WalletIcon className="w-5 h-5" />
         </div>
       );
     } else {

@@ -24,6 +24,8 @@ import {
   XMarkIcon,
   CheckCircleIcon,
   CheckIcon,
+  ClockIcon,
+  ChatBubbleBottomCenterTextIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import moment from "moment";
@@ -47,11 +49,16 @@ export default function Check() {
   const [isLoading, setIsLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
 
+  // User transaction history state
+  const [userTransactions, setUserTransactions] = useState([]);
+  const [isTxLoading, setIsTxLoading] = useState(false);
+
   // Fund action mode: "credit" (send/add amount) or "exact" (set exact balance)
   const [fundMode, setFundMode] = useState("credit");
   const [creditType, setCreditType] = useState("add"); // "add" | "deduct"
   const [amountInput, setAmountInput] = useState("");
   const [exactInput, setExactInput] = useState("");
+  const [noteInput, setNoteInput] = useState("");
   const [copiedField, setCopiedField] = useState(null);
 
   const handleCopy = (text, fieldName) => {
@@ -60,6 +67,19 @@ export default function Check() {
     setCopiedField(fieldName);
     toast.success(`Copied ${fieldName} to clipboard!`);
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const fetchTransactions = async (userId) => {
+    if (!userId) return;
+    try {
+      setIsTxLoading(true);
+      const res = await api.get(`/transaction/user/${userId}?limit=50`);
+      setUserTransactions(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Failed to fetch user transactions:", err);
+    } finally {
+      setIsTxLoading(false);
+    }
   };
 
   const handleSearch = async (query) => {
@@ -72,11 +92,18 @@ export default function Check() {
     try {
       setIsLoading(true);
       setData(null);
+      setUserTransactions([]);
       const res = await api.get(`/refer/statistic/${encodeURIComponent(term)}`);
       setData(res.data);
       setLastSearched(term);
       setExactInput(String(res.data?.user?.balance ?? 0));
       setAmountInput("");
+      setNoteInput("");
+
+      // Fetch transaction history
+      if (res.data?.user?._id) {
+        fetchTransactions(res.data.user._id);
+      }
     } catch (error) {
       toast.error(
         error?.response?.data?.message || error?.message || "User not found"
@@ -92,7 +119,7 @@ export default function Check() {
     }
   };
 
-  // Submit credit / deduct amount
+  // Submit credit / deduct amount with transaction recording
   const handleCreditSubmit = async (e) => {
     e?.preventDefault();
     if (!data?.user) return;
@@ -103,30 +130,38 @@ export default function Check() {
       return;
     }
 
-    const currentBalance = Number(data.user.balance) || 0;
-    const change = creditType === "add" ? parsedAmount : -parsedAmount;
-    const newBalance = Math.max(0, currentBalance + change);
+    const type = creditType === "add" ? "credit" : "debit";
 
     try {
       setUpdating(true);
-      await api.put(`/user/${data.user._id}`, { balance: newBalance });
+      const res = await api.post("/transaction/adjust", {
+        userId: data.user._id,
+        amount: parsedAmount,
+        type,
+        note: noteInput.trim() || undefined,
+        title: creditType === "add" ? "Admin Balance Credit" : "Admin Balance Deduction",
+      });
+
       toast.success(
-        creditType === "add"
-          ? `Successfully added ৳${parsedAmount} to ${data.user.name}'s balance!`
-          : `Successfully deducted ৳${parsedAmount} from ${data.user.name}'s balance!`
+        res.data?.message ||
+          (creditType === "add"
+            ? `Successfully credited ৳${parsedAmount} to ${data.user.name}!`
+            : `Successfully deducted ৳${parsedAmount} from ${data.user.name}!`)
       );
+
       setAmountInput("");
+      setNoteInput("");
       await handleSearch(lastSearched || data.user.email);
     } catch (error) {
       toast.error(
-        error?.response?.data?.message || error?.message || "Failed to update balance"
+        error?.response?.data?.message || error?.message || "Failed to process transaction"
       );
     } finally {
       setUpdating(false);
     }
   };
 
-  // Submit exact balance overwrite
+  // Submit exact balance overwrite with transaction recording
   const handleExactSubmit = async (e) => {
     e?.preventDefault();
     if (!data?.user) return;
@@ -137,10 +172,32 @@ export default function Check() {
       return;
     }
 
+    const currentBal = Number(data.user.balance) || 0;
+    const diff = parsedBalance - currentBal;
+
+    if (diff === 0) {
+      toast.error("The new balance is the same as current balance.");
+      return;
+    }
+
+    const type = diff > 0 ? "credit" : "debit";
+    const amount = Math.abs(diff);
+
     try {
       setUpdating(true);
-      await api.put(`/user/${data.user._id}`, { balance: parsedBalance });
-      toast.success(`Balance updated to ৳${parsedBalance} successfully!`);
+      const res = await api.post("/transaction/adjust", {
+        userId: data.user._id,
+        amount,
+        type,
+        note: noteInput.trim() || `Balance updated from ৳${currentBal} to ৳${parsedBalance}`,
+        title: diff > 0 ? "Admin Balance Adjustment (Credit)" : "Admin Balance Adjustment (Debit)",
+      });
+
+      toast.success(
+        res.data?.message || `Balance successfully set to ৳${parsedBalance}!`
+      );
+
+      setNoteInput("");
       await handleSearch(lastSearched || data.user.email);
     } catch (error) {
       toast.error(
@@ -203,7 +260,7 @@ export default function Check() {
       <PageHeader
         icon={BanknotesIcon}
         title="Check User & Balance"
-        subtitle="Lookup user profiles, inspect multi-generation referral stats, and send or adjust account funds."
+        subtitle="Lookup user profiles, inspect multi-generation referral stats, and record balance transactions."
         accent="teal"
         action={
           user ? (
@@ -289,7 +346,7 @@ export default function Check() {
             Search a User to Get Started
           </h3>
           <p className="text-sm text-gray-500 max-w-md mb-6 leading-relaxed">
-            Enter a user's username or email address above to inspect their profile, view account balances, analyze their 6-tier referral downline, or send/adjust funds.
+            Enter a user's username or email address above to inspect their profile, view account balances, analyze their 6-tier referral downline, or send/adjust funds with automatic transaction recording.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 font-medium text-gray-600">
@@ -299,7 +356,7 @@ export default function Check() {
               <SparklesIcon className="w-4 h-4 text-emerald-600" /> 6-Tier Referral Tree
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 font-medium text-gray-600">
-              <ShieldCheckIcon className="w-4 h-4 text-blue-600" /> Account Security & Verification
+              <ClockIcon className="w-4 h-4 text-blue-600" /> Auto Transaction Logging
             </span>
           </div>
         </Card>
@@ -494,7 +551,7 @@ export default function Check() {
                     </div>
                     <div className="shrink-0 flex items-center gap-2">
                       <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-xl bg-white/10 text-emerald-300 font-medium backdrop-blur-md border border-white/10">
-                        <CheckCircleIcon className="w-4 h-4 text-emerald-400" /> Ready to Update
+                        <CheckCircleIcon className="w-4 h-4 text-emerald-400" /> Auto-Logged on Ledger
                       </span>
                     </div>
                   </div>
@@ -595,6 +652,21 @@ export default function Check() {
                       </div>
                     </div>
 
+                    {/* Transaction Note / Reason Input */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-gray-500" />
+                        Transaction Note / Purpose (Visible to User)
+                      </label>
+                      <input
+                        type="text"
+                        value={noteInput}
+                        onChange={(e) => setNoteInput(e.target.value)}
+                        placeholder="e.g. Monthly Performance Bonus, Task Reward, Correction..."
+                        className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-gray-900"
+                      />
+                    </div>
+
                     {/* Real-time preview calculation box */}
                     {parsedAmount > 0 && (
                       <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
@@ -630,8 +702,8 @@ export default function Check() {
                         <>
                           <BanknotesIcon className="w-4 h-4" />
                           {creditType === "add"
-                            ? `Send & Credit ৳${parsedAmount || 0} to User`
-                            : `Deduct ৳${parsedAmount || 0} from User`}
+                            ? `Send & Credit ৳${parsedAmount || 0} (Point to Transaction)`
+                            : `Deduct ৳${parsedAmount || 0} (Point to Transaction)`}
                         </>
                       )}
                     </Button>
@@ -660,8 +732,23 @@ export default function Check() {
                         />
                       </div>
                       <p className="text-[11px] text-gray-400 mt-1">
-                        Directly replaces the user's total balance in the database.
+                        Updates the user's balance and automatically logs the difference as a transaction.
                       </p>
+                    </div>
+
+                    {/* Note Input */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-gray-500" />
+                        Transaction Note / Reason (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={noteInput}
+                        onChange={(e) => setNoteInput(e.target.value)}
+                        placeholder="e.g. Account balance reconciliation..."
+                        className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-gray-900"
+                      />
                     </div>
 
                     {exactInput !== "" && !isNaN(parseFloat(exactInput)) && (
@@ -688,7 +775,7 @@ export default function Check() {
                       {updating ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Saving Balance...
+                          Saving & Logging Transaction...
                         </>
                       ) : (
                         <>
@@ -703,7 +790,100 @@ export default function Check() {
             </Card>
           </div>
 
-          {/* Row 2: Referral Network Statistics Cards */}
+          {/* Row 2: User's Recent Balance Transactions Table */}
+          <TableCard
+            toolbar={
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <ClockIcon className="w-5 h-5 text-teal-600" />
+                    Transaction History for this User
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Live balance adjustment log (also visible on the user's "My Earnings" panel).
+                  </p>
+                </div>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 self-start sm:self-auto">
+                  {userTransactions.length} Recorded Transactions
+                </span>
+              </div>
+            }
+          >
+            {isTxLoading ? (
+              <div className="p-8 text-center text-xs text-gray-400">Loading transactions...</div>
+            ) : userTransactions.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full table-auto text-left text-xs">
+                  <TableHead
+                    columns={[
+                      "Trx ID",
+                      "Type",
+                      "Amount",
+                      "Balance (Before → After)",
+                      "Note / Reason",
+                      "Issued By",
+                      "Date & Time",
+                    ]}
+                  />
+                  <tbody className="divide-y divide-gray-100">
+                    {userTransactions.map((tx) => {
+                      const isCredit = tx.type === "credit";
+                      return (
+                        <tr key={tx._id} className="hover:bg-gray-50/70 transition-colors">
+                          <td className="px-4 py-3 font-mono font-bold text-gray-800">
+                            <span className="flex items-center gap-1">
+                              {tx.trxId}
+                              <button
+                                onClick={() => handleCopy(tx.trxId, "Trx ID")}
+                                className="text-gray-400 hover:text-teal-600 transition-colors"
+                              >
+                                <DocumentDuplicateIcon className="w-3.5 h-3.5" />
+                              </button>
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`px-2.5 py-0.5 rounded-md font-bold text-[10px] uppercase ${
+                                isCredit
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : "bg-red-50 text-red-700 border border-red-200"
+                              }`}
+                            >
+                              {isCredit ? "Credit (+)" : "Debit (-)"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-black font-mono text-sm">
+                            <span className={isCredit ? "text-emerald-600" : "text-red-600"}>
+                              {isCredit ? "+" : "-"}৳{tx.amount?.toLocaleString()}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-mono text-gray-500">
+                            ৳{tx.balanceBefore ?? 0} →{" "}
+                            <strong className="text-gray-900">৳{tx.balanceAfter ?? 0}</strong>
+                          </td>
+                          <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">
+                            {tx.note || <span className="text-gray-400 italic">No note</span>}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 font-medium">
+                            {tx.adminUser?.name || "Admin"}
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 font-medium">
+                            {moment(tx.createdAt).format("DD MMM YYYY, hh:mm A")}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-xs text-gray-400">
+                No manual balance transactions recorded yet for this user.
+              </div>
+            )}
+          </TableCard>
+
+          {/* Row 3: Referral Network Statistics Cards */}
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
@@ -751,7 +931,7 @@ export default function Check() {
             </StatGrid>
           </div>
 
-          {/* Row 3: Generation Tier Table */}
+          {/* Row 4: Generation Tier Table */}
           <TableCard
             toolbar={
               <div className="flex items-center justify-between w-full">

@@ -458,8 +458,8 @@ const updateUser = async (req, res) => {
             return res.status(400).send({ message: "No updatable fields provided" });
         }
         const prevUser =
-            update.level !== undefined
-                ? await User.findById(req.params.id).select("level")
+            (update.level !== undefined || update.balance !== undefined)
+                ? await User.findById(req.params.id).select("level balance")
                 : null;
         const user = await User.findByIdAndUpdate(req.params.id, update, {
             new: true,
@@ -476,6 +476,25 @@ const updateUser = async (req, res) => {
                 message: `আপনার লেভেল ${prevUser.level || 1} থেকে ${update.level}-এ উন্নীত হয়েছে। নতুন কমিশন হার ও বোনাস আনলক হয়েছে।`,
                 link: "/level",
             });
+        }
+        if (prevUser && update.balance !== undefined && Number(prevUser.balance) !== Number(update.balance)) {
+            const diff = Number(update.balance) - Number(prevUser.balance);
+            try {
+                const { recordTransaction } = require("../Transaction/transaction.service");
+                await recordTransaction({
+                    userId: user._id,
+                    amount: Math.abs(diff),
+                    type: diff > 0 ? "credit" : "debit",
+                    category: diff > 0 ? "admin_credit" : "admin_debit",
+                    title: diff > 0 ? "Admin Balance Credit" : "Admin Balance Deduction",
+                    note: req.body.note || `Balance set to ৳${update.balance}`,
+                    adminId: req.user?._id,
+                    balanceBefore: prevUser.balance,
+                    balanceAfter: user.balance,
+                });
+            } catch (txErr) {
+                console.error("Failed to record balance update transaction:", txErr);
+            }
         }
         res.send({
             message: "User updated successfully",
