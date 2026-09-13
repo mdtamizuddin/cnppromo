@@ -85,4 +85,19 @@ router.get("/feed", async (req, res) => {
   }
 });
 
+// Admin: Backfill historical data into Transaction ledger
+// router.post("/backfill", roleChecker(["admin"]), async (req, res) => {
+//   try {
+//     const result = await transactionService.syncHistoricalTransactions(req.body.userId || null);
+//     res.send({
+//       message: "Historical backfill completed successfully",
+//       ...result,
+//     });
+//   } catch (error) {
+//     res.status(500).send({
+//       message: error.message || "Failed to backfill historical data",
+//     });
+//   }
+// });
+
 module.exports = router;

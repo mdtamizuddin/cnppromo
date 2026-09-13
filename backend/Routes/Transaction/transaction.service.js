@@ -200,6 +200,36 @@ const recordTransaction = async ({
 };
 
 /**
+ * Helper to batch insert records in chunks of 500
+ */
+const batchInsertMissingTransactions = async (docs) => {
+  if (!docs || docs.length === 0) return 0;
+  const CHUNK_SIZE = 500;
+  let inserted = 0;
+
+  for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
+    const chunk = docs.slice(i, i + CHUNK_SIZE);
+    const existingRefIds = new Set(
+      (
+        await Transaction.find({
+          referenceId: { $in: chunk.map((d) => d.referenceId) },
+        })
+          .select("referenceId")
+          .lean()
+      ).map((d) => d.referenceId)
+    );
+
+    const toInsert = chunk.filter((d) => !existingRefIds.has(d.referenceId));
+    if (toInsert.length > 0) {
+      await Transaction.insertMany(toInsert, { ordered: false }).catch(() => {});
+      inserted += toInsert.length;
+    }
+  }
+
+  return inserted;
+};
+
+/**
  * One-time backfill/sync of existing legacy records into the unified Transaction ledger
  */
 const syncHistoricalTransactions = async (targetUserId = null) => {
@@ -221,84 +251,85 @@ const syncHistoricalTransactions = async (targetUserId = null) => {
     WorkSubmit.find({ ...workSubmitFilter, status: "completed" }).populate("workId", "title price amount reward").lean(),
   ]);
 
-  const newDocs = [];
+  let totalInserted = 0;
 
-  for (const w of withdrawals) {
-    newDocs.push({
-      user: w.user,
-      amount: Number(w.amount || 0),
-      type: "debit",
-      category: "withdraw",
-      title: w.status === "completed" ? "Withdrawal Payment" : "Withdrawal Request",
-      note: w.note || (w.status === "completed" ? `Payment sent to user ${w.method} number.` : ""),
-      trxId: `TRX${String(w._id).slice(-7).toUpperCase()}`,
-      referenceId: String(w._id),
-      method: w.method || "Local Banking",
-      account: w.account || "",
-      image: w.image || "",
-      status: w.status === "completed" ? "completed" : w.status === "rejected" ? "rejected" : "pending",
-      createdAt: w.createdAt,
-      updatedAt: w.updatedAt,
-    });
-  }
+  // 1. Process Withdrawals
+  const withdrawDocs = withdrawals.map((w) => ({
+    user: w.user,
+    amount: Number(w.amount || 0),
+    type: "debit",
+    category: "withdraw",
+    title: w.status === "completed" ? "Withdrawal Payment" : "Withdrawal Request",
+    note: w.note || (w.status === "completed" ? `Payment sent to user ${w.method} number.` : ""),
+    trxId: `TRX${String(w._id).slice(-7).toUpperCase()}`,
+    referenceId: String(w._id),
+    method: w.method || "Local Banking",
+    account: w.account || "",
+    image: w.image || "",
+    status: w.status === "completed" ? "completed" : w.status === "rejected" ? "rejected" : "pending",
+    createdAt: w.createdAt,
+    updatedAt: w.updatedAt,
+  }));
+  totalInserted += await batchInsertMissingTransactions(withdrawDocs);
 
-  for (const ew of extWithdrawals) {
-    newDocs.push({
-      user: ew.user,
-      amount: Number(ew.amount || 0),
-      type: "debit",
-      category: "withdraw",
-      title: ew.status === "completed" ? "External Withdrawal Payment" : "External Withdrawal Request",
-      note: "External Gateway Withdrawal",
-      trxId: `TRX${String(ew._id).slice(-7).toUpperCase()}`,
-      referenceId: String(ew._id),
-      method: ew.method || "External Gateway",
-      account: ew.account || "",
-      image: ew.image || "",
-      status: ew.status === "completed" ? "completed" : ew.status === "rejected" ? "rejected" : "pending",
-      createdAt: ew.createdAt,
-      updatedAt: ew.updatedAt,
-    });
-  }
+  // 2. Process External Withdrawals
+  const extWithdrawDocs = extWithdrawals.map((ew) => ({
+    user: ew.user,
+    amount: Number(ew.amount || 0),
+    type: "debit",
+    category: "withdraw",
+    title: ew.status === "completed" ? "External Withdrawal Payment" : "External Withdrawal Request",
+    note: ew.note || "External Gateway Withdrawal",
+    trxId: `TRX${String(ew._id).slice(-7).toUpperCase()}`,
+    referenceId: String(ew._id),
+    method: ew.method || "External Gateway",
+    account: ew.account || "",
+    image: ew.image || "",
+    status: ew.status === "completed" ? "completed" : ew.status === "rejected" ? "rejected" : "pending",
+    createdAt: ew.createdAt,
+    updatedAt: ew.updatedAt,
+  }));
+  totalInserted += await batchInsertMissingTransactions(extWithdrawDocs);
 
-  for (const tp of topups) {
-    newDocs.push({
-      user: tp.user,
-      amount: Number(tp.amount || 0),
-      type: "credit",
-      category: "topup",
-      title: tp.status === "completed" ? "Wallet TopUp Completed" : tp.status === "pending" ? "Wallet TopUp Pending" : "Wallet TopUp Rejected",
-      trxId: tp.trx || `TRX${String(tp._id).slice(-7).toUpperCase()}`,
-      referenceId: String(tp._id),
-      method: tp.method || "TopUp",
-      account: tp.account || "",
-      image: tp.image || "",
-      status: tp.status === "completed" ? "completed" : tp.status === "rejected" ? "rejected" : "pending",
-      createdAt: tp.createdAt,
-      updatedAt: tp.updatedAt,
-    });
-  }
+  // 3. Process Topups
+  const topupDocs = topups.map((tp) => ({
+    user: tp.user,
+    amount: Number(tp.amount || 0),
+    type: "credit",
+    category: "topup",
+    title: tp.status === "completed" ? "Wallet TopUp Completed" : tp.status === "pending" ? "Wallet TopUp Pending" : "Wallet TopUp Rejected",
+    trxId: tp.trx || `TRX${String(tp._id).slice(-7).toUpperCase()}`,
+    referenceId: String(tp._id),
+    method: tp.method || "TopUp",
+    account: tp.account || "",
+    image: tp.image || "",
+    status: tp.status === "completed" ? "completed" : tp.status === "rejected" ? "rejected" : "pending",
+    createdAt: tp.createdAt,
+    updatedAt: tp.updatedAt,
+  }));
+  totalInserted += await batchInsertMissingTransactions(topupDocs);
 
-  for (const r of refers) {
-    newDocs.push({
-      user: r.reffer,
-      amount: Number(r.commition || (r.gen === 1 ? 50 : 20)),
-      type: "credit",
-      category: "referral",
-      title: `Referral Bonus (Gen ${r.gen || 1})`,
-      trxId: `TRX${String(r._id).slice(-7).toUpperCase()}`,
-      referenceId: String(r._id),
-      referredUser: r.user,
-      gen: r.gen || 1,
-      status: "completed",
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
-    });
-  }
+  // 4. Process Refers
+  const referDocs = refers.map((r) => ({
+    user: r.reffer,
+    amount: Number(r.commition || (r.gen === 1 ? 50 : 20)),
+    type: "credit",
+    category: "referral",
+    title: `Referral Bonus (Gen ${r.gen || 1})`,
+    trxId: `TRX${String(r._id).slice(-7).toUpperCase()}`,
+    referenceId: String(r._id),
+    referredUser: r.user,
+    gen: r.gen || 1,
+    status: "completed",
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+  }));
+  totalInserted += await batchInsertMissingTransactions(referDocs);
 
-  for (const ws of workSubmits) {
+  // 5. Process Work Submits
+  const workSubmitDocs = workSubmits.map((ws) => {
     const taskReward = Number(ws.amount || ws.workId?.reward || ws.workId?.amount || ws.workId?.price || 20);
-    newDocs.push({
+    return {
       user: ws.userId,
       amount: taskReward,
       type: "credit",
@@ -311,19 +342,25 @@ const syncHistoricalTransactions = async (targetUserId = null) => {
       status: "completed",
       createdAt: ws.createdAt,
       updatedAt: ws.updatedAt,
-    });
-  }
+    };
+  });
+  totalInserted += await batchInsertMissingTransactions(workSubmitDocs);
 
-  // Insert missing records idempotently
-  if (newDocs.length > 0) {
-    const existingRefIds = new Set(
-      (await Transaction.find({ referenceId: { $in: newDocs.map((d) => d.referenceId) } }).select("referenceId").lean()).map((d) => d.referenceId)
-    );
-    const toInsert = newDocs.filter((d) => !existingRefIds.has(d.referenceId));
-    if (toInsert.length > 0) {
-      await Transaction.insertMany(toInsert, { ordered: false }).catch(() => {});
-    }
-  }
+  return {
+    success: true,
+    totalWithdrawals: withdrawals.length,
+    totalExternalWithdrawals: extWithdrawals.length,
+    totalTopups: topups.length,
+    totalRefers: refers.length,
+    totalWorkSubmits: workSubmits.length,
+    totalProcessed:
+      withdrawals.length +
+      extWithdrawals.length +
+      topups.length +
+      refers.length +
+      workSubmits.length,
+    newTransactionsInserted: totalInserted,
+  };
 };
 
 /**
