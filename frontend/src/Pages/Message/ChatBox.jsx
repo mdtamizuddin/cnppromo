@@ -6,6 +6,7 @@ import {
   ArrowLeftIcon,
   EllipsisVerticalIcon,
   ChatBubbleLeftRightIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { api } from "../../util/axios";
 import { useSocketContext } from "../../Components/SocketContext";
@@ -46,6 +47,11 @@ const ChatBox = ({ chatId, onBack }) => {
 
   const chatUser = chat?.user;
   const chatUserId = chatUser?._id;
+
+  const isTamiz =
+    chatUser?.username?.trim().toLowerCase() === "tamiz" ||
+    chatUser?.name?.toLowerCase().includes("tamiz") ||
+    chatUser?.name?.toLowerCase().includes("don't message");
 
   const {
     data: messagesPages,
@@ -254,6 +260,21 @@ const ChatBox = ({ chatId, onBack }) => {
           </button>
         )}
       </header>
+
+      {/* ⚠️ Notice banner when chatting with Tamiz */}
+      {isTamiz && (
+        <div className="shrink-0 bg-amber-50/95 border-b border-amber-200/80 px-4 py-2.5 flex items-start gap-2.5 text-amber-900 shadow-xs">
+          <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <h4 className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+              <span>জরুরি নোটিশ</span>
+            </h4>
+            <p className="text-xs text-amber-800 font-medium leading-relaxed mt-0.5">
+              কোনো ধরণের সাপোর্ট বা অন্যান্য সাহায্যের জন্য এই অ্যাকাউন্টে মেসেজ পাঠাবেন না। যেকোনো সাহায্য ও সাপোর্টের জন্য অনুগ্রহ করে বাকি ২ জন অ্যাডমিনকে মেসেজ করুন।
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Thread */}
       <div className="flex-1 min-h-0">

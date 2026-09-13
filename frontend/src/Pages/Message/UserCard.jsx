@@ -11,8 +11,11 @@ const UserCard = ({ user, setOpen }) => {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
 
-  const isTamiz = user?.username?.trim().toLowerCase() === "tamiz";
-  const [unlocked, setUnlocked] = useState(false);
+  const isTamiz =
+    user?.username?.trim().toLowerCase() === "tamiz" ||
+    user?.name?.toLowerCase().includes("tamiz") ||
+    user?.name?.toLowerCase().includes("don't message");
+  const [unlocked, setUnlocked] = useState(true);
   const [clicks, setClicks] = useState(0);
 
   const isDisabled = isTamiz && !unlocked;
@@ -75,8 +78,8 @@ const UserCard = ({ user, setOpen }) => {
           <span className="text-[10px] text-gray-400 shrink-0">{user?.username}</span>
         </span>
         {isTamiz ? (
-          <span className={`block text-[11px] font-medium truncate mt-0.5 ${isDisabled ? "text-rose-500" : "text-emerald-600"}`}>
-            {isDisabled ? "Do not message this user for any support" : "Unlocked for messaging"}
+          <span className="block text-[11px] font-medium text-rose-500 leading-tight mt-0.5">
+            কোনো সাপোর্টের প্রয়োজন হলে বাকি ২ জন অ্যাডমিনকে মেসেজ করুন
           </span>
         ) : (
           <span className="block text-xs text-gray-400 truncate mt-0.5">
