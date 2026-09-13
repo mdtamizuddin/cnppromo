@@ -18,7 +18,6 @@ import {
   DevicePhoneMobileIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
-  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import Cookie from "js-cookie";
 import toast from "react-hot-toast";
@@ -38,7 +37,6 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
 
   const navMenuItems = [
     { label: "Dashboard", to: "/user/home", icon: HomeIcon },
-    { label: "Social Tasks", to: "/user/social-works", icon: SparklesIcon },
     { label: "Micro Tasks", to: "/user/works", icon: ClipboardDocumentListIcon },
     { label: "My Earnings", to: "/user/earnings", icon: BanknotesIcon },
     { label: "Withdraw", to: "/user/account/withdraw", icon: CreditCardIcon },
@@ -137,11 +135,8 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
               item.to &&
               (location.pathname === item.to ||
                 (item.to === "/home" && location.pathname === "/welcome") ||
-                (item.to === "/user/social-works" &&
-                  location.pathname.startsWith("/user/social-works")) ||
                 (item.to === "/user/works" &&
-                  location.pathname.startsWith("/user/works") &&
-                  !location.pathname.startsWith("/user/social-works")));
+                  location.pathname.startsWith("/user/works")));
             const Icon = item.icon;
 
             if (item.onClick) {

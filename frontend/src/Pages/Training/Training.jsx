@@ -109,7 +109,7 @@ const TRAINING_QUICK_ACTIONS = [
     title: "ভিডিও লেসন",
     subtitle: "দেখুন ও শিখুন",
     icon: PlayIcon,
-    to: "/user/social-works",
+    to: "/user/works",
     color: "#0D9488",
     bg: "bg-teal-50",
   },

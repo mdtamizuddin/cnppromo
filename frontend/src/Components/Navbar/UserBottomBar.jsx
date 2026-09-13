@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
-  SparklesIcon,
+  BanknotesIcon,
   ChatBubbleLeftRightIcon,
   Bars3Icon,
 } from "@heroicons/react/24/outline";
@@ -17,23 +17,15 @@ const UserBottomBar = ({ onOpenMenu }) => {
     pathname === "/user" ||
     pathname === "/";
   const isWorks = pathname.startsWith("/user/works");
-  const isSocialWorks = pathname.startsWith("/user/social-works");
+  const isEarnings = pathname.startsWith("/user/earnings");
   const isMessage =
     pathname === "/user/message" ||
     pathname === "/message" ||
     pathname.startsWith("/user/all-message") ||
     pathname.startsWith("/user/message/");
 
-  // Detect if user is on the active task details / proof submission page
-  const isSocialTaskDetails =
-    pathname.startsWith("/user/social-works/") &&
-    pathname !== "/user/social-works/my-tasks" &&
-    pathname !== "/user/social-works/create" &&
-    pathname !== "/user/social-works/submissions" &&
-    !pathname.includes("/submissions");
-
-  // Don't show floating bottom bar in message pages or during active task proof submission (prevents overlap)
-  if (isMessage || isSocialTaskDetails) {
+  // Don't show floating bottom bar in message pages (prevents overlap)
+  if (isMessage) {
     return null;
   }
 
@@ -77,25 +69,25 @@ const UserBottomBar = ({ onOpenMenu }) => {
         <span className="text-[10px] tracking-tight mt-0.5">Tasks</span>
       </Link>
 
-      {/* 3. Center Social Tasks Button (Raised gradient circular button) */}
+      {/* 3. Center Earnings Button (Raised gradient circular button) */}
       <div className="flex-1 flex flex-col items-center justify-center -mt-6">
         <Link
-          to="/user/social-works"
+          to="/user/earnings"
           className={`w-12 h-12 rounded-full bg-brand-gradient text-white flex items-center justify-center shadow-lg transition-all border-[3px] border-white active:scale-95 ${
-            isSocialWorks
+            isEarnings
               ? "ring-4 ring-teal-500/30 scale-105 shadow-teal-500/50"
               : "shadow-teal-500/30 hover:scale-110"
           }`}
-          title="Social Tasks"
+          title="My Earnings"
         >
-          <SparklesIcon className="w-6 h-6 stroke-[2.2]" />
+          <BanknotesIcon className="w-6 h-6 stroke-[2.2]" />
         </Link>
         <span
           className={`text-[9px] tracking-tight mt-0.5 font-bold ${
-            isSocialWorks ? "text-primary" : "text-gray-400"
+            isEarnings ? "text-primary" : "text-gray-400"
           }`}
         >
-          Social
+          Earnings
         </span>
       </div>
 

@@ -18,7 +18,6 @@ import {
   CurrencyDollarIcon,
   CreditCardIcon,
   UserGroupIcon,
-  PlayCircleIcon,
   AcademicCapIcon,
   TrophyIcon,
   LightBulbIcon,
@@ -218,16 +217,6 @@ const Welcome = () => {
       icon: UserGroupIcon,
       color: "#10b981",
       bg: "bg-emerald-50",
-    },
-    {
-      id: "social-works",
-      title: "Social Work",
-      subtitle: "Video & tasks",
-      to: "/user/social-works",
-      icon: PlayCircleIcon,
-      color: "#0D9488",
-      bg: "bg-teal-50",
-      badge: "HOT",
     },
     {
       id: "training",
@@ -614,7 +603,7 @@ const Welcome = () => {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-base font-bold text-[#0b0c2a]">My Tasks</h3>
-                <Link to="/user/social-works" className="text-xs font-semibold text-primary hover:underline">
+                <Link to="/user/works" className="text-xs font-semibold text-primary hover:underline">
                   View All
                 </Link>
               </div>
@@ -676,7 +665,7 @@ const Welcome = () => {
               </div>
             </div>
 
-            <Link to="/user/social-works" className="mt-4">
+            <Link to="/user/works" className="mt-4">
               <Button
                 variant="outlined"
                 className="w-full rounded-xl normal-case text-xs font-bold border-primary/30 text-primary hover:bg-primary-light py-3"
