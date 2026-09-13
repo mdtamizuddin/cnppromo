@@ -53,11 +53,8 @@ export default function Check() {
   const [userTransactions, setUserTransactions] = useState([]);
   const [isTxLoading, setIsTxLoading] = useState(false);
 
-  // Fund action mode: "credit" (send/add amount) or "exact" (set exact balance)
-  const [fundMode, setFundMode] = useState("credit");
   const [creditType, setCreditType] = useState("add"); // "add" | "deduct"
   const [amountInput, setAmountInput] = useState("");
-  const [exactInput, setExactInput] = useState("");
   const [noteInput, setNoteInput] = useState("");
   const [copiedField, setCopiedField] = useState(null);
 
@@ -73,7 +70,7 @@ export default function Check() {
     if (!userId) return;
     try {
       setIsTxLoading(true);
-      const res = await api.get(`/transaction/user/${userId}?limit=50`);
+      const res = await api.get(`/transaction/user/${userId}?limit=15`);
       setUserTransactions(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Failed to fetch user transactions:", err);
@@ -96,7 +93,6 @@ export default function Check() {
       const res = await api.get(`/refer/statistic/${encodeURIComponent(term)}`);
       setData(res.data);
       setLastSearched(term);
-      setExactInput(String(res.data?.user?.balance ?? 0));
       setAmountInput("");
       setNoteInput("");
 
@@ -119,14 +115,19 @@ export default function Check() {
     }
   };
 
-  // Submit credit / deduct amount with transaction recording
+  // Submit credit/debit transaction
   const handleCreditSubmit = async (e) => {
     e?.preventDefault();
     if (!data?.user) return;
 
-    const parsedAmount = parseFloat(amountInput);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      toast.error("Please enter a valid positive amount");
+    const amount = parseFloat(amountInput);
+    if (!amount || amount <= 0) {
+      toast.error("Please enter a valid amount greater than 0");
+      return;
+    }
+
+    if (creditType === "deduct" && amount > (data.user.balance || 0)) {
+      toast.error("Cannot deduct more than user's current balance");
       return;
     }
 
@@ -136,17 +137,14 @@ export default function Check() {
       setUpdating(true);
       const res = await api.post("/transaction/adjust", {
         userId: data.user._id,
-        amount: parsedAmount,
+        amount,
         type,
-        note: noteInput.trim() || undefined,
+        note: noteInput.trim(),
         title: creditType === "add" ? "Admin Balance Credit" : "Admin Balance Deduction",
       });
 
       toast.success(
-        res.data?.message ||
-          (creditType === "add"
-            ? `Successfully credited ৳${parsedAmount} to ${data.user.name}!`
-            : `Successfully deducted ৳${parsedAmount} from ${data.user.name}!`)
+        res.data?.message || `Successfully ${type === "credit" ? "credited" : "deducted"} ৳${amount}!`
       );
 
       setAmountInput("");
@@ -155,53 +153,6 @@ export default function Check() {
     } catch (error) {
       toast.error(
         error?.response?.data?.message || error?.message || "Failed to process transaction"
-      );
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  // Submit exact balance overwrite with transaction recording
-  const handleExactSubmit = async (e) => {
-    e?.preventDefault();
-    if (!data?.user) return;
-
-    const parsedBalance = parseFloat(exactInput);
-    if (isNaN(parsedBalance) || parsedBalance < 0) {
-      toast.error("Please enter a valid non-negative balance");
-      return;
-    }
-
-    const currentBal = Number(data.user.balance) || 0;
-    const diff = parsedBalance - currentBal;
-
-    if (diff === 0) {
-      toast.error("The new balance is the same as current balance.");
-      return;
-    }
-
-    const type = diff > 0 ? "credit" : "debit";
-    const amount = Math.abs(diff);
-
-    try {
-      setUpdating(true);
-      const res = await api.post("/transaction/adjust", {
-        userId: data.user._id,
-        amount,
-        type,
-        note: noteInput.trim() || `Balance updated from ৳${currentBal} to ৳${parsedBalance}`,
-        title: diff > 0 ? "Admin Balance Adjustment (Credit)" : "Admin Balance Adjustment (Debit)",
-      });
-
-      toast.success(
-        res.data?.message || `Balance successfully set to ৳${parsedBalance}!`
-      );
-
-      setNoteInput("");
-      await handleSearch(lastSearched || data.user.email);
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message || error?.message || "Failed to update balance"
       );
     } finally {
       setUpdating(false);
@@ -557,32 +508,6 @@ export default function Check() {
                   </div>
                 </div>
 
-                {/* Fund Operation Tabs */}
-                <div className="flex border-b border-gray-200 mb-5">
-                  <button
-                    onClick={() => setFundMode("credit")}
-                    className={`pb-3 px-4 text-xs sm:text-sm font-bold transition-all relative ${
-                      fundMode === "credit"
-                        ? "text-teal-600 border-b-2 border-teal-600"
-                        : "text-gray-400 hover:text-gray-700"
-                    }`}
-                  >
-                    Send / Adjust Amount
-                  </button>
-                  <button
-                    onClick={() => setFundMode("exact")}
-                    className={`pb-3 px-4 text-xs sm:text-sm font-bold transition-all relative ${
-                      fundMode === "exact"
-                        ? "text-teal-600 border-b-2 border-teal-600"
-                        : "text-gray-400 hover:text-gray-700"
-                    }`}
-                  >
-                    Set Exact Balance
-                  </button>
-                </div>
-
-                {/* Mode A: Credit / Send Amount */}
-                {fundMode === "credit" && (
                   <form onSubmit={handleCreditSubmit} className="space-y-4">
                     {/* Operation Type Switcher (Add vs Deduct) */}
                     <div className="flex items-center gap-2 p-1 rounded-xl bg-gray-100 w-full sm:w-max">
@@ -708,87 +633,9 @@ export default function Check() {
                       )}
                     </Button>
                   </form>
-                )}
-
-                {/* Mode B: Set Exact Balance */}
-                {fundMode === "exact" && (
-                  <form onSubmit={handleExactSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                        New Total Balance (৳)
-                      </label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 font-bold">
-                          ৳
-                        </span>
-                        <input
-                          type="number"
-                          step="any"
-                          min="0"
-                          value={exactInput}
-                          onChange={(e) => setExactInput(e.target.value)}
-                          placeholder="Enter new exact balance"
-                          className="w-full pl-8 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-gray-900 font-semibold"
-                        />
-                      </div>
-                      <p className="text-[11px] text-gray-400 mt-1">
-                        Updates the user's balance and automatically logs the difference as a transaction.
-                      </p>
-                    </div>
-
-                    {/* Note Input */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                        <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-gray-500" />
-                        Transaction Note / Reason (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={noteInput}
-                        onChange={(e) => setNoteInput(e.target.value)}
-                        placeholder="e.g. Account balance reconciliation..."
-                        className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-gray-900"
-                      />
-                    </div>
-
-                    {exactInput !== "" && !isNaN(parseFloat(exactInput)) && (
-                      <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 text-xs flex items-center justify-between">
-                        <span className="text-gray-500">Difference from current:</span>
-                        <span
-                          className={`font-bold font-mono ${
-                            parseFloat(exactInput) - currentBalance >= 0
-                              ? "text-emerald-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {parseFloat(exactInput) - currentBalance >= 0 ? "+" : ""}
-                          ৳{(parseFloat(exactInput) - currentBalance).toFixed(2)}
-                        </span>
-                      </div>
-                    )}
-
-                    <Button
-                      type="submit"
-                      disabled={updating || exactInput === "" || isNaN(parseFloat(exactInput))}
-                      className="w-full py-3 bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-700 hover:to-indigo-700 rounded-xl normal-case font-bold shadow-sm transition-all flex items-center justify-center gap-2"
-                    >
-                      {updating ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Saving & Logging Transaction...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircleIcon className="w-4 h-4" />
-                          Update Total Balance to ৳{exactInput || "0"}
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                )}
-              </div>
-            </Card>
-          </div>
+                </div>
+              </Card>
+            </div>
 
           {/* Row 2: User's Recent Balance Transactions Table */}
           <TableCard
@@ -804,7 +651,7 @@ export default function Check() {
                   </p>
                 </div>
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 self-start sm:self-auto">
-                  {userTransactions.length} Recorded Transactions
+                  Showing Latest {userTransactions.slice(0, 15).length} Transactions
                 </span>
               </div>
             }
@@ -826,7 +673,7 @@ export default function Check() {
                     ]}
                   />
                   <tbody className="divide-y divide-gray-100">
-                    {userTransactions.map((tx) => {
+                    {userTransactions.slice(0, 15).map((tx) => {
                       const isCredit = tx.type === "credit";
                       return (
                         <tr key={tx._id} className="hover:bg-gray-50/70 transition-colors">
