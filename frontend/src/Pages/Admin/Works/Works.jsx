@@ -52,8 +52,8 @@ const Works = () => {
               </div>
             </div>
 
-            {/* Right 3D Illustration */}
-            <div className="lg:col-span-4 flex justify-center">
+            {/* Right 3D Illustration - Hidden on mobile */}
+            <div className="hidden lg:flex lg:col-span-4 justify-center">
               <div className="relative w-44 sm:w-52 lg:w-60 aspect-square flex items-center justify-center">
                 <div className="absolute inset-0 bg-teal-400/15 rounded-full blur-2xl pointer-events-none"></div>
                 <img

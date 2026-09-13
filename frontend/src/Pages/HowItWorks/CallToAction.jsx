@@ -15,8 +15,8 @@ const CallToAction = () => {
         >
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6 sm:gap-8 text-center md:text-left">
                 
-                {/* Gift Box CSS Illustration */}
-                <div className="w-24 h-24 shrink-0 relative flex items-center justify-center group">
+                {/* Gift Box CSS Illustration - Hidden on mobile */}
+                <div className="hidden sm:flex w-24 h-24 shrink-0 relative items-center justify-center group">
                     <div className="absolute inset-0 bg-teal-400/20 rounded-2xl opacity-40 filter blur-xl group-hover:opacity-60 transition-opacity duration-300"></div>
                     <div className="relative w-20 h-20">
                         {/* Box Lid */}

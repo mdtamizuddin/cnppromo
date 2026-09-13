@@ -183,8 +183,8 @@ const PaymentProof = () => {
               </div>
             </div>
 
-            {/* Right illustration / graphic */}
-            <div className="lg:col-span-4 flex justify-center">
+            {/* Right illustration / graphic - Hidden on mobile */}
+            <div className="hidden lg:flex lg:col-span-4 justify-center">
               <div className="relative w-44 sm:w-52 aspect-square flex items-center justify-center">
                 <div className="absolute inset-0 bg-teal-400/15 rounded-full blur-2xl pointer-events-none"></div>
                 <img

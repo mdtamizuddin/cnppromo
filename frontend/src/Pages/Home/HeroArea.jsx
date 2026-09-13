@@ -126,12 +126,12 @@ const HeroArea = () => {
                     </div>
                 </motion.div>
 
-                {/* Right Illustration */}
+                {/* Right Illustration - Hidden on mobile */}
                 <motion.div 
                     initial={{ opacity: 0, scale: 0.9, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
-                    className="relative flex justify-center lg:justify-end"
+                    className="hidden lg:flex relative justify-center lg:justify-end"
                 >
                     <HeroIllustration />
                 </motion.div>

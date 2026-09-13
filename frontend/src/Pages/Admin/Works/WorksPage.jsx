@@ -161,8 +161,8 @@ const WorksPage = () => {
               </div>
             </div>
 
-            {/* Right Big Icon Card */}
-            <div className="lg:col-span-4 flex justify-center">
+            {/* Right Big Icon Card - Hidden on mobile */}
+            <div className="hidden lg:flex lg:col-span-4 justify-center">
               <div className="w-32 sm:w-40 aspect-square rounded-3xl bg-white/80 backdrop-blur-md border border-teal-200/80 flex items-center justify-center text-6xl shadow-sm">
                 {currentCategory.icon}
               </div>

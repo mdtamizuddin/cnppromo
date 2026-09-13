@@ -30,12 +30,12 @@ const HowItWorksHero = () => {
                     </p>
                 </motion.div>
 
-                {/* Right Illustration */}
+                {/* Right Illustration - Hidden on mobile */}
                 <motion.div 
                     initial={{ opacity: 0, x: 30 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
-                    className="flex-1 w-full flex justify-center relative"
+                    className="hidden md:flex flex-1 w-full justify-center relative"
                 >
                     <div className="relative w-[300px] h-[300px] md:w-[350px] md:h-[350px]">
                         <div className="absolute inset-0 bg-primary rounded-full opacity-10 blur-xl"></div>
