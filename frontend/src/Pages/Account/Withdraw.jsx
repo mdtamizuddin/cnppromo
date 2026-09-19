@@ -27,7 +27,7 @@ import { refreshUser } from "../../redux/features/user/userSlice";
 import HistoryTable from "./HistoryTable";
 import Loader from "../../Components/Loader";
 
-const quickAmounts = [300, 500, 1000, 2000, 5000];
+const quickAmounts = [90, 300, 500, 1000, 2000, 5000];
 const rechargeQuickAmounts = [30, 50, 100, 200, 500];
 
 const formatCurrency = (val) => {
@@ -237,7 +237,17 @@ const Withdraw = () => {
   const withdrawCharge = 0.0;
   const netReceive = Math.max(0, numAmount - withdrawCharge);
 
-  const activeQuickAmounts = currentMethod.isRecharge ? rechargeQuickAmounts : quickAmounts;
+  const activeQuickAmounts = useMemo(() => {
+    const { minAmount: min, maxAmount: max } = currentMethod;
+    const base = currentMethod.isRecharge ? rechargeQuickAmounts : quickAmounts;
+    const withinRange = base.filter((qa) => qa >= min && qa <= max);
+    if (withinRange.length >= 3) return withinRange;
+
+    // Fallback for gateways whose min/max don't overlap the preset pills
+    // (e.g. a custom ৳90–৳1000 method) — derive pills from its own range instead.
+    const midpoint = Math.round((min + max) / 2);
+    return [...new Set([min, midpoint, max])].filter((v) => v > 0);
+  }, [currentMethod]);
 
   const isBelowMin = numAmount > 0 && numAmount < currentMethod.minAmount;
   const isAboveMax = numAmount > currentMethod.maxAmount;
@@ -499,8 +509,8 @@ const Withdraw = () => {
                           key={m.id}
                           onClick={() => setSelectedMethod(m.id)}
                           className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${isSelected
-                              ? m.bgActive
-                              : "border-gray-200/90 bg-white hover:bg-gray-50/80"
+                            ? m.bgActive
+                            : "border-gray-200/90 bg-white hover:bg-gray-50/80"
                             }`}
                         >
                           <div className="flex items-center gap-3">
@@ -525,8 +535,8 @@ const Withdraw = () => {
                           {/* Radio circle */}
                           <div
                             className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isSelected
-                                ? "bg-[#e81c78] text-white shadow-sm ring-4 ring-pink-100"
-                                : "border-2 border-gray-300 bg-white"
+                              ? "bg-[#e81c78] text-white shadow-sm ring-4 ring-pink-100"
+                              : "border-2 border-gray-300 bg-white"
                               }`}
                           >
                             {isSelected && <CheckIcon className="w-3.5 h-3.5 stroke-[3]" />}
@@ -547,11 +557,10 @@ const Withdraw = () => {
                       <button
                         type="button"
                         onClick={() => setEditingAccount((v) => !v)}
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors cursor-pointer ${
-                          editingAccount
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors cursor-pointer ${editingAccount
                             ? "bg-teal-100 text-teal-700 hover:bg-teal-200"
                             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        }`}
+                          }`}
                         title={
                           editingAccount
                             ? "এডিট শেষ করে লক করুন"
@@ -581,11 +590,10 @@ const Withdraw = () => {
                         onChange={(e) =>
                           setAccount(e.target.value.replace(/[^0-9]/g, ""))
                         }
-                        className={`w-full px-4 py-3.5 border rounded-2xl text-sm font-mono font-bold text-gray-900 placeholder-gray-400 focus:outline-none transition-all ${
-                          editingAccount
+                        className={`w-full px-4 py-3.5 border rounded-2xl text-sm font-mono font-bold text-gray-900 placeholder-gray-400 focus:outline-none transition-all ${editingAccount
                             ? "bg-white border-purple-300 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 pr-11"
                             : "bg-gray-100 border-gray-200 cursor-not-allowed pr-11"
-                        }`}
+                          }`}
                       />
                       {account.length === 11 && (
                         <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500 flex items-center gap-1">
@@ -642,8 +650,8 @@ const Withdraw = () => {
                           type="button"
                           onClick={() => setAmount(qa.toString())}
                           className={`py-2.5 rounded-xl text-xs font-bold transition-all ${isSelected
-                              ? "bg-purple-600 text-white shadow-sm shadow-purple-500/20 scale-[1.02]"
-                              : "bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-100/80"
+                            ? "bg-purple-600 text-white shadow-sm shadow-purple-500/20 scale-[1.02]"
+                            : "bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-100/80"
                             }`}
                         >
                           ৳{qa.toLocaleString()}
@@ -692,8 +700,8 @@ const Withdraw = () => {
                   onClick={handleContinueToConfirm}
                   disabled={!canProceedToConfirm}
                   className={`w-full py-4 rounded-2xl font-black text-sm tracking-wide shadow-lg transition-all flex items-center justify-center gap-2 ${canProceedToConfirm
-                      ? "bg-gradient-to-r from-[#d9176c] via-[#b81da8] to-[#6d25d9] hover:from-[#c41360] hover:to-[#5e1ec2] text-white shadow-pink-500/25 active:scale-[0.99]"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                    ? "bg-gradient-to-r from-[#d9176c] via-[#b81da8] to-[#6d25d9] hover:from-[#c41360] hover:to-[#5e1ec2] text-white shadow-pink-500/25 active:scale-[0.99]"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
                     }`}
                 >
                   <span>Continue</span>
@@ -926,9 +934,14 @@ const Withdraw = () => {
               <span>জরুরি তথ্য</span>
             </div>
             <ul className="text-[11px] text-gray-600 space-y-2 list-disc pl-4">
-              <li>সর্বনিম্ন উত্তোলনের সীমা ৳৩০ (মোবাইল রিচার্জ) / ৳৩০০ (বিকাশ/নগদ/রকেট)।</li>
+              <li>
+                সর্বনিম্ন {currentMethod.isRecharge ? "রিচার্জের" : "উত্তোলনের"} সীমা ৳
+                {formatCurrency(currentMethod.minAmount)} ({currentMethod.name})।
+              </li>
               <li>পেমেন্ট পৌঁছাতে সর্বোচ্চ ২৪ থেকে ৪৮ ঘণ্টা সময় লাগতে পারে।</li>
-              <li>ভুল অ্যাকাউন্ট নম্বরের ক্ষেত্রে দ্রুত সাপোর্টে জানান।</li>
+              <li>
+                ভুল {currentMethod.isRecharge ? "মোবাইল" : "অ্যাকাউন্ট"} নম্বরের ক্ষেত্রে দ্রুত সাপোর্টে জানান।
+              </li>
             </ul>
           </div>
         </div>
