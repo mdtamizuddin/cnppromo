@@ -27,7 +27,7 @@ import { refreshUser } from "../../redux/features/user/userSlice";
 import HistoryTable from "./HistoryTable";
 import Loader from "../../Components/Loader";
 
-const quickAmounts = [90, 300, 500, 1000, 2000, 5000];
+const quickAmounts = [90, 300, 500, 1000];
 const rechargeQuickAmounts = [30, 50, 100, 200, 500];
 
 const formatCurrency = (val) => {
@@ -558,8 +558,8 @@ const Withdraw = () => {
                         type="button"
                         onClick={() => setEditingAccount((v) => !v)}
                         className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors cursor-pointer ${editingAccount
-                            ? "bg-teal-100 text-teal-700 hover:bg-teal-200"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? "bg-teal-100 text-teal-700 hover:bg-teal-200"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                           }`}
                         title={
                           editingAccount
@@ -591,8 +591,8 @@ const Withdraw = () => {
                           setAccount(e.target.value.replace(/[^0-9]/g, ""))
                         }
                         className={`w-full px-4 py-3.5 border rounded-2xl text-sm font-mono font-bold text-gray-900 placeholder-gray-400 focus:outline-none transition-all ${editingAccount
-                            ? "bg-white border-purple-300 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 pr-11"
-                            : "bg-gray-100 border-gray-200 cursor-not-allowed pr-11"
+                          ? "bg-white border-purple-300 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 pr-11"
+                          : "bg-gray-100 border-gray-200 cursor-not-allowed pr-11"
                           }`}
                       />
                       {account.length === 11 && (
