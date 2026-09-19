@@ -28,6 +28,7 @@ import HistoryTable from "./HistoryTable";
 import Loader from "../../Components/Loader";
 
 const quickAmounts = [300, 500, 1000, 2000, 5000];
+const rechargeQuickAmounts = [30, 50, 100, 200, 500];
 
 const formatCurrency = (val) => {
   const num = Number(val) || 0;
@@ -133,11 +134,13 @@ const Withdraw = () => {
           bgActive = "border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/20";
         }
 
+        const isRecharge = nameLower.includes("recharge");
+
         return {
           id: g.name,
           gatewayId: g._id,
           name: g.name,
-          subtitle: g.subName || "ক্যাশআউট",
+          subtitle: g.subName || (isRecharge ? "মোবাইল রিচার্জ" : "ক্যাশআউট"),
           logo: g.icon || logo,
           minAmount: Number(g.minAmount) || 300,
           maxAmount: Number(g.maxAmount) || 25000,
@@ -147,6 +150,7 @@ const Withdraw = () => {
           themeColor,
           accentColor,
           bgActive,
+          isRecharge,
         };
       });
   }, [dynamicGateways]);
@@ -208,6 +212,7 @@ const Withdraw = () => {
       themeColor: "from-gray-500 to-gray-700",
       accentColor: "#6b7280",
       bgActive: "",
+      isRecharge: false,
     };
 
   // When the selected gateway changes, auto-fill its saved account (and lock
@@ -231,6 +236,8 @@ const Withdraw = () => {
   const numAmount = Number(amount || 0);
   const withdrawCharge = 0.0;
   const netReceive = Math.max(0, numAmount - withdrawCharge);
+
+  const activeQuickAmounts = currentMethod.isRecharge ? rechargeQuickAmounts : quickAmounts;
 
   const isBelowMin = numAmount > 0 && numAmount < currentMethod.minAmount;
   const isAboveMax = numAmount > currentMethod.maxAmount;
@@ -533,7 +540,9 @@ const Withdraw = () => {
                   <div className="pt-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="block text-xs font-bold text-gray-700">
-                        আপনার {currentMethod.name} অ্যাকাউন্ট নম্বর লিখুন:
+                        {currentMethod.isRecharge
+                          ? "যে মোবাইল নম্বরে রিচার্জ করতে চান তা লিখুন:"
+                          : `আপনার ${currentMethod.name} অ্যাকাউন্ট নম্বর লিখুন:`}
                       </label>
                       <button
                         type="button"
@@ -589,11 +598,6 @@ const Withdraw = () => {
                     </div>
                   </div>
 
-                  {/* Info note */}
-                  <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-100 flex items-center gap-2 text-xs text-purple-900 font-medium">
-                    <InformationCircleIcon className="w-4 h-4 text-purple-600 shrink-0" />
-                    <span>Withdraw only to your own account number.</span>
-                  </div>
                 </div>
 
                 {/* 2. Enter Withdraw Amount Card */}
@@ -630,7 +634,7 @@ const Withdraw = () => {
 
                   {/* Quick Amount Pills */}
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 pt-1">
-                    {quickAmounts.map((qa) => {
+                    {activeQuickAmounts.map((qa) => {
                       const isSelected = Number(amount) === qa;
                       return (
                         <button
@@ -666,8 +670,15 @@ const Withdraw = () => {
                   <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-100 flex items-start gap-2 text-xs text-purple-900 font-medium">
                     <InformationCircleIcon className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
                     <div>
-                      <p>Minimum withdraw amount is ৳{formatCurrency(currentMethod.minAmount)}.</p>
-                      <p className="text-purple-600/80 text-[11px]">Withdraw charges may apply.</p>
+                      <p>
+                        Minimum {currentMethod.isRecharge ? "recharge" : "withdraw"} amount is ৳
+                        {formatCurrency(currentMethod.minAmount)}.
+                      </p>
+                      <p className="text-purple-600/80 text-[11px]">
+                        {currentMethod.isRecharge
+                          ? "Recharge charges may apply."
+                          : "Withdraw charges may apply."}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -915,7 +926,7 @@ const Withdraw = () => {
               <span>জরুরি তথ্য</span>
             </div>
             <ul className="text-[11px] text-gray-600 space-y-2 list-disc pl-4">
-              <li>সর্বনিম্ন উত্তোলনের সীমা ৳১০০ (রিচার্জ) / ৳৩০০ (বিকাশ/নগদ/রকেট)।</li>
+              <li>সর্বনিম্ন উত্তোলনের সীমা ৳৩০ (মোবাইল রিচার্জ) / ৳৩০০ (বিকাশ/নগদ/রকেট)।</li>
               <li>পেমেন্ট পৌঁছাতে সর্বোচ্চ ২৪ থেকে ৪৮ ঘণ্টা সময় লাগতে পারে।</li>
               <li>ভুল অ্যাকাউন্ট নম্বরের ক্ষেত্রে দ্রুত সাপোর্টে জানান।</li>
             </ul>
@@ -972,7 +983,7 @@ const Withdraw = () => {
 
           <div className="p-3 bg-purple-50/60 rounded-2xl border border-purple-100">
             <p className="font-bold text-purple-900 mb-1">২. সর্বনিম্ন উইথড্রয়াল সীমা কত?</p>
-            <p>বিকাশ/নগদ/রকেটে সর্বনিম্ন ৳৩০০.০০ এবং মোবাইল রিচার্জে সর্বনিম্ন ৳১০০.০০ উত্তোলন করা যায়।</p>
+            <p>বিকাশ/নগদ/রকেটে সর্বনিম্ন ৳৩০০.০০ এবং মোবাইল রিচার্জে সর্বনিম্ন ৳৩০.০০ উত্তোলন করা যায়।</p>
           </div>
 
           <div className="p-3 bg-purple-50/60 rounded-2xl border border-purple-100">
