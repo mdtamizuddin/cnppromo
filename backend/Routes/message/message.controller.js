@@ -64,11 +64,13 @@ const createNewChat = async (req, res) => {
                     ],
                 }),
             ]);
-            if (!targetUser) {
-                return res.status(404).send({ message: "User not found" });
-            }
-            if (!existing && !STAFF_ROLES.includes(targetUser.role)) {
-                return res.status(403).send({ message: "You can only start a conversation with support staff" });
+            if (!existing) {
+                if (!targetUser) {
+                    return res.status(404).send({ message: "User not found" });
+                }
+                if (!STAFF_ROLES.includes(targetUser.role)) {
+                    return res.status(403).send({ message: "You can only start a conversation with support staff" });
+                }
             }
         }
         const result = await messageService.createNewChat({ owner: req.user._id, user: target });

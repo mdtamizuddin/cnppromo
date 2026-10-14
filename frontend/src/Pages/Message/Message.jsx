@@ -3,6 +3,7 @@ import { useInfiniteQuery, useQueryClient } from "react-query";
 import { useSelector } from "react-redux";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { ClockIcon } from "@heroicons/react/24/outline";
+import moment from "moment";
 import { api } from "../../util/axios";
 import { useSocketContext } from "../../Components/SocketContext";
 import ChatList from "./ChatList";
@@ -96,7 +97,34 @@ const Message = () => {
     if (!message?._id || appliedMessageRef.current === message._id) return;
     appliedMessageRef.current = message._id;
 
-    let missing = false;
+    const current = queryClient.getQueryData(listKey);
+    if (!current) return;
+
+    const belongs = (c) =>
+      String(c._id) === String(message.chat) ||
+      (String(c?.user?._id) === String(message.sender) &&
+        String(c?.owner?._id || c?.owner) === String(message.receiver));
+
+    // Checked on the cached data rather than inside setQueryData: a no-op
+    // setQueryData still marks the query as not fetching, which let the refetch
+    // below run alongside a fetch already in flight.
+    if (!current.pages.some((page) => page.chats.some(belongs))) {
+      // Not in the loaded pages. Refetch only when the server could now return
+      // it for these filters, so messages in chats the filter excludes cost nothing.
+      const openUserId = chatId ? queryClient.getQueryData(["chat", chatId])?.user?._id : null;
+      const incoming = String(message.sender) !== String(user?._id);
+      const fromOpenChat = openUserId && String(message.sender) === String(openUserId);
+      const moreOnServer = Boolean(current.pages[current.pages.length - 1]?.nextCursor);
+      const dateMatches = !date || date === moment(message.createdAt).format("YYYY-MM-DD");
+      const tabMatches = sortby === "All" || (sortby === "Unread" && incoming && !fromOpenChat);
+      if (dateMatches && (moreOnServer || (tabMatches && !search))) {
+        // cancelRefetch restarts a fetch already in flight, which may have read
+        // the database before this message was saved.
+        queryClient.invalidateQueries(["chat-list", user?._id], {}, { cancelRefetch: true });
+      }
+      return;
+    }
+
     patchChatList((oldData) => {
       if (!oldData) return oldData;
       
@@ -106,12 +134,7 @@ const Message = () => {
       
       for (let i = 0; i < oldData.pages.length; i++) {
         const page = oldData.pages[i];
-        const idx = page.chats.findIndex(
-          (c) =>
-            String(c._id) === String(message.chat) ||
-            (String(c?.user?._id) === String(message.sender) &&
-              String(c?.owner?._id || c?.owner) === String(message.receiver))
-        );
+        const idx = page.chats.findIndex(belongs);
         if (idx !== -1) {
           foundChat = page.chats[idx];
           chatPageIdx = i;
@@ -120,12 +143,7 @@ const Message = () => {
         }
       }
       
-      if (!foundChat) {
-        // Not in the loaded pages (an older or brand-new conversation);
-        // refetched below so it surfaces at the top.
-        missing = true;
-        return oldData;
-      }
+      if (!foundChat) return oldData;
 
       const incoming = String(message.sender) === String(foundChat?.user?._id);
       const isOpen = String(foundChat._id) === String(chatId);
@@ -150,14 +168,18 @@ const Message = () => {
       
       return { ...oldData, pages: newPages };
     });
-    if (missing) queryClient.invalidateQueries(["chat-list", user?._id]);
-  }, [message, chatId, user?._id, patchChatList, queryClient]);
+  }, [message, chatId, user?._id, sortby, search, date, listKey, patchChatList, queryClient]);
 
   // Listen for real-time presence updates to update green online dots live
   useEffect(() => {
     if (!socket) return;
     const handlePresence = (payload) => {
       if (!payload?.userId) return;
+      const current = queryClient.getQueryData(listKey);
+      const listed = current?.pages?.some((page) =>
+        page.chats.some((c) => String(c?.user?._id) === String(payload.userId))
+      );
+      if (!listed) return;
       patchChatList((oldData) => {
         if (!oldData) return oldData;
         return {
@@ -183,7 +205,7 @@ const Message = () => {
 
     socket.on("user:presence", handlePresence);
     return () => socket.off("user:presence", handlePresence);
-  }, [socket, patchChatList]);
+  }, [socket, listKey, patchChatList, queryClient]);
 
   const openChat = useCallback(
     (id) => {
