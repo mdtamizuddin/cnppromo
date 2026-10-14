@@ -3,6 +3,7 @@ import { Card, Input, Button, Chip, Spinner } from '@material-tailwind/react';
 import { useInfiniteQuery } from 'react-query';
 import { useInView } from 'react-intersection-observer';
 import { api } from '../../../../util/axios';
+import { useDebounce } from '../../../../hooks/useDebounce';
 import moment from 'moment';
 import toast from 'react-hot-toast';
 import {
@@ -31,10 +32,17 @@ const StatCard = ({ title, value, icon: Icon, colorClass, bgClass }) => (
 
 const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", title = "Users", subtitle = "Manage users in the system." }) => {
   const [option, setOption] = useState({ limit: 50 });
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebounce(searchInput, 400);
+  const [activeSearch, setActiveSearch] = useState("");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [selectedUser, setSelectedUser] = useState(null);
   const { ref, inView } = useInView({ threshold: 0.1 });
+
+  // Debounced search sync
+  useEffect(() => {
+    setActiveSearch(debouncedSearch.trim());
+  }, [debouncedSearch]);
 
   const handleCopy = (text, type) => {
     navigator.clipboard.writeText(text);
@@ -43,18 +51,23 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
 
   const searchHandler = (e) => {
     e.preventDefault();
-    setSearch(e.target.search.value);
+    setActiveSearch(searchInput.trim());
   };
 
-  const { data, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
-    ["Premium Users Table", status, lock, role, option.limit, search, dateRange],
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setActiveSearch("");
+  };
+
+  const { data, isLoading, isFetching, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
+    ["Premium Users Table", status, lock, role, option.limit, activeSearch, dateRange],
     async ({ pageParam = null }) => {
       let url = `/user?limit=${option.limit}&reverse=true`;
       if (status) url += `&status=${status}`;
       if (lock) url += `&lock=true`;
       if (role === "admin") url += `&admin=true`;
       if (role === "moderator") url += `&moderator=true`;
-      if (search) url += `&search=${search}`;
+      if (activeSearch) url += `&search=${encodeURIComponent(activeSearch)}`;
       if (pageParam) url += `&cursor=${pageParam}`;
       if (dateRange.start) url += `&startDate=${dateRange.start}`;
       if (dateRange.end) url += `&endDate=${dateRange.end}`;
@@ -78,6 +91,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
   const totalPending = data?.pages[0]?.pending || 0;
   const totalActive = data?.pages[0]?.active || 0;
   const filteredCount = data?.pages[0]?.total || 0;
+  const isSearching = (isFetching && !isFetchingNextPage) || (searchInput.trim() !== activeSearch);
 
   return (
     <div className="w-full pb-10">
@@ -138,15 +152,34 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
         {/* Table Filters Header */}
         <div className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-200 bg-white">
           <form onSubmit={searchHandler} className="w-full md:w-80 relative">
-            <Input
-              name="search"
-              placeholder="Search by name, email or ID..."
-              className="!border !border-gray-200 bg-gray-50 text-gray-900 shadow-none ring-0 placeholder:text-gray-400 focus:!border-blue-500 focus:bg-white transition-colors"
-              labelProps={{
-                className: "hidden",
-              }}
-              icon={<button type="submit"><MagnifyingGlassIcon className="h-4 w-4 text-gray-400" /></button>}
-            />
+            <div className="relative w-full">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <MagnifyingGlassIcon className="h-4 w-4" />
+              </span>
+              <input
+                type="text"
+                name="search"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search by name, email, phone, ID..."
+                className="w-full h-10 pl-9 pr-14 text-sm bg-gray-50 text-gray-900 placeholder:text-gray-400 border border-gray-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white transition-all shadow-none"
+              />
+              <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1">
+                {isSearching && (
+                  <Spinner className="h-4 w-4 text-blue-500" />
+                )}
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200/60 transition-colors"
+                    title="Clear search"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
           </form>
 
           <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto mt-3 md:mt-0">
@@ -182,7 +215,9 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
           {isLoading && allUsers.length === 0 ? (
             <div className="text-center p-8 text-gray-400 font-medium">Loading users...</div>
           ) : allUsers.length === 0 ? (
-            <div className="text-center p-8 text-gray-400 font-medium">No users found</div>
+            <div className="text-center p-8 text-gray-400 font-medium">
+              {activeSearch ? `No users found matching "${activeSearch}"` : "No users found"}
+            </div>
           ) : (
             allUsers.map((user) => (
               <div key={user._id} className="p-3.5 space-y-2.5 hover:bg-blue-50/20 transition-colors">
@@ -279,7 +314,9 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
               {isLoading && allUsers.length === 0 ? (
                 <tr><td colSpan="8" className="text-center p-12 text-gray-400 font-medium">Loading users...</td></tr>
               ) : allUsers.length === 0 ? (
-                <tr><td colSpan="8" className="text-center p-12 text-gray-400 font-medium">No users found</td></tr>
+                <tr><td colSpan="8" className="text-center p-12 text-gray-400 font-medium">
+                  {activeSearch ? `No users found matching "${activeSearch}"` : "No users found"}
+                </td></tr>
               ) : (
                 allUsers.map((user) => (
                   <tr key={user._id} className="hover:bg-gray-50/80 hover:shadow-[0_2px_15px_-3px_rgba(6,81,237,0.08)] transition-all duration-300 relative z-0 hover:z-10 group border-b border-gray-100 last:border-0">
