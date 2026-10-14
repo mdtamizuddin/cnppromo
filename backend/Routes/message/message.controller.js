@@ -3,6 +3,7 @@ const roleChecker = require("../../util/roleChecker");
 const messageService = require("./message.service");
 const Chat = require("./chat.model");
 const Message = require("./message.model");
+const User = require("../User/user.model");
 const router = require("express").Router();
 
 // Admins and moderators run support tooling over other people's conversations;
@@ -31,28 +32,46 @@ const loadOwnChat = async (req, res, chatId) => {
 
 const createMessage = async (req, res) => {
     try {
-        const data = {
-            ...req.body,
-            sender: req.user._id
-        };
-        const result = await messageService.createMessage(data);
+        // The sender is always the caller; the service checks the rest against the chat.
+        const result = await messageService.createMessage(req.user._id, req.body);
         res.send(result);
     } catch (error) {
-        res.status(500).send({
+        res.status(error.status || 500).send({
             message: error.message
         });
     }
 };
 
+const STAFF_ROLES = ["admin", "moderator"];
+
 const createNewChat = async (req, res) => {
     try {
         // The caller is always the owner of the chat they create — taking `owner`
         // from the body would let anyone open a thread on someone else's behalf.
-        const data = {
-            ...req.body,
-            owner: req.user._id
-        };
-        const result = await messageService.createNewChat(data);
+        const target = String(req.body?.user ?? "");
+        if (!/^[a-f0-9]{24}$/i.test(target)) {
+            return res.status(400).send({ message: "A valid user is required" });
+        }
+        // Regular users may only start new conversations with staff. A chat that
+        // already exists in either direction still opens, so no thread is lost.
+        if (!isPrivileged(req)) {
+            const [targetUser, existing] = await Promise.all([
+                User.findById(target).select("role").lean(),
+                Chat.exists({
+                    $or: [
+                        { owner: req.user._id, user: target },
+                        { owner: target, user: req.user._id },
+                    ],
+                }),
+            ]);
+            if (!targetUser) {
+                return res.status(404).send({ message: "User not found" });
+            }
+            if (!existing && !STAFF_ROLES.includes(targetUser.role)) {
+                return res.status(403).send({ message: "You can only start a conversation with support staff" });
+            }
+        }
+        const result = await messageService.createNewChat({ owner: req.user._id, user: target });
         res.send(result);
     } catch (error) {
         res.status(500).send({

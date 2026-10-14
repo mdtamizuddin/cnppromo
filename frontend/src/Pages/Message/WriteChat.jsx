@@ -45,6 +45,16 @@ const Composer = ({ socket, chat, reply, setReply }) => {
 
   const hasText = message.trim().length > 0;
 
+  /* ── Send failures ──────────────────────────────────────────────────── */
+  // The server rejects a send it cannot validate (e.g. the other user no longer
+  // exists); say so instead of letting the message silently vanish.
+  useEffect(() => {
+    if (!socket) return;
+    const onError = (payload) => toast.error(payload?.error || "Message could not be sent");
+    socket.on("message:error", onError);
+    return () => socket.off("message:error", onError);
+  }, [socket]);
+
   /* ── Auto-grow ──────────────────────────────────────────────────────── */
   useEffect(() => {
     const el = textareaRef.current;

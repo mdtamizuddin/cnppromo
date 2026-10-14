@@ -4,17 +4,76 @@ const mongoose = require('mongoose')
 const User = require("../User/user.model")
 const fs = require('fs')
 const { deleteFromS3 } = require("../../util/s3")
-const createMessage = async (data) => {
+// Fields a client may set on a new message. Everything else (sender, seen,
+// likes, deleted) is decided by the server.
+const MESSAGE_BODY_FIELDS = ["message", "image", "audio", "video"];
+
+const isObjectId = (value) => /^[a-f0-9]{24}$/i.test(String(value ?? ""));
+
+const httpError = (status, message) => Object.assign(new Error(message), { status });
+
+// Checks a send request against the chat it names and returns the document to
+// store. The sender must be one side of that chat and the receiver the other,
+// and a reply may only quote a message from the same conversation.
+const buildMessage = async (senderId, payload = {}) => {
+    if (!isObjectId(payload.chat) || !isObjectId(payload.receiver)) {
+        throw httpError(400, "chat and receiver are required");
+    }
+    // Plain strings from here on: a one-element array passes the format check
+    // above but must not reach Mongoose as an array.
+    const chatId = String(payload.chat);
+    const receiver = String(payload.receiver);
+    const reply = isObjectId(payload.reply) ? String(payload.reply) : null;
+
+    const chat = await Chat.findById(chatId).select("owner user").lean();
+    const sender = String(senderId);
+    const other = receiver;
+    const isParticipant = chat && (
+        (String(chat.owner) === sender && String(chat.user) === other) ||
+        (String(chat.owner) === other && String(chat.user) === sender)
+    );
+    if (!isParticipant) {
+        throw httpError(403, "You are not a participant of this chat");
+    }
+
+    const doc = { sender: senderId, receiver, chat: chatId };
+    for (const field of MESSAGE_BODY_FIELDS) {
+        if (typeof payload[field] === "string" && payload[field].trim()) {
+            doc[field] = payload[field];
+        }
+    }
+    if (!MESSAGE_BODY_FIELDS.some((field) => doc[field])) {
+        throw httpError(400, "Message is empty");
+    }
+
+    if (reply) {
+        // populate('reply') returns the quoted message, so a reply pointing outside
+        // this conversation would leak someone else's text. Drop it instead.
+        const inThread = await Message.exists({
+            _id: reply,
+            $or: [
+                { sender: senderId, receiver },
+                { sender: receiver, receiver: senderId },
+            ],
+        });
+        if (inThread) doc.reply = reply;
+    }
+
+    return doc;
+};
+
+const createMessage = async (senderId, payload) => {
     try {
+        const doc = await buildMessage(senderId, payload);
         const newMessage = new Message({
-            ...data,
+            ...doc,
             seen: false
         })
         const result = await newMessage.save()
         await Chat.updateMany({
             $or: [
-                { owner: data.sender, user: data.receiver },
-                { owner: data.receiver, user: data.sender },
+                { owner: doc.sender, user: doc.receiver },
+                { owner: doc.receiver, user: doc.sender },
             ],
         }, {
             message: result._id
@@ -356,8 +415,8 @@ const getAllMessages = async (query) => {
             ];
         }
         const messages = await Message.find(filter)
-            .populate('sender')
-            .populate('receiver')
+            .populate('sender', 'name username avatar')
+            .populate('receiver', 'name username avatar')
             .populate('reply')
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -374,7 +433,7 @@ const getMessages = async (query) => {
         const sender = query.sender;
         const receiver = query.receiver;
         const limit = Math.min(Math.max(parseInt(query.limit, 10) || 30, 1), 100);
-        const cursor = query.cursor; // ISO timestamp or message ID string
+        const cursor = query.cursor; // message _id (ISO timestamps from older clients still work)
 
         if (!sender || !receiver) {
             throw new Error("sender and receiver are required");
@@ -387,16 +446,23 @@ const getMessages = async (query) => {
             ]
         };
 
+        // Sorting and paging on _id lets the {sender, receiver, _id} indexes serve
+        // the query; sorting on createdAt forced an in-memory sort of the whole
+        // conversation, and equal timestamps could drop messages at page edges.
         if (cursor) {
-            const cursorDate = new Date(cursor);
-            if (!isNaN(cursorDate.getTime())) {
-                filter.createdAt = { $lt: cursorDate };
+            if (isObjectId(cursor)) {
+                filter._id = { $lt: new mongoose.Types.ObjectId(String(cursor)) };
+            } else {
+                const cursorDate = new Date(cursor);
+                if (!isNaN(cursorDate.getTime())) {
+                    filter.createdAt = { $lt: cursorDate };
+                }
             }
         }
 
         const messages = await Message.find(filter)
             .populate("reply")
-            .sort({ createdAt: -1 })
+            .sort({ _id: -1 })
             .limit(limit + 1)
             .lean();
 
@@ -405,7 +471,7 @@ const getMessages = async (query) => {
 
         // Oldest in this slice is the next cursor for older messages
         const nextCursor = hasNextPage && sliced.length > 0
-            ? sliced[sliced.length - 1].createdAt
+            ? String(sliced[sliced.length - 1]._id)
             : null;
 
         // Return chronological order (oldest to newest for this page)

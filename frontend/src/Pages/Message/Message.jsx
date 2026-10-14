@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useQueryClient } from "react-query";
 import { useSelector } from "react-redux";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
@@ -64,6 +64,22 @@ const Message = () => {
     keepPreviousData: true,
   });
 
+  const listKey = useMemo(
+    () => ["chat-list", user?._id, sortby, search, date],
+    [user?._id, sortby, search, date]
+  );
+
+  // Patch the loaded list in place. Skipped while the current filters have no
+  // data yet: react-query v3 records an updater's `undefined` as a successful
+  // empty result, which flashed an empty list in the middle of a fetch.
+  const patchChatList = useCallback(
+    (updater) => {
+      if (!queryClient.getQueryData(listKey)) return;
+      queryClient.setQueryData(listKey, updater);
+    },
+    [queryClient, listKey]
+  );
+
   const chats = data?.pages?.flatMap(page => page?.chats || []) || [];
   const counts = {
     All: data?.pages?.[0]?.totalAll || 0,
@@ -72,10 +88,16 @@ const Message = () => {
   };
 
   // Move the conversation a new message belongs to to the top of the list and
-  // refresh its preview, without refetching the whole list.
+  // refresh its preview, without refetching the whole list. Each socket message
+  // is applied once: re-applying the last one whenever the open chat, tab or
+  // filters changed bumped its unread count again.
+  const appliedMessageRef = useRef(null);
   useEffect(() => {
-    if (!message) return;
-    queryClient.setQueryData(["chat-list", user?._id, sortby, search, date], (oldData) => {
+    if (!message?._id || appliedMessageRef.current === message._id) return;
+    appliedMessageRef.current = message._id;
+
+    let missing = false;
+    patchChatList((oldData) => {
       if (!oldData) return oldData;
       
       let foundChat = null;
@@ -99,8 +121,10 @@ const Message = () => {
       }
       
       if (!foundChat) {
-         // Chat not found in current loaded pages, could refetch here if needed
-         return oldData;
+        // Not in the loaded pages (an older or brand-new conversation);
+        // refetched below so it surfaces at the top.
+        missing = true;
+        return oldData;
       }
 
       const incoming = String(message.sender) === String(foundChat?.user?._id);
@@ -126,14 +150,15 @@ const Message = () => {
       
       return { ...oldData, pages: newPages };
     });
-  }, [message, chatId, user?._id, sortby, search, date, queryClient]);
+    if (missing) queryClient.invalidateQueries(["chat-list", user?._id]);
+  }, [message, chatId, user?._id, patchChatList, queryClient]);
 
   // Listen for real-time presence updates to update green online dots live
   useEffect(() => {
     if (!socket) return;
     const handlePresence = (payload) => {
       if (!payload?.userId) return;
-      queryClient.setQueryData(["chat-list", user?._id, sortby, search, date], (oldData) => {
+      patchChatList((oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
@@ -158,7 +183,7 @@ const Message = () => {
 
     socket.on("user:presence", handlePresence);
     return () => socket.off("user:presence", handlePresence);
-  }, [socket, user?._id, sortby, search, date, queryClient]);
+  }, [socket, patchChatList]);
 
   const openChat = useCallback(
     (id) => {
@@ -167,7 +192,7 @@ const Message = () => {
       navigate(`${location.pathname}?${next.toString()}`);
       
       // Clearing the badge locally keeps the list honest until the next refetch.
-      queryClient.setQueryData(["chat-list", user?._id, sortby, search, date], (oldData) => {
+      patchChatList((oldData) => {
         if (!oldData) return oldData;
         return {
            ...oldData,
@@ -178,7 +203,7 @@ const Message = () => {
         }
       });
     },
-    [location.pathname, location.search, navigate, user?._id, sortby, search, date, queryClient]
+    [location.pathname, location.search, navigate, patchChatList]
   );
 
   const closeChat = useCallback(() => {

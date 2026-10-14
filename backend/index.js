@@ -359,10 +359,11 @@ io.on("connection", async (socket) => {
         });
       }
       // The sender is whoever the handshake authenticated, never whatever the
-      // payload claims — otherwise anyone could post as another user.
-      const result = await createMessage({ ...data, sender: userId });
+      // payload claims — otherwise anyone could post as another user. The
+      // service also checks the sender and receiver are the two sides of `chat`.
+      const result = await createMessage(userId, data);
 
-      sendToSpecificUser(data.receiver, result, "message");
+      sendToSpecificUser(String(result.receiver), result, "message");
       sendToSpecificUser(userId, result, "message");
     } catch (error) {
       console.error("socket message handler error:", error.message);
