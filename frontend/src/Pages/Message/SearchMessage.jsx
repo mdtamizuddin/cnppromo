@@ -48,14 +48,26 @@ const SearchMessage = ({ open, setOpen }) => {
       return;
     }
     setLoading(true);
+    // Abort the in-flight request when the term changes, so a slow response for
+    // an older term can never overwrite the results for the current one.
+    const controller = new AbortController();
     const timer = setTimeout(() => {
       api
-        .get(`/message/msg/search?text=${encodeURIComponent(search.trim())}&user=${user?._id}`)
+        .get(`/message/msg/search?text=${encodeURIComponent(search.trim())}&user=${user?._id}`, {
+          signal: controller.signal,
+        })
         .then((res) => setResult(res.data))
-        .catch(() => setResult(null))
-        .finally(() => setLoading(false));
+        .catch(() => {
+          if (!controller.signal.aborted) setResult(null);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
     }, 300);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [search, user?._id]);
 
   // A hit can be a message you sent or one you received; the conversation to open

@@ -1,6 +1,7 @@
 const Chat = require("./chat.model")
 const Message = require("./message.model")
 const mongoose = require('mongoose')
+const User = require("../User/user.model")
 const fs = require('fs')
 const { deleteFromS3 } = require("../../util/s3")
 const createMessage = async (data) => {
@@ -143,15 +144,74 @@ const getChats = async (filter = {}) => {
 //     }
 // };
 
-const chatByUser = async (id, query = {}) => {
+// Calendar day "YYYY-MM-DD" in the viewer's timezone → [start, end) as Dates.
+// `tz` is the browser's getTimezoneOffset() in minutes (e.g. -360 for UTC+6).
+const dayRange = (date, tz) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) return null;
+    const [y, m, d] = date.split("-").map(Number);
+    let offset = parseInt(tz, 10);
+    if (!Number.isFinite(offset) || Math.abs(offset) > 840) offset = 0;
+    const start = new Date(Date.UTC(y, m - 1, d) + offset * 60000);
+    if (Number.isNaN(start.getTime())) return null;
+    return { start, end: new Date(start.getTime() + 24 * 60 * 60 * 1000) };
+};
+
+const intersectIds = (a, b) => {
+    const keep = new Set(b.map(String));
+    return a.filter((x) => keep.has(String(x)));
+};
+
+// `privileged` callers (admin/moderator) may match on email and phone too. Regular
+// users only see staff in their list, and matching on contact details would let
+// them probe staff emails and phone numbers one keystroke at a time.
+const chatByUser = async (id, query = {}, { privileged = false } = {}) => {
     try {
-        const { cursor, sortby, limit = 40 } = query;
+        const { cursor, sortby, limit = 40, search, date, tz } = query;
         const parsedLimit = parseInt(limit) || 40;
+        const ownerId = new mongoose.Types.ObjectId(id);
+
+        // Conversation partners that still exist. The soft-delete hook drops deleted
+        // users from this distinct, so their chats leave both the list and the counts.
+        const chatUserIds = await Chat.distinct("user", { owner: id });
+        const liveUserIds = chatUserIds.length
+            ? await User.distinct("_id", { _id: { $in: chatUserIds } })
+            : [];
+
+        const term = typeof search === "string" ? search.trim() : "";
+        let visibleUserIds = liveUserIds;
+        if (term && liveUserIds.length) {
+            const regex = new RegExp(escapeRegex(term), "i");
+            const fields = privileged ? ["name", "username", "email", "phone"] : ["name", "username"];
+            visibleUserIds = await User.distinct("_id", {
+                _id: { $in: liveUserIds },
+                $or: fields.map((field) => ({ [field]: { $regex: regex } })),
+            });
+        }
+
+        // Partners with at least one message to the owner that is still unseen.
+        const unseenSenders = await Message.aggregate([
+            { $match: { receiver: ownerId, seen: { $in: [false, null] } } },
+            { $group: { _id: "$sender" } }
+        ]);
+        const unreadUserIds = intersectIds(unseenSenders.map((s) => s._id), liveUserIds);
 
         const filter = { owner: id };
 
         if (sortby === "Favourite") {
             filter.marked = true;
+        }
+        filter.user = {
+            $in: sortby === "Unread" ? intersectIds(visibleUserIds, unreadUserIds) : visibleUserIds
+        };
+
+        // A chat's `message` is its latest message, and an ObjectId carries its
+        // creation time, so the day filter needs no join.
+        const range = date ? dayRange(date, tz) : null;
+        if (range) {
+            filter.message = {
+                $gte: mongoose.Types.ObjectId.createFromTime(Math.floor(range.start.getTime() / 1000)),
+                $lt: mongoose.Types.ObjectId.createFromTime(Math.floor(range.end.getTime() / 1000)),
+            };
         }
 
         if (cursor) {
@@ -186,18 +246,14 @@ const chatByUser = async (id, query = {}) => {
         const validChats = pagedChats.filter(chat => chat.owner && chat.user);
         const userIds = validChats.map(chat => chat.user._id);
 
-        // Fetch global counts & unseen counts in parallel
-        const [totalAll, totalFavourite, unseenSenders, unseenCounts] = await Promise.all([
-            Chat.countDocuments({ owner: id }),
-            Chat.countDocuments({ owner: id, marked: true }),
-            Message.aggregate([
-                { $match: { receiver: new mongoose.Types.ObjectId(id), seen: { $in: [false, null] } } },
-                { $group: { _id: "$sender" } }
-            ]),
+        // Tab counts ignore search and day filters so the tabs stay stable while typing.
+        const [totalAll, totalFavourite, unseenCounts] = await Promise.all([
+            Chat.countDocuments({ owner: id, user: { $in: liveUserIds } }),
+            Chat.countDocuments({ owner: id, marked: true, user: { $in: liveUserIds } }),
             userIds.length > 0 ? Message.aggregate([
                 {
                     $match: {
-                        receiver: new mongoose.Types.ObjectId(id),
+                        receiver: ownerId,
                         sender: { $in: userIds },
                         seen: { $in: [false, null] }
                     }
@@ -229,7 +285,7 @@ const chatByUser = async (id, query = {}) => {
             nextCursor,
             totalAll,
             totalFavourite,
-            totalUnread: unseenSenders.length
+            totalUnread: unreadUserIds.length
         };
     } catch (error) {
         throw new Error(error.message || 'Error fetching chats');

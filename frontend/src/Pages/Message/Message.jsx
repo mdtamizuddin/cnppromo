@@ -43,15 +43,25 @@ const Message = () => {
     refetch,
     isFetchingNextPage
   } = useInfiniteQuery({
-    queryKey: ["chat-list", user?._id, sortby],
+    queryKey: ["chat-list", user?._id, sortby, search, date],
     queryFn: async ({ pageParam = null }) => {
       const res = await api.get(`/message/user/${user?._id}`, {
-        params: { cursor: pageParam, sortby, limit: 40 },
+        // Search and the day filter run on the server so they cover every
+        // conversation, not just the pages loaded so far.
+        params: {
+          cursor: pageParam,
+          sortby,
+          limit: 40,
+          search: search || undefined,
+          date: date || undefined,
+          tz: date ? new Date().getTimezoneOffset() : undefined,
+        },
       });
       return res.data;
     },
     getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
     enabled: !!user?._id,
+    keepPreviousData: true,
   });
 
   const chats = data?.pages?.flatMap(page => page?.chats || []) || [];
@@ -65,7 +75,7 @@ const Message = () => {
   // refresh its preview, without refetching the whole list.
   useEffect(() => {
     if (!message) return;
-    queryClient.setQueryData(["chat-list", user?._id, sortby], (oldData) => {
+    queryClient.setQueryData(["chat-list", user?._id, sortby, search, date], (oldData) => {
       if (!oldData) return oldData;
       
       let foundChat = null;
@@ -116,14 +126,14 @@ const Message = () => {
       
       return { ...oldData, pages: newPages };
     });
-  }, [message, chatId, user?._id, sortby, queryClient]);
+  }, [message, chatId, user?._id, sortby, search, date, queryClient]);
 
   // Listen for real-time presence updates to update green online dots live
   useEffect(() => {
     if (!socket) return;
     const handlePresence = (payload) => {
       if (!payload?.userId) return;
-      queryClient.setQueryData(["chat-list", user?._id, sortby], (oldData) => {
+      queryClient.setQueryData(["chat-list", user?._id, sortby, search, date], (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
@@ -148,7 +158,7 @@ const Message = () => {
 
     socket.on("user:presence", handlePresence);
     return () => socket.off("user:presence", handlePresence);
-  }, [socket, user?._id, sortby, queryClient]);
+  }, [socket, user?._id, sortby, search, date, queryClient]);
 
   const openChat = useCallback(
     (id) => {
@@ -157,7 +167,7 @@ const Message = () => {
       navigate(`${location.pathname}?${next.toString()}`);
       
       // Clearing the badge locally keeps the list honest until the next refetch.
-      queryClient.setQueryData(["chat-list", user?._id, sortby], (oldData) => {
+      queryClient.setQueryData(["chat-list", user?._id, sortby, search, date], (oldData) => {
         if (!oldData) return oldData;
         return {
            ...oldData,
@@ -168,7 +178,7 @@ const Message = () => {
         }
       });
     },
-    [location.pathname, location.search, navigate, user?._id, sortby, queryClient]
+    [location.pathname, location.search, navigate, user?._id, sortby, search, date, queryClient]
   );
 
   const closeChat = useCallback(() => {

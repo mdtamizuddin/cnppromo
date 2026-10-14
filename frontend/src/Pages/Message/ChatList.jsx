@@ -127,6 +127,7 @@ ChatRow.displayName = "ChatRow";
 
 const ChatList = ({ users, counts, refetch, loading, fetchNextPage, hasNextPage, isFetchingNextPage, activeId, onOpen, onOpenMenu }) => {
   const { user } = useSelector((state) => state.user);
+  const isStaff = user?.role === "admin" || user?.role === "moderator";
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -140,6 +141,7 @@ const ChatList = ({ users, counts, refetch, loading, fetchNextPage, hasNextPage,
   const [filterOpen, setFilterOpen] = useState(false);
   const [directorySearch, setDirectorySearch] = useState("");
   const [directoryQuery, setDirectoryQuery] = useState("");
+  const [searchInput, setSearchInput] = useState(nameParam);
 
   const setSortby = (value) => {
     const next = new URLSearchParams(location.search);
@@ -151,14 +153,23 @@ const ChatList = ({ users, counts, refetch, loading, fetchNextPage, hasNextPage,
     const next = new URLSearchParams(location.search);
     if (value) next.set("search", value);
     else next.delete("search");
-    navigate(`${location.pathname}?${next.toString()}`);
+    navigate(`${location.pathname}?${next.toString()}`, { replace: true });
   };
+
+  // Typing updates the box immediately; the URL (and so the server query)
+  // follows 300ms after the last keystroke.
+  useEffect(() => {
+    const value = searchInput.trim();
+    if (value === nameParam) return;
+    const timer = setTimeout(() => setNameParam(value), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput, nameParam]);
 
   const setDateParam = (value) => {
     const next = new URLSearchParams(location.search);
     if (value) next.set("date", value);
     else next.delete("date");
-    navigate(`${location.pathname}?${next.toString()}`);
+    navigate(`${location.pathname}?${next.toString()}`, { replace: true });
   };
 
   const directoryParams = useMemo(() => {
@@ -188,8 +199,10 @@ const ChatList = ({ users, counts, refetch, loading, fetchNextPage, hasNextPage,
   };
 
 
+  // The server already applies tab, day and search filters. Tab and day are
+  // re-checked here so live socket updates (a chat read, a new message) drop
+  // out of a filtered view without waiting for a refetch.
   const filtered = useMemo(() => {
-    const q = nameParam.trim().toLowerCase();
     return (users || [])
       .filter((c) => {
         if (sortby === "Unread") return c?.unseen > 0;
@@ -200,15 +213,8 @@ const ChatList = ({ users, counts, refetch, loading, fetchNextPage, hasNextPage,
         if (!dateParam) return true;
         const d = c?.message?.createdAt ? moment(c.message.createdAt).format("YYYY-MM-DD") : "";
         return d === dateParam;
-      })
-      .filter((c) => {
-        if (!q) return true;
-        return (
-          c?.user?.name?.toLowerCase()?.includes(q) ||
-          c?.user?.username?.toLowerCase()?.includes(q)
-        );
       });
-  }, [users, sortby, dateParam, nameParam]);
+  }, [users, sortby, dateParam]);
 
   const tabs = ["All", "Unread", "Favourite"];
 
@@ -309,9 +315,9 @@ const ChatList = ({ users, counts, refetch, loading, fetchNextPage, hasNextPage,
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <input
             type="search"
-            value={nameParam}
-            onChange={(e) => setNameParam(e.target.value)}
-            placeholder="Search conversations"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder={isStaff ? "Search name, username, email or phone" : "Search conversations"}
             aria-label="Search conversations"
             className="w-full h-10 pl-9 pr-3 text-sm text-gray-800 bg-gray-100 rounded-xl outline-none placeholder:text-gray-400 focus:bg-gray-50 focus:ring-2 focus:ring-brand/30 transition-colors"
           />
