@@ -4,19 +4,13 @@ import App from './App.jsx'
 import './index.css'
 import { RouterProvider } from 'react-router-dom'
 import router from './router/router.jsx'
+import { registerSW } from 'virtual:pwa-register'
 
-// Clear any stale Service Workers from previous builds
-if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    for (const registration of registrations) {
-      registration.unregister();
-    }
-  });
-}
+// Register PWA service worker with auto-update
+registerSW({ immediate: true })
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <RouterProvider router={router} />
   </React.StrictMode>,
 )
-

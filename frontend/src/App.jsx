@@ -13,6 +13,7 @@ import { api } from "./util/axios";
 import { SocketProvider } from "./Components/SocketContext";
 import { Notifications } from "react-push-notification";
 import ErrorBoundary from "./Components/ErrorBoundary";
+import PWAInstallPrompt from "./Components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +103,7 @@ const App = () => {
             <SocketProvider>
               <Notifications />
               {isServerRunning ? <MainLayout /> : <NoInternet />}
+              <PWAInstallPrompt />
             </SocketProvider>
           </QueryClientProvider>
         </Provider>

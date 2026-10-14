@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Input, Button, Spinner } from '@material-tailwind/react';
+import { Card, Button, Spinner } from '@material-tailwind/react';
 import { useInfiniteQuery } from 'react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -24,7 +24,7 @@ import { getAccountState } from '../../../../util/accountState';
 const StatCard = ({ title, value, icon: Icon, colorClass, bgClass, active = false, activeClass, onClick }) => (
   <Card 
     onClick={onClick}
-    className={`flex flex-col p-4 sm:p-5 shadow-xs hover:shadow-md rounded-2xl bg-white hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden group select-none ${
+    className={`flex flex-col p-3.5 sm:p-4 shadow-2xs hover:shadow-md rounded-2xl bg-white hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden group select-none ${
       onClick ? "cursor-pointer" : ""
     } ${
       active 
@@ -32,14 +32,18 @@ const StatCard = ({ title, value, icon: Icon, colorClass, bgClass, active = fals
         : "border border-gray-100 hover:border-gray-200"
     }`}
   >
-    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-white/0 to-gray-100/50 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110"></div>
-    <div className="flex items-center justify-between relative z-10">
-      <div className={`p-2.5 rounded-xl ${bgClass}`}>
-        <Icon className={`w-6 h-6 sm:w-7 sm:h-7 ${colorClass}`} />
+    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-white/0 to-gray-100/50 rounded-bl-full -mr-6 -mt-6 transition-transform duration-500 group-hover:scale-110 pointer-events-none"></div>
+    <div className="flex items-center justify-between relative z-10 gap-2">
+      <div className={`p-2 sm:p-2.5 rounded-xl ${bgClass} shrink-0`}>
+        <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${colorClass}`} />
       </div>
-      <div className="flex flex-col items-end">
-        <h4 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">{value}</h4>
-        <span className="text-xs sm:text-sm font-medium text-gray-500 mt-1">{title}</span>
+      <div className="flex flex-col items-end min-w-0">
+        <h4 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight truncate">
+          {Number(value || 0).toLocaleString()}
+        </h4>
+        <span className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate mt-0.5">
+          {title}
+        </span>
       </div>
     </div>
   </Card>
@@ -54,7 +58,7 @@ const PremiumUsersTable = ({
   subtitle,
   defaultStatus = "all",
 }) => {
-  const [option, setOption] = useState({ limit: 50 });
+  const [option] = useState({ limit: 50 });
   const [searchParams, setSearchParams] = useSearchParams();
   const search = (searchParams.get("search") || "").trim();
   const statusParam = searchParams.get("status");
@@ -117,6 +121,7 @@ const PremiumUsersTable = ({
   }
 
   const handleCopy = (text, type) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     toast.success(`${type} copied!`);
   };
@@ -154,7 +159,7 @@ const PremiumUsersTable = ({
     : "Joined";
 
   const { data, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
-    ["Premium Users Table", effectiveStatus, effectiveLock, role, effectiveDeleted, option.limit, search, dateRange],
+    ["Premium Users Table", effectiveStatus, effectiveLock, role, effectiveDeleted, option.limit, search, dateRange, activeTab],
     async ({ pageParam = null }) => {
       let url = `/user?limit=${option.limit}&reverse=true`;
       if (effectiveDeleted) url += `&deleted=true`;
@@ -183,7 +188,6 @@ const PremiumUsersTable = ({
 
   const allUsers = data?.pages.flatMap((page) => page.users) || [];
   const grandTotal = data?.pages[0]?.grandTotal || 0;
-  const todayAdded = data?.pages[0]?.todayAdded || 0;
   const totalPending = data?.pages[0]?.pending || 0;
   const totalActive = data?.pages[0]?.active || 0;
   const totalBanned = data?.pages[0]?.banned || 0;
@@ -280,14 +284,14 @@ const PremiumUsersTable = ({
   return (
     <div className="w-full pb-10">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">{displayTitle}</h1>
-        <p className="text-sm text-gray-500 mt-1">{displaySubtitle}</p>
+      <div className="mb-5 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">{displayTitle}</h1>
+        <p className="text-xs sm:text-sm text-gray-500 mt-1">{displaySubtitle}</p>
       </div>
 
       {/* Stat Cards Grid */}
       {role === "user" ? (
-        <div className={`grid gap-3 sm:gap-4 mb-6 ${isAdmin ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" : "grid-cols-2 lg:grid-cols-4"}`}>
+        <div className={`grid gap-2.5 sm:gap-3.5 mb-5 sm:mb-6 ${isAdmin ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5" : "grid-cols-2 lg:grid-cols-4"}`}>
           <StatCard 
             title="All Users" 
             value={grandTotal} 
@@ -342,7 +346,7 @@ const PremiumUsersTable = ({
           )}
         </div>
       ) : (
-        <div className="grid gap-3 sm:gap-6 mb-6 sm:mb-8 grid-cols-2 lg:grid-cols-2">
+        <div className="grid gap-3 sm:gap-6 mb-5 sm:mb-6 grid-cols-2 lg:grid-cols-2">
           <StatCard 
             title="Filtered Results" 
             value={filteredCount} 
@@ -363,7 +367,7 @@ const PremiumUsersTable = ({
       {/* Status Filter Tabs (For Users view) */}
       {role === "user" && (
         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-          <div className="inline-flex items-center gap-1.5 p-1 bg-gray-100/90 rounded-2xl border border-gray-200/70 overflow-x-auto max-w-full">
+          <div className="inline-flex items-center gap-1 sm:gap-1.5 p-1 bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-x-auto max-w-full">
             {statusTabs.map((tab) => {
               const isSelected = activeTab === tab.id;
               const Icon = tab.icon;
@@ -372,22 +376,22 @@ const PremiumUsersTable = ({
                   key={tab.id}
                   type="button"
                   onClick={() => handleTabChange(tab.id)}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                     isSelected
                       ? tab.activeBg
-                      : "text-gray-600 hover:text-gray-900 hover:bg-white/80"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 shrink-0" />
                   <span>{tab.label}</span>
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[11px] font-bold transition-colors ${
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold transition-colors ${
                       isSelected
                         ? "bg-white/25 text-white"
-                        : "bg-white text-gray-700 shadow-2xs border border-gray-200/70"
+                        : "bg-gray-100 text-gray-700 border border-gray-200/60"
                     }`}
                   >
-                    {tab.count}
+                    {Number(tab.count || 0).toLocaleString()}
                   </span>
                 </button>
               );
@@ -396,7 +400,7 @@ const PremiumUsersTable = ({
 
           {(search || dateRange.start || dateRange.end) && (
             <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-2xs">
-              <span>Filtered: <strong className="text-gray-800">{filteredCount}</strong> results</span>
+              <span>Filtered: <strong className="text-gray-800">{Number(filteredCount).toLocaleString()}</strong> results</span>
               <button
                 type="button"
                 onClick={() => {
@@ -412,56 +416,71 @@ const PremiumUsersTable = ({
         </div>
       )}
 
-      <Card className="w-full shadow-xs border border-gray-200 overflow-hidden rounded-2xl">
+      <Card className="w-full shadow-2xs border border-gray-200 overflow-hidden rounded-2xl bg-white">
         {/* Table Filters Header */}
-        <div className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-200 bg-white">
-          <form onSubmit={searchHandler} className="w-full md:w-80 relative">
-            <Input
-              key={search}
-              name="search"
-              defaultValue={search}
-              placeholder="Name, username, email, phone or ID..."
-              className={`!border !border-gray-200 bg-gray-50 text-gray-900 shadow-none ring-0 placeholder:text-gray-400 focus:!border-blue-500 focus:bg-white transition-colors ${search ? "!pr-16" : ""}`}
-              labelProps={{
-                className: "hidden",
-              }}
-              icon={<button type="submit"><MagnifyingGlassIcon className="h-4 w-4 text-gray-400" /></button>}
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => applySearch("")}
-                className="absolute top-1/2 -translate-y-1/2 right-10 p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 transition-colors"
-                title="Clear search"
-              >
-                <XMarkIcon className="h-4 w-4" />
-              </button>
-            )}
+        <div className="p-3.5 sm:p-4 flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 border-b border-gray-100 bg-white">
+          <form onSubmit={searchHandler} className="w-full md:w-96 relative">
+            <div className="relative flex items-center">
+              <MagnifyingGlassIcon className="absolute left-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                key={search}
+                name="search"
+                defaultValue={search}
+                placeholder="Search by name, username, email, phone or ID..."
+                className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-hidden focus:border-blue-500 focus:bg-white transition-all"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => applySearch("")}
+                  className="absolute right-2.5 p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 transition-colors"
+                  title="Clear search"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </form>
 
-          <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto mt-3 md:mt-0">
-            <Input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-              className="!border !border-gray-200 bg-gray-50 text-gray-900 shadow-none ring-0 focus:!border-blue-500 focus:bg-white transition-colors"
-              labelProps={{ className: "hidden" }}
-            />
-            <span className="text-gray-400 text-sm hidden md:block">to</span>
-            <Input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-              className="!border !border-gray-200 bg-gray-50 text-gray-900 shadow-none ring-0 focus:!border-blue-500 focus:bg-white transition-colors"
-              labelProps={{ className: "hidden" }}
-            />
-            {(dateRange.start || dateRange.end) && (
-              <button 
-                onClick={() => setDateRange({ start: "", end: "" })}
-                className="p-2 text-gray-400 hover:text-red-500 transition-colors ml-1"
-                title="Clear Dates"
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end flex-wrap">
+            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1.5">
+              <CalendarDaysIcon className="w-4 h-4 text-gray-400 shrink-0" />
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="bg-transparent text-xs text-gray-800 focus:outline-hidden cursor-pointer"
+                title="Start Date"
+              />
+              <span className="text-gray-400 text-xs font-medium">to</span>
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="bg-transparent text-xs text-gray-800 focus:outline-hidden cursor-pointer"
+                title="End Date"
+              />
+              {(dateRange.start || dateRange.end) && (
+                <button 
+                  onClick={() => setDateRange({ start: "", end: "" })}
+                  className="p-1 text-gray-400 hover:text-red-500 transition-colors ml-1"
+                  title="Clear Dates"
+                >
+                  <XMarkIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {(search || dateRange.start || dateRange.end) && (
+              <button
+                type="button"
+                onClick={() => {
+                  applySearch("");
+                  setDateRange({ start: "", end: "" });
+                }}
+                className="text-xs text-blue-600 hover:text-blue-800 font-semibold px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
               >
-                <XMarkIcon className="w-5 h-5" />
+                Reset
               </button>
             )}
           </div>
@@ -470,22 +489,22 @@ const PremiumUsersTable = ({
         {/* 📱 Mobile View: User Cards */}
         <div className="divide-y divide-gray-100 md:hidden">
           {isLoading && allUsers.length === 0 ? (
-            <div className="text-center p-8 text-gray-400 font-medium">Loading users...</div>
+            <div className="text-center p-8 text-gray-400 font-medium text-xs">Loading users...</div>
           ) : allUsers.length === 0 ? (
-            <div className="text-center p-8 text-gray-400 font-medium">No users found</div>
+            <div className="text-center p-8 text-gray-400 font-medium text-xs">No users found</div>
           ) : (
             allUsers.map((user) => (
               <div key={user._id} className="p-3.5 space-y-2.5 hover:bg-blue-50/20 transition-colors">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <img
                       src={user.avatar || "/default-avater.png"}
                       alt={user.name}
-                      className="w-9 h-9 rounded-full object-cover border border-gray-200 cursor-pointer"
+                      className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0 cursor-pointer"
                       onClick={() => setSelectedUser(user)}
                     />
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span
                           className="text-xs font-bold text-gray-900 truncate max-w-[130px] cursor-pointer hover:text-blue-600"
                           onClick={() => handleCopy(user.name, "Name")}
@@ -495,24 +514,21 @@ const PremiumUsersTable = ({
                         {role === "user" && renderStatusBadge(user)}
                       </div>
                       <span
-                        className="text-[11px] text-gray-400 cursor-pointer hover:text-blue-600"
+                        className="text-[11px] text-gray-400 font-mono cursor-pointer hover:text-blue-600"
                         onClick={() => handleCopy(user.username, "Username")}
                       >
                         #{user.username}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-100" title="Max Devices">
-                      📱 {user.maxActiveSessions ?? 5}
-                    </span>
-                    <span className="text-xs font-bold text-gray-900 font-mono">
-                      ৳ {user.balance}
+                  <div className="shrink-0 text-right">
+                    <span className="text-xs font-bold font-mono text-gray-900 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                      ৳ {Number(user.balance || 0).toLocaleString()}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px] bg-gray-50/70 p-2 rounded-lg border border-gray-100">
+                <div className="grid grid-cols-2 gap-2 text-[11px] bg-gray-50/70 p-2 rounded-xl border border-gray-100">
                   <div className="truncate">
                     <span className="text-gray-400 block text-[10px]">Email</span>
                     <span
@@ -525,7 +541,7 @@ const PremiumUsersTable = ({
                   <div className="truncate">
                     <span className="text-gray-400 block text-[10px]">Phone</span>
                     <span
-                      className="text-gray-700 font-medium truncate block cursor-pointer hover:text-blue-600"
+                      className="text-gray-700 font-medium font-mono truncate block cursor-pointer hover:text-blue-600"
                       onClick={() => handleCopy(user.phone, "Phone")}
                     >
                       {user.phone || "N/A"}
@@ -534,11 +550,11 @@ const PremiumUsersTable = ({
                 </div>
 
                 <div className="flex items-center justify-between pt-1 border-t border-gray-100/60 text-[11px] text-gray-400">
-                  <div className="flex flex-col text-[10px]">
+                  <div className="flex flex-col text-[10px] min-w-0">
                     {effectiveDeleted || user.deletedAt ? (
-                      <span>By: <strong className="text-gray-600">{user.deletedBy ? user.deletedBy.name : "Unknown"}</strong></span>
+                      <span className="truncate">By: <strong className="text-gray-600">{user.deletedBy ? user.deletedBy.name : "Unknown"}</strong></span>
                     ) : (
-                      <span>Ref: <strong className="text-gray-600">{user.reffer ? user.reffer.name : "Direct"}</strong></span>
+                      <span className="truncate">Ref: <strong className="text-gray-600">{user.reffer ? user.reffer.name : "Direct"}</strong></span>
                     )}
                     <span>
                       {dateHead}: {moment(dateValue(user)).format("DD MMM YYYY")}
@@ -546,9 +562,9 @@ const PremiumUsersTable = ({
                   </div>
                   <Button
                     size="sm"
-                    variant="outlined"
+                    variant="text"
                     color="blue"
-                    className="py-1 px-3 normal-case text-xs shadow-none hover:shadow-md"
+                    className="py-1 px-3 normal-case text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition-all rounded-lg shadow-none"
                     onClick={() => setSelectedUser(user)}
                   >
                     Review
@@ -559,109 +575,139 @@ const PremiumUsersTable = ({
           )}
         </div>
 
-        {/* 🖥️ Desktop View: Full Data Table */}
+        {/* 🖥️ Desktop View: Full Data Table (All columns visible, responsive width) */}
         <div className="hidden md:block overflow-x-auto">
-          <table className="w-full min-w-[850px] table-auto text-left whitespace-nowrap">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr>
-                {[
-                  "User",
-                  "Contact Info",
-                  ...(role === "user" ? ["Status"] : []),
-                  "Balance",
-                  "Device Limit",
-                  effectiveDeleted ? "Deleted By" : role === "user" && activeTab === "all" ? "Referrer / Deleted By" : "Referrer",
-                  dateHead,
-                  "Action"
-                ].map((head) => (
-                  <th key={head} className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    {head}
+              <tr className="border-b border-gray-200 bg-gray-50/90">
+                <th className="px-3.5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-[23%]">
+                  User
+                </th>
+                <th className="px-3.5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-[24%]">
+                  Contact Info
+                </th>
+                {role === "user" && (
+                  <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-[12%] text-center">
+                    Status
                   </th>
-                ))}
+                )}
+                <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-[10%]">
+                  Balance
+                </th>
+                <th className="px-3.5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-[15%]">
+                  {effectiveDeleted ? "Deleted By" : role === "user" && activeTab === "all" ? "Referrer / Deleted By" : "Referrer"}
+                </th>
+                <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-[10%] whitespace-nowrap">
+                  {dateHead}
+                </th>
+                <th className="px-3.5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-[6%] text-right whitespace-nowrap">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
               {isLoading && allUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={role === "user" ? 8 : 7} className="text-center p-12 text-gray-400 font-medium">
+                  <td colSpan={role === "user" ? 7 : 6} className="text-center p-12 text-gray-400 font-medium text-xs">
                     Loading users...
                   </td>
                 </tr>
               ) : allUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={role === "user" ? 8 : 7} className="text-center p-12 text-gray-400 font-medium">
+                  <td colSpan={role === "user" ? 7 : 6} className="text-center p-12 text-gray-400 font-medium text-xs">
                     No users found
                   </td>
                 </tr>
               ) : (
                 allUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50/80 hover:shadow-[0_2px_15px_-3px_rgba(6,81,237,0.08)] transition-all duration-300 relative z-0 hover:z-10 group border-b border-gray-100 last:border-0">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
+                  <tr key={user._id} className="hover:bg-blue-50/30 transition-colors border-b border-gray-100 last:border-0 group">
+                    {/* 1. User */}
+                    <td className="px-3.5 py-2.5">
+                      <div className="flex items-center gap-2.5">
                         <img 
                           src={user.avatar || "/default-avater.png"} 
                           alt={user.name} 
-                          className="w-8 h-8 rounded-full object-cover border border-gray-200 group-hover:ring-2 ring-blue-100 transition-all cursor-pointer"
+                          className="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0 group-hover:ring-2 ring-blue-100 transition-all cursor-pointer"
                           onClick={() => setSelectedUser(user)}
                         />
-                        <div className="flex flex-col items-start">
+                        <div className="flex flex-col min-w-0">
                           <span 
-                            className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                            className="text-xs sm:text-sm font-semibold text-gray-900 truncate max-w-[140px] lg:max-w-[170px] cursor-pointer hover:text-blue-600 transition-colors"
                             onClick={() => handleCopy(user.name, "Name")}
+                            title={user.name}
                           >
                             {user.name}
                           </span>
                           <span 
-                            className="text-xs text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
+                            className="text-[11px] text-gray-400 font-mono truncate max-w-[140px] lg:max-w-[170px] cursor-pointer hover:text-blue-600 transition-colors"
                             onClick={() => handleCopy(user.username, "Username")}
+                            title={`#${user.username}`}
                           >
                             #{user.username}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col items-start">
+
+                    {/* 2. Contact Info */}
+                    <td className="px-3.5 py-2.5">
+                      <div className="flex flex-col min-w-0">
                         <span 
-                          className="text-sm text-gray-700 cursor-pointer hover:text-blue-600 transition-colors"
+                          className="text-xs font-medium text-gray-700 truncate max-w-[160px] lg:max-w-[200px] cursor-pointer hover:text-blue-600 transition-colors"
                           onClick={() => handleCopy(user.email, "Email")}
+                          title={user.email}
                         >
-                          {user.email}
+                          {user.email || "N/A"}
                         </span>
                         <span 
-                          className="text-xs text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
+                          className="text-xs text-gray-400 font-mono truncate max-w-[160px] lg:max-w-[200px] cursor-pointer hover:text-blue-600 transition-colors"
                           onClick={() => handleCopy(user.phone, "Phone")}
+                          title={user.phone}
                         >
-                          {user.phone}
+                          {user.phone || "N/A"}
                         </span>
                       </div>
                     </td>
+
+                    {/* 3. Status */}
                     {role === "user" && (
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2.5 text-center whitespace-nowrap">
                         {renderStatusBadge(user)}
                       </td>
                     )}
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">৳ {user.balance}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold border border-amber-100">
-                        {user.maxActiveSessions ?? 5}
+
+                    {/* 4. Balance */}
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <span className="text-xs sm:text-sm font-bold font-mono text-gray-900">
+                        ৳ {Number(user.balance || 0).toLocaleString()}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
+
+                    {/* 5. Referrer / Deleted By */}
+                    <td className="px-3.5 py-2.5">
                       {effectiveDeleted || user.deletedAt ? (
-                        <div className="flex flex-col">
-                          <span>{user.deletedBy ? user.deletedBy.name : "Unknown"}</span>
-                          <span className="text-xs text-gray-400 truncate max-w-[180px]" title={user.deleteReason}>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-semibold text-gray-800 truncate max-w-[130px] lg:max-w-[160px]">
+                            {user.deletedBy ? user.deletedBy.name : "Unknown"}
+                          </span>
+                          <span className="text-[11px] text-gray-400 truncate max-w-[130px] lg:max-w-[160px]" title={user.deleteReason}>
                             {user.deleteReason || "No reason"}
                           </span>
                         </div>
                       ) : (
-                        user.reffer ? user.reffer.name : "Direct"
+                        <span 
+                          className="text-xs text-gray-600 truncate max-w-[130px] lg:max-w-[160px] block" 
+                          title={user.reffer ? user.reffer.name : "Direct Signup"}
+                        >
+                          {user.reffer ? user.reffer.name : "Direct Signup"}
+                        </span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+
+                    {/* 6. Date */}
+                    <td className="px-3 py-2.5 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="text-sm text-gray-700">
+                        <span className="text-xs font-medium text-gray-700">
                           {moment(dateValue(user)).format("MMM DD, YYYY")}
                         </span>
                         {user.deletedAt ? (
@@ -675,11 +721,14 @@ const PremiumUsersTable = ({
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+
+                    {/* 7. Action */}
+                    <td className="px-3.5 py-2.5 text-right whitespace-nowrap">
                       <Button
+                        size="sm"
                         variant="text"
                         color="blue"
-                        className="px-3 py-1.5 normal-case text-xs focus:ring-0 rounded-md font-medium bg-blue-50/0 group-hover:bg-blue-50 transition-colors"
+                        className="py-1 px-3 normal-case text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition-all rounded-lg shadow-none"
                         onClick={() => setSelectedUser(user)}
                       >
                         Review
@@ -694,22 +743,22 @@ const PremiumUsersTable = ({
 
         {/* Infinite Scroll Footer */}
         {allUsers.length > 0 && (
-          <div ref={ref} className="p-6 flex flex-col items-center justify-center border-t border-gray-100 bg-white">
+          <div ref={ref} className="p-5 flex flex-col items-center justify-center border-t border-gray-100 bg-white">
             {isFetchingNextPage ? (
-              <div className="flex items-center gap-3 text-blue-600">
-                <Spinner className="h-5 w-5" />
-                <span className="text-sm font-medium">Loading more...</span>
+              <div className="flex items-center gap-2.5 text-blue-600">
+                <Spinner className="h-4 w-4" />
+                <span className="text-xs font-medium">Loading more users...</span>
               </div>
             ) : hasNextPage ? (
-              <span className="text-sm font-medium text-gray-400">Scroll down to load more</span>
+              <span className="text-xs font-medium text-gray-400">Scroll down to load more</span>
             ) : (
-              <span className="text-sm font-medium text-gray-400">You've reached the end</span>
+              <span className="text-xs font-medium text-gray-400">You've reached the end of the list</span>
             )}
           </div>
         )}
       </Card>
 
-      {/* Selected User Details Bottom Card */}
+      {/* Selected User Details Bottom Card / Modal */}
       <PremiumUserDetailsModal 
         user={selectedUser} 
         onClose={() => setSelectedUser(null)} 

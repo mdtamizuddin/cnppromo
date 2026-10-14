@@ -27,8 +27,10 @@ import {
   AcademicCapIcon,
   TrophyIcon,
   BanknotesIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import { IconButton } from "@material-tailwind/react";
+import { usePWA } from "../../util/usePWA";
 
 const sidebarData = [
   {
@@ -88,6 +90,15 @@ const sidebarData = [
 const AdminSidebar = ({ isOpen, onClose }) => {
   const { user } = useSelector((state) => state.user);
   const location = useLocation();
+  const { isInstallable, installApp } = usePWA();
+
+  const handleInstallClick = async () => {
+    const success = await installApp();
+    if (success) {
+      toast.success("App installed successfully!");
+      if (onClose) onClose();
+    }
+  };
 
   const handleLogout = () => {
     Cookie.remove("token-you");
@@ -164,8 +175,24 @@ const AdminSidebar = ({ isOpen, onClose }) => {
             </div>
           ))}
 
-          {/* Logout Section */}
-          <div className="pt-2 pb-4">
+          {/* Action / Install & Logout Section */}
+          <div className="pt-2 pb-4 space-y-2 border-t border-gray-100">
+            {isInstallable && (
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                className="flex w-full items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-bold text-white bg-gradient-to-r from-[#4d28e2] to-indigo-600 hover:from-[#3d1bc8] hover:to-indigo-700 shadow-sm transition-all active:scale-[0.98]"
+              >
+                <div className="flex items-center gap-2.5">
+                  <ArrowDownTrayIcon className="w-4 h-4 text-white shrink-0" />
+                  <span>Install CNP App</span>
+                </div>
+                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono font-medium uppercase tracking-wider">
+                  PWA
+                </span>
+              </button>
+            )}
+
             <button
               onClick={handleLogout}
               className="flex w-full items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold text-red-500 hover:bg-red-50 transition-colors"

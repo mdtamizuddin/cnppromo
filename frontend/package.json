@@ -49,7 +49,8 @@
     "socket.io-client": "^4.8.3",
     "swiper": "^11.2.10",
     "use-react-countries": "^2.0.1",
-    "vite-plugin-pwa": "^0.21.2"
+    "vite-plugin-pwa": "^0.21.2",
+    "workbox-window": "^7.4.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.31",

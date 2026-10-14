@@ -18,15 +18,26 @@ import {
   DevicePhoneMobileIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import Cookie from "js-cookie";
 import toast from "react-hot-toast";
 import { useUnreadNotifications } from "../../util/useUnreadNotifications";
+import { usePWA } from "../../util/usePWA";
 
 const UserSidebarDrawer = ({ isOpen, onClose }) => {
   const { user } = useSelector((state) => state.user);
   const location = useLocation();
   const unreadCount = useUnreadNotifications();
+  const { isInstallable, installApp } = usePWA();
+
+  const handleInstallClick = async () => {
+    const success = await installApp();
+    if (success) {
+      toast.success("App installed successfully!");
+      if (onClose) onClose();
+    }
+  };
 
   const handleLogout = () => {
     Cookie.remove("token-you");
@@ -195,8 +206,24 @@ const UserSidebarDrawer = ({ isOpen, onClose }) => {
           })}
         </div>
 
-        {/* Bottom Logout & Version Strip */}
-        <div className="p-4 border-t border-white/10 space-y-3 bg-[#0b0c1e]">
+        {/* Bottom Logout, Install & Version Strip */}
+        <div className="p-4 border-t border-white/10 space-y-2.5 bg-[#0b0c1e]">
+          {isInstallable && (
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-white bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 rounded-xl transition-all shadow-md shadow-teal-500/20 active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-2.5">
+                <ArrowDownTrayIcon className="w-4 h-4 shrink-0 text-white" />
+                <span>Install CNP App</span>
+              </div>
+              <span className="text-[10px] bg-black/25 px-2 py-0.5 rounded-full font-mono uppercase tracking-wider">
+                PWA
+              </span>
+            </button>
+          )}
+
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl transition-all"
