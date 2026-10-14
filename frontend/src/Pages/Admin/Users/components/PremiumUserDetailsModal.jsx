@@ -1,16 +1,55 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { XMarkIcon, DocumentDuplicateIcon, BanknotesIcon } from '@heroicons/react/24/outline';
+import {
+  XMarkIcon,
+  DocumentDuplicateIcon,
+  BanknotesIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  UserGroupIcon,
+  CalendarDaysIcon,
+  CheckBadgeIcon,
+  ShieldCheckIcon,
+  LockClosedIcon,
+  LockOpenIcon,
+  TrashIcon,
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  PencilSquareIcon,
+  KeyIcon,
+} from '@heroicons/react/24/outline';
 import { Button, Input, Select, Option } from "@material-tailwind/react";
 import moment from "moment";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { api } from "../../../../util/axios";
+import { ACCOUNT_STATES, getAccountState } from "../../../../util/accountState";
 import DeleteConfirmModal from "../../../../Components/DeleteConfirmModal";
 
-const PremiumUserDetailsModal = ({ user, onClose, refetch, deleted = false }) => {
-  if (!user) return null;
+const InfoRow = ({ icon: Icon, label, value, onCopy, children }) => (
+  <div className="flex items-center justify-between gap-3 py-2.5 border-b border-gray-100 last:border-0">
+    <span className="flex items-center gap-2 text-xs text-gray-500 shrink-0">
+      <Icon className="w-4 h-4 text-gray-400" />
+      {label}
+    </span>
+    <span className="flex items-center gap-1.5 min-w-0 text-sm font-medium text-gray-900">
+      {children || <span className="truncate">{value || "N/A"}</span>}
+      {onCopy && value && (
+        <button
+          type="button"
+          onClick={onCopy}
+          className="p-0.5 text-gray-400 hover:text-blue-600 transition-colors shrink-0"
+          title={`Copy ${label}`}
+        >
+          <DocumentDuplicateIcon className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </span>
+  </div>
+);
 
+const PremiumUserDetailsModal = ({ user, onClose, refetch, deleted = false }) => {
   const navigate = useNavigate();
   const { user: admin } = useSelector((state) => state.user);
   const [loading, setLoading] = useState(false);
@@ -18,6 +57,8 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch, deleted = false }) =>
   const [isEditing, setIsEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
+  const [confirmApprove, setConfirmApprove] = useState(false);
+  const [shown, setShown] = useState(false);
 
   const [value, setValue] = useState({
     name: "",
@@ -34,9 +75,45 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch, deleted = false }) =>
       });
       setPassword("");
       setDeleteReason("");
+      setConfirmApprove(false);
       setIsEditing(false); // Reset to view mode on user change
     }
   }, [user]);
+
+  // Slide the drawer in on open; lock page scroll and close on Escape while open.
+  useEffect(() => {
+    if (!user) {
+      setShown(false);
+      return;
+    }
+    const frame = requestAnimationFrame(() => setShown(true));
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && !deleteOpen && !loading) onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [user, deleteOpen, loading, onClose]);
+
+  if (!user) return null;
+
+  const accountState = deleted ? "deleted" : getAccountState(user);
+  const state = ACCOUNT_STATES[accountState];
+  const isDeleted = accountState === "deleted";
+  const isPending = accountState === "pending";
+  const isBanned = accountState === "banned";
+  // Every write endpoint behind this drawer is admin-only on the backend.
+  const isAdmin = admin?.role === "admin";
+  const canEdit = isAdmin && !isDeleted;
+
+  const handleCopy = (text, label) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copied!`);
+  };
 
   const handleUpdate = async () => {
     try {
@@ -120,6 +197,7 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch, deleted = false }) =>
       toast.error(error?.response?.data?.message || "Failed to activate user");
     } finally {
       setLoading(false);
+      setConfirmApprove(false);
     }
   };
 
@@ -129,14 +207,23 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch, deleted = false }) =>
     navigate(`/admin/check?search=${query}`);
   };
 
-  const isPending = user.status === "pending";
-  const canEdit = !deleted && (admin?.role === "admin" || admin?.role === "moderator");
-
   return (
     <>
-      <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 transition-opacity" onClick={onClose}></div>
-      <div className="fixed bottom-0 left-0 right-0 max-h-[90vh] overflow-y-auto md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-3xl bg-white rounded-t-[2rem] md:rounded-3xl shadow-2xl border border-gray-200 z-50 p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:gap-8 animate-fade-in-up">
-        
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 transition-opacity duration-300 ${shown ? "opacity-100" : "opacity-0"}`}
+        onClick={() => !loading && onClose()}
+      />
+
+      {/* Drawer: bottom sheet on mobile, right-side panel on md+ */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        className={`fixed z-50 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out
+          inset-x-0 bottom-0 max-h-[90vh] rounded-t-[2rem]
+          md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:w-[460px] md:max-h-none md:rounded-none md:rounded-l-3xl
+          ${shown ? "translate-y-0 md:translate-x-0" : "translate-y-full md:translate-y-0 md:translate-x-full"}`}
+      >
         {/* Loader Overlay */}
         {loading && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-50 flex items-center justify-center rounded-[inherit]">
@@ -144,221 +231,254 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch, deleted = false }) =>
           </div>
         )}
 
-        <button onClick={onClose} className="absolute top-4 right-4 md:top-6 md:right-6 p-2 bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors z-10">
-          <XMarkIcon className="w-5 h-5" />
-        </button>
-
-        {/* Left Profile Section */}
-        <div className="flex flex-col items-center md:justify-center w-full md:w-1/3 md:border-r border-gray-100 pr-0 md:pr-6 relative">
-          <div className="relative">
-             <img
-               src={user.avatar || "/default-avater.png"}
-               alt={user.name}
-               className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white shadow-md object-cover mb-3"
-             />
-             <span className={`absolute bottom-4 right-1 md:bottom-5 md:right-2 w-4 h-4 rounded-full border-2 border-white ${deleted ? 'bg-red-500' : isPending ? 'bg-amber-500' : 'bg-green-500'}`}></span>
-          </div>
-          <h2 className="text-lg md:text-xl font-bold text-gray-900 text-center">{user.name}</h2>
-          <p className="text-sm text-gray-500 mt-0.5">#{user.username}</p>
-          <div className="mt-4 md:mt-6 w-full px-4 md:px-0">
-             {deleted ? (
-               <div className="w-full rounded-xl p-2.5 flex items-center justify-center gap-2 border bg-red-50 border-red-100/50">
-                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                  <span className="text-[11px] font-bold tracking-wider text-red-700">DELETED USER</span>
-               </div>
-             ) : (
-               <div className={`w-full rounded-xl p-2.5 flex items-center justify-center gap-2 border ${isPending ? 'bg-amber-50 border-amber-100/50' : 'bg-green-50 border-green-100/50'}`}>
-                  <span className={`w-2 h-2 rounded-full animate-pulse ${isPending ? 'bg-amber-500' : 'bg-green-500'}`}></span>
-                  <span className={`text-[11px] font-bold tracking-wider ${isPending ? 'text-amber-700' : 'text-green-700'}`}>
-                    {isPending ? 'PENDING REVIEW' : 'ACTIVE USER'}
-                  </span>
-               </div>
-             )}
-          </div>
-
-          {canEdit && (
-            <div className="mt-6 w-full flex flex-col gap-2">
-              <Button 
-                variant={isEditing ? "filled" : "outlined"} 
-                color="blue" 
-                className="w-full normal-case"
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                {isEditing ? "View Details" : "Edit Profile"}
-              </Button>
+        {/* Header */}
+        <div className="shrink-0 p-5 sm:p-6 border-b border-gray-100">
+          <div className="flex items-start gap-4">
+            <div className="relative shrink-0">
+              <img
+                src={user.avatar || "/default-avater.png"}
+                alt={user.name}
+                className="w-16 h-16 rounded-2xl border border-gray-100 shadow-sm object-cover"
+                onError={(e) => { e.target.src = "/default-avater.png"; }}
+              />
+              <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${state.dot}`} title={state.label}></span>
             </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-bold text-gray-900 truncate">{user.name}</h2>
+              <button
+                type="button"
+                onClick={() => handleCopy(user.username, "Username")}
+                className="text-sm text-gray-500 hover:text-blue-600 transition-colors"
+              >
+                @{user.username}
+              </button>
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${state.badge}`}>
+                  {state.label}
+                </span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 capitalize">
+                  {user.role || "user"}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(!isEditing)}
+                  className={`p-2 rounded-full transition-colors ${isEditing ? "bg-blue-50 text-blue-600" : "text-gray-400 hover:text-gray-900 hover:bg-gray-100"}`}
+                  title={isEditing ? "View details" : "Edit profile"}
+                >
+                  <PencilSquareIcon className="w-5 h-5" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-2 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                title="Close"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+          {/* State banner: why this account is not plain active */}
+          {state.banner && (
+            <div className={`p-3.5 rounded-2xl border flex items-start gap-3 text-xs ${state.banner}`}>
+              {isDeleted ? (
+                <TrashIcon className="w-5 h-5 shrink-0" />
+              ) : isBanned ? (
+                <LockClosedIcon className="w-5 h-5 shrink-0" />
+              ) : (
+                <ExclamationTriangleIcon className="w-5 h-5 shrink-0" />
+              )}
+              <div className="min-w-0 space-y-0.5">
+                {isDeleted ? (
+                  <>
+                    <p className="font-bold">
+                      Deleted {user.deletedAt ? moment(user.deletedAt).format("MMM DD, YYYY h:mm A") : ""}
+                      {" by "}
+                      {user.deletedBy ? `${user.deletedBy.name} (@${user.deletedBy.username})` : "unknown admin"}
+                    </p>
+                    <p className="break-words">Reason: {user.deleteReason || "Not recorded"}</p>
+                  </>
+                ) : isBanned ? (
+                  <p className="font-bold">This account is locked. The user cannot sign in.</p>
+                ) : isPending ? (
+                  <>
+                    <p className="font-bold">Waiting for activation since {moment(user.createdAt).format("MMM DD, YYYY")}.</p>
+                    <p>Approving activates the account and pays referral commission to the upline.</p>
+                  </>
+                ) : (
+                  <p className="font-bold">This account is inactive.</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {isEditing ? (
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900">Edit Profile</h3>
+              <Select
+                label="User Role"
+                value={value.role}
+                onChange={(val) => setValue({ ...value, role: val })}
+              >
+                <Option value="user">User</Option>
+                <Option value="admin">Admin</Option>
+                <Option value="moderator">Moderator</Option>
+              </Select>
+              <Input
+                label="Full Name"
+                value={value.name}
+                onChange={(e) => setValue({ ...value, name: e.target.value })}
+              />
+              <Input
+                label="Username"
+                value={value.username}
+                onChange={(e) => setValue({ ...value, username: e.target.value })}
+              />
+              <div className="pt-4 border-t border-gray-100">
+                <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-1.5">
+                  <KeyIcon className="w-4 h-4 text-gray-500" /> Update Password
+                </h4>
+                <div className="flex gap-2">
+                  <Input
+                    label="New Password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <Button color="green" className="whitespace-nowrap normal-case" onClick={handleUpdatePassword}>
+                    Update
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Balance */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-gray-900 to-[#1b263b] text-white flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-teal-300/80">Balance</span>
+                  <div className="text-2xl font-black font-mono">
+                    <span className="text-teal-400">৳</span> {user.balance}
+                  </div>
+                </div>
+                {!isDeleted && (
+                  <button
+                    type="button"
+                    onClick={handleGoToCheckBalance}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-bold transition-colors"
+                    title="Update balance on Check & Balance page"
+                  >
+                    <BanknotesIcon className="w-4 h-4 text-teal-300" />
+                    Check & Balance
+                  </button>
+                )}
+              </div>
+
+              {/* Details */}
+              <div className="rounded-2xl border border-gray-100 px-4">
+                <InfoRow icon={EnvelopeIcon} label="Email" value={user.email} onCopy={() => handleCopy(user.email, "Email")} />
+                <InfoRow icon={PhoneIcon} label="WhatsApp" value={user.phone} onCopy={() => handleCopy(user.phone, "Phone")} />
+                <InfoRow
+                  icon={UserGroupIcon}
+                  label="Referrer"
+                  value={user.reffer?.username}
+                  onCopy={() => handleCopy(user.reffer.username, "Referrer")}
+                >
+                  {user.reffer?.username ? (
+                    <span className="truncate">{user.reffer.name} (@{user.reffer.username})</span>
+                  ) : (
+                    <span className="text-gray-500">Direct Signup</span>
+                  )}
+                </InfoRow>
+                <InfoRow icon={CalendarDaysIcon} label="Joined" value={moment(user.createdAt).format("MMM DD, YYYY")} />
+                {user.activatedAt && (
+                  <InfoRow icon={CheckBadgeIcon} label="Activated" value={moment(user.activatedAt).format("MMM DD, YYYY")} />
+                )}
+                <InfoRow icon={ShieldCheckIcon} label="User ID" value={user._id} onCopy={() => handleCopy(user._id, "User ID")}>
+                  <span className="truncate font-mono text-xs text-gray-600">{user._id}</span>
+                </InfoRow>
+              </div>
+            </>
           )}
         </div>
 
-        {/* Right Details Section */}
-        <div className="flex-1 flex flex-col justify-between mt-2 md:mt-0">
-          <div>
-            <h3 className="text-base font-bold text-gray-900 mb-4 hidden md:block">
-              {isEditing ? "Edit User Information" : "User Information"}
-            </h3>
-
-            {isEditing ? (
-              <div className="flex flex-col gap-4 animate-fade-in">
-                {admin?.role === "admin" && (
-                  <div className="w-full">
-                    <Select
-                      label="User Role"
-                      value={value.role}
-                      onChange={(val) => setValue({ ...value, role: val })}
-                    >
-                      <Option value="user">User</Option>
-                      <Option value="admin">Admin</Option>
-                      <Option value="moderator">Moderator</Option>
-                    </Select>
-                  </div>
-                )}
-                <Input 
-                  label="Full Name" 
-                  value={value.name} 
-                  onChange={(e) => setValue({ ...value, name: e.target.value })} 
-                />
-                <Input 
-                  label="Username" 
-                  value={value.username} 
-                  onChange={(e) => setValue({ ...value, username: e.target.value })} 
-                />
-                <div className="pt-2 border-t border-gray-100 mt-2">
-                  <h4 className="text-sm font-semibold text-gray-800 mb-3">Update Password</h4>
-                  <div className="flex gap-2">
-                    <Input 
-                      label="New Password" 
-                      type="password"
-                      value={password} 
-                      onChange={(e) => setPassword(e.target.value)} 
-                    />
-                    <Button color="green" className="whitespace-nowrap normal-case" onClick={handleUpdatePassword}>
-                      Update
-                    </Button>
-                  </div>
-                </div>
+        {/* Footer actions, driven by account state */}
+        <div className="shrink-0 p-4 sm:p-5 border-t border-gray-100 bg-gray-50/60 md:rounded-bl-3xl">
+          {!isAdmin ? (
+            <p className="text-xs text-center text-gray-500">Only admins can change this account.</p>
+          ) : isEditing ? (
+            <div className="flex justify-end gap-3">
+              <Button variant="text" color="gray" onClick={() => setIsEditing(false)} className="normal-case">Cancel</Button>
+              <Button color="blue" onClick={handleUpdate} className="normal-case">Save Changes</Button>
+            </div>
+          ) : confirmApprove ? (
+            <div className="space-y-3">
+              <p className="text-xs text-gray-700">
+                Approve <strong>@{user.username}</strong>? The account becomes active and referral commission is paid to the upline. This cannot be undone from here.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outlined" color="gray" className="flex-1 normal-case" onClick={() => setConfirmApprove(false)}>
+                  Cancel
+                </Button>
+                <Button className="flex-1 normal-case bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-1.5" onClick={handleApprove}>
+                  <CheckCircleIcon className="w-4 h-4" /> Confirm Approve
+                </Button>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 text-sm animate-fade-in">
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
-                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Referer ID</span>
-                  <span className="text-gray-900 font-medium flex items-center gap-2">
-                    {user.reffer?.username || "Direct Signup"}
-                    {user.reffer?.username && (
-                      <DocumentDuplicateIcon 
-                        className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600 transition-colors" 
-                        onClick={() => {
-                          navigator.clipboard.writeText(user.reffer.username);
-                          toast.success("Copied Referer ID");
-                        }}
-                      />
-                    )}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
-                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Role</span>
-                  <span className="text-gray-900 font-medium capitalize">{user.role}</span>
-                </div>
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
-                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Email</span>
-                  <span className="text-gray-900 font-medium truncate">{user.email}</span>
-                </div>
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
-                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">WhatsApp</span>
-                  <span className="text-gray-900 font-medium">{user.phone}</span>
-                </div>
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
-                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Balance</span>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-gray-900 font-bold text-base">৳ {user.balance}</span>
-                    {!deleted && (
-                    <button
-                      type="button"
-                      onClick={handleGoToCheckBalance}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200 text-xs font-bold transition-all shadow-xs"
-                      title="Update balance on Check & Balance page"
-                    >
-                      <BanknotesIcon className="w-3.5 h-3.5 text-teal-600" />
-                      <span>Update Balance</span>
-                    </button>
-                    )}
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
-                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Joined Date</span>
-                  <span className="text-gray-900 font-medium">{moment(user.createdAt).format("MMM DD, YYYY")}</span>
-                </div>
-                {deleted && (
-                  <div className="sm:col-span-2 flex flex-col gap-1 p-3 rounded-xl bg-red-50/70 border border-red-100">
-                    <span className="text-[10px] text-red-500 font-semibold uppercase tracking-wider">Deletion</span>
-                    <span className="text-gray-900 font-medium">
-                      {moment(user.deletedAt).format("MMM DD, YYYY h:mm A")}
-                      {" by "}
-                      {user.deletedBy ? `${user.deletedBy.name} (#${user.deletedBy.username})` : "Unknown"}
-                    </span>
-                    <span className="text-gray-600 text-xs">
-                      Reason: {user.deleteReason || "Not recorded"}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-row gap-3 mt-6 pt-6 border-t border-gray-100 w-full">
-            {deleted ? (
-              admin?.role === "admin" && (
+            </div>
+          ) : isDeleted ? (
+            <Button
+              className="w-full normal-case bg-gray-900 hover:bg-gray-800 flex items-center justify-center gap-1.5"
+              onClick={handleRestore}
+            >
+              <ArrowPathIcon className="w-4 h-4" /> Restore User
+            </Button>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="text"
+                color="red"
+                className="normal-case hover:bg-red-50 flex items-center gap-1.5"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <TrashIcon className="w-4 h-4" /> {isPending ? "Reject" : "Delete"}
+              </Button>
+              <div className="flex-1" />
+              {isBanned ? (
                 <Button
-                  className="flex-1 flex justify-center items-center bg-green-600 text-white normal-case px-4 py-2.5 hover:bg-green-700 shadow-none rounded-xl transition-all focus:ring-0"
-                  onClick={handleRestore}
+                  color="green"
+                  className="normal-case shadow-none flex items-center gap-1.5"
+                  onClick={() => handleLockUnlock(false)}
                 >
-                  Restore User
+                  <LockOpenIcon className="w-4 h-4" /> Unlock
                 </Button>
-              )
-            ) : isPending ? (
-              <>
-                <Button variant="outlined" color="red" className="flex-1 flex justify-center items-center border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 normal-case px-4 py-2.5 rounded-xl transition-colors focus:ring-0" onClick={() => setDeleteOpen(true)}>
-                  Reject
-                </Button>
-                <Button 
-                  className="flex-1 flex justify-center items-center bg-blue-600 text-white normal-case px-4 py-2.5 hover:bg-blue-700 shadow-none hover:shadow-lg hover:shadow-blue-500/20 rounded-xl transition-all focus:ring-0"
-                  onClick={handleApprove}
+              ) : (
+                <Button
+                  variant="outlined"
+                  color="red"
+                  className="normal-case border-red-100 text-red-500 hover:bg-red-50 flex items-center gap-1.5"
+                  onClick={() => handleLockUnlock(true)}
                 >
-                  Approve User
+                  <LockClosedIcon className="w-4 h-4" /> Lock
                 </Button>
-              </>
-            ) : isEditing ? (
-               <div className="flex-1 flex justify-end gap-3">
-                 <Button variant="text" color="gray" onClick={() => setIsEditing(false)} className="normal-case">Cancel</Button>
-                 <Button color="blue" onClick={handleUpdate} className="normal-case">Save Changes</Button>
-               </div>
-            ) : (
-              <div className="flex-1 flex flex-wrap justify-between items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="filled"
-                    className="normal-case bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm"
-                    onClick={handleGoToCheckBalance}
-                  >
-                    <BanknotesIcon className="w-4 h-4" />
-                    Check & Balance
-                  </Button>
-                  <Button variant="text" color="red" className="normal-case hover:bg-red-50 text-xs" onClick={() => setDeleteOpen(true)}>
-                    Delete User
-                  </Button>
-                </div>
-                {user.lock ? (
-                  <Button variant="filled" color="green" className="normal-case shadow-none text-xs" onClick={() => handleLockUnlock(false)}>
-                    Unlock Profile
-                  </Button>
-                ) : (
-                  <Button variant="outlined" color="red" className="normal-case border-red-100 text-red-500 hover:bg-red-50 text-xs" onClick={() => handleLockUnlock(true)}>
-                    Lock Profile
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
+              )}
+              {isPending && (
+                <Button
+                  className="normal-case bg-blue-600 hover:bg-blue-700 shadow-none flex items-center gap-1.5"
+                  onClick={() => setConfirmApprove(true)}
+                >
+                  <CheckCircleIcon className="w-4 h-4" /> Approve
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -366,10 +486,10 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch, deleted = false }) =>
         isOpen={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
-        title={`Delete "${user.name}"?`}
+        title={`${isPending ? "Reject" : "Delete"} "${user.name}"?`}
         message="আপনি কি নিশ্চিত যে এই ইউজারকে মুছে ফেলতে চান? মুছে ফেলা ইউজারকে Deleted Users পেজ থেকে ফিরিয়ে আনা যাবে।"
         itemName={`#${user.username}`}
-        confirmText="Delete User"
+        confirmText={isPending ? "Reject User" : "Delete User"}
         cancelText="Cancel"
         loading={loading}
       >
