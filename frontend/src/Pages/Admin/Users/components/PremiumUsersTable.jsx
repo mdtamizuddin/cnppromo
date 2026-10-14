@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Input, Button, Chip, Spinner } from '@material-tailwind/react';
 import { useInfiniteQuery } from 'react-query';
+import { useSearchParams } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import { api } from '../../../../util/axios';
 import moment from 'moment';
@@ -29,25 +30,11 @@ const StatCard = ({ title, value, icon: Icon, colorClass, bgClass }) => (
   </Card>
 );
 
-// Shown next to each user while searching, since search spans every status.
-const StatusBadge = ({ user }) => {
-  const [label, cls] = user.deletedAt
-    ? ["Deleted", "bg-red-50 text-red-700 border-red-100"]
-    : user.lock
-    ? ["Banned", "bg-gray-100 text-gray-700 border-gray-200"]
-    : user.status === "active"
-    ? ["Active", "bg-green-50 text-green-700 border-green-100"]
-    : ["Pending", "bg-amber-50 text-amber-700 border-amber-100"];
-  return (
-    <span className={`inline-flex px-1.5 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider ${cls}`}>
-      {label}
-    </span>
-  );
-};
-
 const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", deleted = false, title = "Users", subtitle = "Manage users in the system." }) => {
   const [option, setOption] = useState({ limit: 50 });
-  const [search, setSearch] = useState("");
+  // Search lives in the URL (?search=) so it survives a reload and can be shared.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = (searchParams.get("search") || "").trim();
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [selectedUser, setSelectedUser] = useState(null);
   const { ref, inView } = useInView({ threshold: 0.1 });
@@ -57,24 +44,30 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", de
     toast.success(`${type} copied!`);
   };
 
-  const searchHandler = (e) => {
-    e.preventDefault();
-    setSearch(e.target.search.value.trim());
+  const applySearch = (value) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value) next.set("search", value);
+      else next.delete("search");
+      return next;
+    }, { replace: true });
   };
 
-  // A search looks across every status (active, pending, banned) so a user is
-  // found no matter which tab the admin is on. The deleted view stays scoped.
-  const isSearching = Boolean(search);
-  const showStatusBadge = isSearching || deleted;
-  const dateHead = deleted ? "Deleted" : status === "active" && !isSearching ? "Activated" : "Joined";
+  const searchHandler = (e) => {
+    e.preventDefault();
+    applySearch(e.target.search.value.trim());
+  };
+
+  // Search stays inside the current tab: active, pending, banned or deleted.
+  const dateHead = deleted ? "Deleted" : status === "active" ? "Activated" : "Joined";
 
   const { data, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
     ["Premium Users Table", status, lock, role, deleted, option.limit, search, dateRange],
     async ({ pageParam = null }) => {
       let url = `/user?limit=${option.limit}&reverse=true`;
       if (deleted) url += `&deleted=true`;
-      if (status && !isSearching && !deleted) url += `&status=${status}`;
-      if (lock && !isSearching && !deleted) url += `&lock=true`;
+      if (status && !deleted) url += `&status=${status}`;
+      if (lock && !deleted) url += `&lock=true`;
       if (role === "admin") url += `&admin=true`;
       if (role === "moderator") url += `&moderator=true`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -106,7 +99,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", de
   const dateValue = (user) =>
     deleted
       ? user.deletedAt
-      : status === "active" && !isSearching
+      : status === "active"
       ? user.activatedAt || user.createdAt
       : user.createdAt;
 
@@ -178,14 +171,26 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", de
         <div className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-200 bg-white">
           <form onSubmit={searchHandler} className="w-full md:w-80 relative">
             <Input
+              key={search}
               name="search"
+              defaultValue={search}
               placeholder="Name, username, email, phone or ID..."
-              className="!border !border-gray-200 bg-gray-50 text-gray-900 shadow-none ring-0 placeholder:text-gray-400 focus:!border-blue-500 focus:bg-white transition-colors"
+              className={`!border !border-gray-200 bg-gray-50 text-gray-900 shadow-none ring-0 placeholder:text-gray-400 focus:!border-blue-500 focus:bg-white transition-colors ${search ? "!pr-16" : ""}`}
               labelProps={{
                 className: "hidden",
               }}
               icon={<button type="submit"><MagnifyingGlassIcon className="h-4 w-4 text-gray-400" /></button>}
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => applySearch("")}
+                className="absolute top-1/2 -translate-y-1/2 right-10 p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 transition-colors"
+                title="Clear search"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            )}
           </form>
 
           <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto mt-3 md:mt-0">
@@ -246,7 +251,6 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", de
                       >
                         #{user.username}
                       </span>
-                      {showStatusBadge && <span className="mt-0.5"><StatusBadge user={user} /></span>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -347,7 +351,6 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", de
                           >
                             #{user.username}
                           </span>
-                          {showStatusBadge && <span className="mt-0.5"><StatusBadge user={user} /></span>}
                         </div>
                       </div>
                     </td>

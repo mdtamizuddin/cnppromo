@@ -237,9 +237,15 @@ const statistic = async (user) => {
     }
 };
 
+// Admin lookup for the Check page. Includes soft-deleted users so the page can
+// show any account in its current state, and never returns the password hash.
 const statistic2 = async (user) => {
     try {
-        const userCheck = await User.findOne({ $or: [{ username: user }, { email: user }] });
+        const userCheck = await User.findOne({ $or: [{ username: user }, { email: user }] })
+            .setOptions({ withDeleted: true })
+            .select("-password")
+            .populate({ path: "reffer", select: "name username", options: { withDeleted: true } })
+            .populate({ path: "deletedBy", select: "name username", options: { withDeleted: true } });
         if (!userCheck) {
             throw new Error("User not found");
         }

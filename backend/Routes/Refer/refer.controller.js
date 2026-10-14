@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const authChecker = require("../../util/authChecker");
+const roleChecker = require("../../util/roleChecker");
 const referService = require("./refer.service");
 
 router.get("/", authChecker, async (req, res) => {
@@ -72,7 +73,8 @@ router.get('/statistic', authChecker, async (req, res) => {
     }
 });
 
-router.get('/statistic/:id', authChecker, async (req, res) => {
+// Admin Check page lookup — returns another user's full profile, so admin only.
+router.get('/statistic/:id', authChecker, roleChecker(['admin']), async (req, res) => {
     try {
         const response = await referService.statistic2(req.params.id);
         res.send(response);

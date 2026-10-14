@@ -27,6 +27,8 @@ import {
   CheckIcon,
   ClockIcon,
   ChatBubbleBottomCenterTextIcon,
+  TrashIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import moment from "moment";
@@ -41,15 +43,58 @@ import {
 
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 2000, 5000];
 
+// Visual treatment per account state. Deleted wins over banned, banned over status.
+const ACCOUNT_STATES = {
+  active: {
+    label: "Active",
+    dot: "bg-emerald-500",
+    badge: "bg-emerald-50 text-emerald-700 border border-emerald-200/50",
+  },
+  pending: {
+    label: "Pending",
+    dot: "bg-amber-500",
+    badge: "bg-amber-50 text-amber-700 border border-amber-200/50",
+    banner: "bg-amber-50 border-amber-200 text-amber-800",
+  },
+  inactive: {
+    label: "Inactive",
+    dot: "bg-gray-400",
+    badge: "bg-gray-100 text-gray-700 border border-gray-200",
+    banner: "bg-gray-50 border-gray-200 text-gray-700",
+  },
+  banned: {
+    label: "Banned",
+    dot: "bg-red-500",
+    badge: "bg-red-50 text-red-700 border border-red-200/50",
+    banner: "bg-red-50 border-red-200 text-red-800",
+  },
+  deleted: {
+    label: "Deleted",
+    dot: "bg-gray-900",
+    badge: "bg-gray-900 text-white border border-gray-900",
+    banner: "bg-gray-100 border-gray-300 text-gray-800",
+  },
+};
+
+const getAccountState = (user) => {
+  if (!user) return null;
+  if (user.deletedAt) return "deleted";
+  if (user.lock) return "banned";
+  if (user.status === "active") return "active";
+  if (user.status === "pending") return "pending";
+  return "inactive";
+};
+
 export default function Check() {
   const { settings } = useSelector((state) => state.user);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchText, setSearchText] = useState("");
   const [lastSearched, setLastSearched] = useState("");
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
 
   // User transaction history state
   const [userTransactions, setUserTransactions] = useState([]);
@@ -124,16 +169,49 @@ export default function Check() {
     }
   };
 
+  // Keep the term in ?search= so a reload or shared link shows the same user.
+  // Changing the URL triggers the search via the effect above; re-submitting
+  // the same term leaves the URL unchanged, so search directly in that case.
+  const submitSearch = () => {
+    const term = searchText.trim();
+    if (term && searchParams.get("search") !== term) {
+      setSearchParams({ search: term }, { replace: true });
+    } else {
+      handleSearch();
+    }
+  };
+
   const handleRefresh = () => {
     if (lastSearched) {
       handleSearch(lastSearched);
     }
   };
 
+  // Approve / unlock / restore — whichever applies to the account's current state.
+  const handleStatusAction = async (action) => {
+    if (!data?.user) return;
+    const id = data.user._id;
+    const requests = {
+      approve: () => api.put(`/user/active/${id}`),
+      unlock: () => api.put(`/user/${id}`, { lock: false }),
+      restore: () => api.put(`/user/restore/${id}`),
+    };
+    try {
+      setStatusUpdating(true);
+      const res = await requests[action]();
+      toast.success(res.data?.message || "User updated");
+      await handleSearch(lastSearched || data.user.username);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error?.message || "Failed to update user");
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
   // Submit credit/debit transaction
   const handleCreditSubmit = async (e) => {
     e?.preventDefault();
-    if (!data?.user) return;
+    if (!data?.user || data.user.deletedAt) return;
 
     const amount = parseFloat(amountInput);
     if (!amount || amount <= 0) {
@@ -180,6 +258,9 @@ export default function Check() {
   };
 
   const user = data?.user;
+  const accountState = getAccountState(user);
+  const stateStyle = accountState ? ACCOUNT_STATES[accountState] : null;
+  const isDeleted = accountState === "deleted";
   const currentBalance = Number(user?.balance) || 0;
   const parsedAmount = parseFloat(amountInput) || 0;
   const calculatedCreditBalance =
@@ -249,7 +330,7 @@ export default function Check() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleSearch();
+            submitSearch();
           }}
           className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 w-full"
         >
@@ -331,6 +412,68 @@ export default function Check() {
       {/* Main Content: User Found */}
       {!isLoading && user && (
         <div className="space-y-6">
+          {/* Account State Banner: explains a non-active account and offers the fix */}
+          {stateStyle.banner && (
+            <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${stateStyle.banner}`}>
+              <div className="flex items-start gap-3 min-w-0">
+                {isDeleted ? (
+                  <TrashIcon className="w-5 h-5 shrink-0 mt-0.5" />
+                ) : accountState === "banned" ? (
+                  <LockClosedIcon className="w-5 h-5 shrink-0 mt-0.5" />
+                ) : (
+                  <ExclamationTriangleIcon className="w-5 h-5 shrink-0 mt-0.5" />
+                )}
+                <div className="text-xs sm:text-sm min-w-0">
+                  {isDeleted ? (
+                    <>
+                      <p className="font-bold">
+                        Account deleted on {moment(user.deletedAt).format("MMM DD, YYYY h:mm A")}
+                        {" by "}
+                        {user.deletedBy ? `${user.deletedBy.name} (@${user.deletedBy.username})` : "unknown admin"}
+                      </p>
+                      <p className="mt-0.5 break-words">Reason: {user.deleteReason || "Not recorded"}</p>
+                      <p className="mt-0.5 opacity-80">Balance changes are disabled until the account is restored.</p>
+                    </>
+                  ) : accountState === "banned" ? (
+                    <p className="font-bold">This account is locked and cannot sign in.</p>
+                  ) : accountState === "pending" ? (
+                    <p className="font-bold">
+                      Waiting for activation since {moment(user.createdAt).format("MMM DD, YYYY")}.
+                    </p>
+                  ) : (
+                    <p className="font-bold">This account is inactive.</p>
+                  )}
+                </div>
+              </div>
+              {(isDeleted || accountState === "banned" || accountState === "pending") && (
+                <Button
+                  size="sm"
+                  disabled={statusUpdating}
+                  onClick={() =>
+                    handleStatusAction(isDeleted ? "restore" : accountState === "banned" ? "unlock" : "approve")
+                  }
+                  className={`shrink-0 normal-case rounded-xl flex items-center justify-center gap-1.5 text-xs ${isDeleted
+                    ? "bg-gray-900 hover:bg-gray-800"
+                    : accountState === "banned"
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "bg-amber-600 hover:bg-amber-700"
+                    }`}
+                >
+                  {statusUpdating ? (
+                    <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                  ) : isDeleted ? (
+                    <ArrowPathIcon className="w-4 h-4" />
+                  ) : accountState === "banned" ? (
+                    <LockOpenIcon className="w-4 h-4" />
+                  ) : (
+                    <CheckCircleIcon className="w-4 h-4" />
+                  )}
+                  {isDeleted ? "Restore User" : accountState === "banned" ? "Unlock User" : "Approve User"}
+                </Button>
+              )}
+            </div>
+          )}
+
           {/* Top Row: Profile Card & Balance Action Card */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* User Profile Overview (Left: 5 cols) */}
@@ -348,13 +491,8 @@ export default function Check() {
                       }}
                     />
                     <span
-                      className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-white ${user.status === "active"
-                        ? "bg-emerald-500"
-                        : user.status === "pending"
-                          ? "bg-amber-500"
-                          : "bg-red-500"
-                        }`}
-                      title={`Status: ${user.status}`}
+                      className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-white ${stateStyle.dot}`}
+                      title={`Status: ${stateStyle.label}`}
                     />
                   </div>
 
@@ -364,14 +502,9 @@ export default function Check() {
                         {user.name}
                       </h2>
                       <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${user.status === "active"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
-                          : user.status === "pending"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200/50"
-                            : "bg-red-50 text-red-700 border border-red-200/50"
-                          }`}
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${stateStyle.badge}`}
                       >
-                        {user.status || "active"}
+                        {stateStyle.label}
                       </span>
                     </div>
 
@@ -512,6 +645,11 @@ export default function Check() {
                   </div>
                 </div>
 
+                {isDeleted ? (
+                  <div className="p-6 rounded-2xl border border-dashed border-gray-300 bg-gray-50 text-center text-sm text-gray-500">
+                    This account is deleted. Restore it to credit or deduct balance.
+                  </div>
+                ) : (
                 <form onSubmit={handleCreditSubmit} className="space-y-3.5 sm:space-y-4">
                   {/* Operation Type Switcher (Add vs Deduct) */}
                   <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-gray-100 w-full sm:w-max">
@@ -634,6 +772,7 @@ export default function Check() {
                     )}
                   </Button>
                 </form>
+                )}
               </div>
             </Card>
           </div>
