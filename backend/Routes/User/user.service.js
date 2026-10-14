@@ -15,11 +15,13 @@ const sessionService = require("../Session/session.service");
 const { notifyUser } = require("../Notification/notification.service");
 const validateUsername = require("../../util/validateUsername");
 const { deleteFromS3 } = require("../../util/s3");
+const escapeRegex = require("../../util/escapeRegex");
+const mongoose = require("mongoose");
 // Fields a self-registering user is never allowed to set on themselves.
 // `new User(req.body)` would otherwise happily accept role:"admin" or balance:1e9.
 const REGISTRATION_BLOCKED_FIELDS = [
     "role", "balance", "status", "level", "lock", "active",
-    "allowedUsers", "deletedAt", "activatedAt", "_id"
+    "allowedUsers", "deletedAt", "deletedBy", "deleteReason", "activatedAt", "_id"
 ];
 
 const createUser = async (req, res) => {
@@ -234,16 +236,32 @@ const getAllData = async (req, res) => {
         filters.lock = true;
     }
 
+    // Deleted users view — admin only. Setting deletedAt explicitly opts this
+    // query out of the soft-delete hook in user.model.js.
+    const showDeleted = req.query.deleted === "true";
+    if (showDeleted) {
+        if (req.user?.role !== "admin") {
+            return res.status(403).send({
+                message: "Only admins can view deleted users"
+            });
+        }
+        filters.deletedAt = { $ne: null };
+    }
+
     // Initialize search filter
     const searchConditions = [];
-    if (req.query.search) {
-        const regex = new RegExp(req.query.search, "i");
+    const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
+    if (search) {
+        const regex = new RegExp(escapeRegex(search), "i");
         searchConditions.push(
             { username: { $regex: regex } },
             { name: { $regex: regex } },
             { email: { $regex: regex } },
             { phone: { $regex: regex } }
         );
+        if (mongoose.isValidObjectId(search) && /^[a-f0-9]{24}$/i.test(search)) {
+            searchConditions.push({ _id: search });
+        }
     }
 
     // Moderator filter
@@ -292,14 +310,20 @@ const getAllData = async (req, res) => {
     }
 
     try {
+        const fields = "_id avatar name username email phone balance status role lock createdAt activatedAt reffer";
         const query = User.find(filters)
-            .select("_id avatar name username email phone balance status role lock createdAt activatedAt reffer")
+            .select(showDeleted ? `${fields} deletedAt deletedBy deleteReason` : fields)
             .populate("reffer", "name username")
             .sort({ _id: req.query.reverse === 'true' ? -1 : 1 })
             .limit(limit);
 
         if (!req.query.cursor) {
             query.skip(skip);
+        }
+
+        if (showDeleted) {
+            // The deleting admin may since have been deleted too, so include them.
+            query.populate({ path: "deletedBy", select: "name username", options: { withDeleted: true } });
         }
 
         const startOfToday = new Date();
@@ -315,14 +339,16 @@ const getAllData = async (req, res) => {
             grandTotal,
             active,
             pending,
-            todayAdded
+            todayAdded,
+            deletedTotal
         ] = await Promise.all([
             query,
             User.countDocuments(filters),
             User.countDocuments({ role: "user" }),
             User.countDocuments({ status: "active" }),
             User.countDocuments({ status: "pending" }),
-            User.countDocuments(todayQuery)
+            User.countDocuments(todayQuery),
+            showDeleted ? User.countDocuments({ role: filters.role, deletedAt: { $ne: null } }) : 0
         ]);
 
         const nextCursor = users.length === limit ? users[users.length - 1]._id : null;
@@ -335,6 +361,7 @@ const getAllData = async (req, res) => {
             active,
             pending,
             todayAdded,
+            deletedTotal,
             users,
             nextCursor,
         });
@@ -418,7 +445,7 @@ const searchUser = async (req, res) => {
         const user = await User.findOne({
             $or: [
                 { username: query },
-                { username: { $regex: new RegExp(`^${query}$`, "i") } }
+                { username: { $regex: new RegExp(`^${escapeRegex(query)}$`, "i") } }
             ]
         }).select("name username");
         const data = {
@@ -439,6 +466,30 @@ const ADMIN_UPDATABLE_FIELDS = [
     "name", "username", "email", "phone", "gender", "fb",
     "role", "status", "level", "lock", "balance", "reffer", "avatar"
 ];
+
+// Undo a soft delete. Clears the audit fields along with deletedAt so the
+// account behaves exactly as it did before deletion.
+const restoreUser = async (req, res) => {
+    try {
+        const user = await User.findOneAndUpdate(
+            { _id: req.params.id, deletedAt: { $ne: null } },
+            { deletedAt: null, deletedBy: null, deleteReason: "" },
+            { new: true }
+        );
+        if (!user) {
+            return res.status(404).send({
+                message: "Deleted user not found"
+            });
+        }
+        res.send({
+            message: "User restored successfully",
+        });
+    } catch (error) {
+        res.status(500).send({
+            message: error.message
+        });
+    }
+}
 
 const updateUser = async (req, res) => {
     try {
@@ -608,10 +659,12 @@ const deleteUser = async (req, res) => {
         })
     }
     try {
-        // Soft delete: never physically remove the document.
-        const user = await User.findByIdAndUpdate(
-            req.params.id,
-            { deletedAt: new Date() },
+        const reason = typeof req.body?.reason === "string" ? req.body.reason.trim().slice(0, 500) : "";
+        // Soft delete: never physically remove the document. Matching on
+        // deletedAt: null keeps a repeat call from overwriting the original audit.
+        const user = await User.findOneAndUpdate(
+            { _id: req.params.id, deletedAt: null },
+            { deletedAt: new Date(), deletedBy: req.user._id, deleteReason: reason },
             { new: true }
         );
         if (!user) {
@@ -813,7 +866,7 @@ const checkUser = async (req, res) => {
         const user = await User.findOne({
             $or: [
                 { username: username },
-                { username: { $regex: new RegExp(`^${username}$`, "i") } }
+                { username: { $regex: new RegExp(`^${escapeRegex(username)}$`, "i") } }
             ]
         }).setOptions({ withDeleted: true });
         if (!user) {
@@ -1209,6 +1262,7 @@ module.exports = {
     getSingle,
     updateUser,
     deleteUser,
+    restoreUser,
     updatePassword,
     loginUser,
     getCurrentUser,

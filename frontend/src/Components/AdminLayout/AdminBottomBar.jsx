@@ -17,7 +17,8 @@ const AdminBottomBar = ({ toggleSidebar }) => {
     pathname.startsWith("/admin/admins") ||
     pathname.startsWith("/admin/moderator") ||
     pathname.startsWith("/admin/non-active-users") ||
-    pathname.startsWith("/admin/banned-users");
+    pathname.startsWith("/admin/banned-users") ||
+    pathname.startsWith("/admin/deleted-users");
   const isWorks =
     pathname.startsWith("/admin/works") ||
     pathname.startsWith("/admin/social-works");

@@ -20,6 +20,7 @@ import {
  * @param {string} confirmText - Confirm button text (default "Delete")
  * @param {string} cancelText - Cancel button text (default "Cancel")
  * @param {boolean} loading - Loading state for async deletion
+ * @param {React.ReactNode} children - Optional extra content (e.g. a reason field) shown above the actions
  */
 const DeleteConfirmModal = ({
   isOpen,
@@ -32,6 +33,7 @@ const DeleteConfirmModal = ({
   confirmText = "Delete Now",
   cancelText = "Cancel",
   loading = false,
+  children,
 }) => {
   useEffect(() => {
     if (!isOpen) return;
@@ -115,6 +117,8 @@ const DeleteConfirmModal = ({
                 <ExclamationTriangleIcon className="w-5 h-5 text-rose-500 shrink-0" />
               </div>
             )}
+
+            {children}
           </div>
 
           {/* Actions Footer */}

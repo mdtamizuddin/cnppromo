@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { api } from "../../../../util/axios";
 import DeleteConfirmModal from "../../../../Components/DeleteConfirmModal";
 
-const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
+const PremiumUserDetailsModal = ({ user, onClose, refetch, deleted = false }) => {
   if (!user) return null;
 
   const navigate = useNavigate();
@@ -17,6 +17,7 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
   const [password, setPassword] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
 
   const [value, setValue] = useState({
     name: "",
@@ -32,6 +33,7 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
         role: user.role || "user",
       });
       setPassword("");
+      setDeleteReason("");
       setIsEditing(false); // Reset to view mode on user change
     }
   }, [user]);
@@ -67,7 +69,7 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
   const handleDelete = async () => {
     try {
       setLoading(true);
-      const res = await api.delete(`/user/${user._id}`);
+      const res = await api.delete(`/user/${user._id}`, { data: { reason: deleteReason.trim() } });
       toast.success(res.data.message || "User deleted");
       refetch();
       onClose();
@@ -76,6 +78,20 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
     } finally {
       setLoading(false);
       setDeleteOpen(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      setLoading(true);
+      const res = await api.put(`/user/restore/${user._id}`);
+      toast.success(res.data.message || "User restored");
+      refetch();
+      onClose();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to restore user");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,7 +130,7 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
   };
 
   const isPending = user.status === "pending";
-  const canEdit = admin?.role === "admin" || admin?.role === "moderator";
+  const canEdit = !deleted && (admin?.role === "admin" || admin?.role === "moderator");
 
   return (
     <>
@@ -140,17 +156,24 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
                alt={user.name}
                className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white shadow-md object-cover mb-3"
              />
-             <span className={`absolute bottom-4 right-1 md:bottom-5 md:right-2 w-4 h-4 rounded-full border-2 border-white ${isPending ? 'bg-amber-500' : 'bg-green-500'}`}></span>
+             <span className={`absolute bottom-4 right-1 md:bottom-5 md:right-2 w-4 h-4 rounded-full border-2 border-white ${deleted ? 'bg-red-500' : isPending ? 'bg-amber-500' : 'bg-green-500'}`}></span>
           </div>
           <h2 className="text-lg md:text-xl font-bold text-gray-900 text-center">{user.name}</h2>
           <p className="text-sm text-gray-500 mt-0.5">#{user.username}</p>
           <div className="mt-4 md:mt-6 w-full px-4 md:px-0">
-             <div className={`w-full rounded-xl p-2.5 flex items-center justify-center gap-2 border ${isPending ? 'bg-amber-50 border-amber-100/50' : 'bg-green-50 border-green-100/50'}`}>
-                <span className={`w-2 h-2 rounded-full animate-pulse ${isPending ? 'bg-amber-500' : 'bg-green-500'}`}></span>
-                <span className={`text-[11px] font-bold tracking-wider ${isPending ? 'text-amber-700' : 'text-green-700'}`}>
-                  {isPending ? 'PENDING REVIEW' : 'ACTIVE USER'}
-                </span>
-             </div>
+             {deleted ? (
+               <div className="w-full rounded-xl p-2.5 flex items-center justify-center gap-2 border bg-red-50 border-red-100/50">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  <span className="text-[11px] font-bold tracking-wider text-red-700">DELETED USER</span>
+               </div>
+             ) : (
+               <div className={`w-full rounded-xl p-2.5 flex items-center justify-center gap-2 border ${isPending ? 'bg-amber-50 border-amber-100/50' : 'bg-green-50 border-green-100/50'}`}>
+                  <span className={`w-2 h-2 rounded-full animate-pulse ${isPending ? 'bg-amber-500' : 'bg-green-500'}`}></span>
+                  <span className={`text-[11px] font-bold tracking-wider ${isPending ? 'text-amber-700' : 'text-green-700'}`}>
+                    {isPending ? 'PENDING REVIEW' : 'ACTIVE USER'}
+                  </span>
+               </div>
+             )}
           </div>
 
           {canEdit && (
@@ -247,6 +270,7 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
                   <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Balance</span>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-gray-900 font-bold text-base">৳ {user.balance}</span>
+                    {!deleted && (
                     <button
                       type="button"
                       onClick={handleGoToCheckBalance}
@@ -256,19 +280,42 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
                       <BanknotesIcon className="w-3.5 h-3.5 text-teal-600" />
                       <span>Update Balance</span>
                     </button>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
                   <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Joined Date</span>
                   <span className="text-gray-900 font-medium">{moment(user.createdAt).format("MMM DD, YYYY")}</span>
                 </div>
+                {deleted && (
+                  <div className="sm:col-span-2 flex flex-col gap-1 p-3 rounded-xl bg-red-50/70 border border-red-100">
+                    <span className="text-[10px] text-red-500 font-semibold uppercase tracking-wider">Deletion</span>
+                    <span className="text-gray-900 font-medium">
+                      {moment(user.deletedAt).format("MMM DD, YYYY h:mm A")}
+                      {" by "}
+                      {user.deletedBy ? `${user.deletedBy.name} (#${user.deletedBy.username})` : "Unknown"}
+                    </span>
+                    <span className="text-gray-600 text-xs">
+                      Reason: {user.deleteReason || "Not recorded"}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-row gap-3 mt-6 pt-6 border-t border-gray-100 w-full">
-            {isPending ? (
+            {deleted ? (
+              admin?.role === "admin" && (
+                <Button
+                  className="flex-1 flex justify-center items-center bg-green-600 text-white normal-case px-4 py-2.5 hover:bg-green-700 shadow-none rounded-xl transition-all focus:ring-0"
+                  onClick={handleRestore}
+                >
+                  Restore User
+                </Button>
+              )
+            ) : isPending ? (
               <>
                 <Button variant="outlined" color="red" className="flex-1 flex justify-center items-center border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 normal-case px-4 py-2.5 rounded-xl transition-colors focus:ring-0" onClick={() => setDeleteOpen(true)}>
                   Reject
@@ -320,12 +367,21 @@ const PremiumUserDetailsModal = ({ user, onClose, refetch }) => {
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
         title={`Delete "${user.name}"?`}
-        message="আপনি কি নিশ্চিত যে এই ইউজারকে স্থায়ীভাবে মুছে ফেলতে চান? এই অ্যাকশনটি পুনরায় ফিরিয়ে আনা সম্ভব নয়।"
+        message="আপনি কি নিশ্চিত যে এই ইউজারকে মুছে ফেলতে চান? মুছে ফেলা ইউজারকে Deleted Users পেজ থেকে ফিরিয়ে আনা যাবে।"
         itemName={`#${user.username}`}
         confirmText="Delete User"
         cancelText="Cancel"
         loading={loading}
-      />
+      >
+        <textarea
+          value={deleteReason}
+          onChange={(e) => setDeleteReason(e.target.value)}
+          maxLength={500}
+          rows={2}
+          placeholder="Reason (e.g. invalid TRX, duplicate account)"
+          className="w-full text-sm text-gray-900 p-3 rounded-2xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-rose-300 outline-none resize-none"
+        />
+      </DeleteConfirmModal>
     </>
   );
 };

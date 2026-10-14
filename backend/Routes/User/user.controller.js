@@ -72,6 +72,9 @@ router.put('/access/:id', authChecker, roleChecker(['admin']), userService.giveA
 // Active An User — runs the referral commission cascade, so admin only
 router.put('/active/:id', authChecker, roleChecker(['admin']), userService.activeAnUser)
 
+// Restore a soft-deleted user
+router.put('/restore/:id', authChecker, roleChecker(['admin']), userService.restoreUser)
+
 // ─── Wildcard routes (must stay last) ────────────────────────────────────────
 
 // Get Single Data — admin/moderator, or the user themselves

@@ -25,6 +25,7 @@ const Check = lazyRetry(() => import("../Pages/Admin/Check/Check"));
 const Users = lazyRetry(() => import("../Pages/Admin/Users/Users"));
 const NonActiveUsers = lazyRetry(() => import("../Pages/Admin/Users/NonActiveUsers"));
 const BannedUsers = lazyRetry(() => import("../Pages/Admin/Users/BannedUsers"));
+const DeletedUsers = lazyRetry(() => import("../Pages/Admin/Users/DeletedUsers"));
 const User = lazyRetry(() => import("../Pages/Admin/Users/User"));
 const Topups = lazyRetry(() => import("../Pages/Admin/TopUp/TopUp"));
 const Settings = lazyRetry(() => import("../Pages/Settings/Settings"));
@@ -114,6 +115,10 @@ export const adminRoutes = [
   {
     path: "banned-users",
     element: <AdminChecker><Lazy><BannedUsers /></Lazy></AdminChecker>,
+  },
+  {
+    path: "deleted-users",
+    element: <AdminChecker><Lazy><DeletedUsers /></Lazy></AdminChecker>,
   },
   {
     path: "user/:id",

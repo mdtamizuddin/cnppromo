@@ -29,7 +29,23 @@ const StatCard = ({ title, value, icon: Icon, colorClass, bgClass }) => (
   </Card>
 );
 
-const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", title = "Users", subtitle = "Manage users in the system." }) => {
+// Shown next to each user while searching, since search spans every status.
+const StatusBadge = ({ user }) => {
+  const [label, cls] = user.deletedAt
+    ? ["Deleted", "bg-red-50 text-red-700 border-red-100"]
+    : user.lock
+    ? ["Banned", "bg-gray-100 text-gray-700 border-gray-200"]
+    : user.status === "active"
+    ? ["Active", "bg-green-50 text-green-700 border-green-100"]
+    : ["Pending", "bg-amber-50 text-amber-700 border-amber-100"];
+  return (
+    <span className={`inline-flex px-1.5 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider ${cls}`}>
+      {label}
+    </span>
+  );
+};
+
+const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", deleted = false, title = "Users", subtitle = "Manage users in the system." }) => {
   const [option, setOption] = useState({ limit: 50 });
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
@@ -43,18 +59,25 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
 
   const searchHandler = (e) => {
     e.preventDefault();
-    setSearch(e.target.search.value);
+    setSearch(e.target.search.value.trim());
   };
 
+  // A search looks across every status (active, pending, banned) so a user is
+  // found no matter which tab the admin is on. The deleted view stays scoped.
+  const isSearching = Boolean(search);
+  const showStatusBadge = isSearching || deleted;
+  const dateHead = deleted ? "Deleted" : status === "active" && !isSearching ? "Activated" : "Joined";
+
   const { data, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
-    ["Premium Users Table", status, lock, role, option.limit, search, dateRange],
+    ["Premium Users Table", status, lock, role, deleted, option.limit, search, dateRange],
     async ({ pageParam = null }) => {
       let url = `/user?limit=${option.limit}&reverse=true`;
-      if (status) url += `&status=${status}`;
-      if (lock) url += `&lock=true`;
+      if (deleted) url += `&deleted=true`;
+      if (status && !isSearching && !deleted) url += `&status=${status}`;
+      if (lock && !isSearching && !deleted) url += `&lock=true`;
       if (role === "admin") url += `&admin=true`;
       if (role === "moderator") url += `&moderator=true`;
-      if (search) url += `&search=${search}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
       if (pageParam) url += `&cursor=${pageParam}`;
       if (dateRange.start) url += `&startDate=${dateRange.start}`;
       if (dateRange.end) url += `&endDate=${dateRange.end}`;
@@ -78,6 +101,14 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
   const totalPending = data?.pages[0]?.pending || 0;
   const totalActive = data?.pages[0]?.active || 0;
   const filteredCount = data?.pages[0]?.total || 0;
+  const deletedTotal = data?.pages[0]?.deletedTotal || 0;
+
+  const dateValue = (user) =>
+    deleted
+      ? user.deletedAt
+      : status === "active" && !isSearching
+      ? user.activatedAt || user.createdAt
+      : user.createdAt;
 
   return (
     <div className="w-full pb-10">
@@ -88,7 +119,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
       </div>
 
       {/* Stat Cards Grid */}
-      <div className={`grid gap-3 sm:gap-6 mb-6 sm:mb-8 ${role !== 'user' ? 'grid-cols-2 lg:grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'}`}>
+      <div className={`grid gap-3 sm:gap-6 mb-6 sm:mb-8 ${role !== 'user' || deleted ? 'grid-cols-2 lg:grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'}`}>
         <StatCard 
           title="Filtered Results" 
           value={filteredCount} 
@@ -97,7 +128,15 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
           bgClass="bg-orange-50" 
         />
         
-        {role === 'user' ? (
+        {deleted ? (
+          <StatCard 
+            title="Total Deleted" 
+            value={deletedTotal} 
+            icon={UsersIcon} 
+            colorClass="text-red-500" 
+            bgClass="bg-red-50" 
+          />
+        ) : role === 'user' ? (
           <>
             {!lock && (
               <StatCard 
@@ -140,7 +179,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
           <form onSubmit={searchHandler} className="w-full md:w-80 relative">
             <Input
               name="search"
-              placeholder="Search by name, email or ID..."
+              placeholder="Name, username, email, phone or ID..."
               className="!border !border-gray-200 bg-gray-50 text-gray-900 shadow-none ring-0 placeholder:text-gray-400 focus:!border-blue-500 focus:bg-white transition-colors"
               labelProps={{
                 className: "hidden",
@@ -207,6 +246,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
                       >
                         #{user.username}
                       </span>
+                      {showStatusBadge && <span className="mt-0.5"><StatusBadge user={user} /></span>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -242,10 +282,13 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
 
                 <div className="flex items-center justify-between pt-1 border-t border-gray-100/60 text-[11px] text-gray-400">
                   <div className="flex flex-col text-[10px]">
-                    <span>Ref: <strong className="text-gray-600">{user.reffer ? user.reffer.name : "Direct"}</strong></span>
+                    {deleted ? (
+                      <span>By: <strong className="text-gray-600">{user.deletedBy ? user.deletedBy.name : "Unknown"}</strong></span>
+                    ) : (
+                      <span>Ref: <strong className="text-gray-600">{user.reffer ? user.reffer.name : "Direct"}</strong></span>
+                    )}
                     <span>
-                      {status === "active" ? "Activated: " : "Joined: "}
-                      {moment(user.activatedAt || user.createdAt).format("DD MMM YYYY")}
+                      {dateHead}: {moment(dateValue(user)).format("DD MMM YYYY")}
                     </span>
                   </div>
                   <Button
@@ -268,7 +311,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
           <table className="w-full min-w-[800px] table-auto text-left whitespace-nowrap">
             <thead>
               <tr>
-                {["User", "Contact Info", "Balance", "Device Limit", "Referer", status === "active" ? "Activated" : "Joined", "Action"].map((head) => (
+                {["User", "Contact Info", "Balance", "Device Limit", deleted ? "Deleted By" : "Referer", dateHead, "Action"].map((head) => (
                   <th key={head} className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     {head}
                   </th>
@@ -304,6 +347,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
                           >
                             #{user.username}
                           </span>
+                          {showStatusBadge && <span className="mt-0.5"><StatusBadge user={user} /></span>}
                         </div>
                       </div>
                     </td>
@@ -329,13 +373,22 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
                         {user.maxActiveSessions ?? 5}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{user.reffer ? user.reffer.name : "Direct"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {deleted ? (
+                        <div className="flex flex-col">
+                          <span>{user.deletedBy ? user.deletedBy.name : "Unknown"}</span>
+                          <span className="text-xs text-gray-400 truncate max-w-[180px]" title={user.deleteReason}>
+                            {user.deleteReason || "No reason"}
+                          </span>
+                        </div>
+                      ) : (
+                        user.reffer ? user.reffer.name : "Direct"
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
                         <span className="text-sm text-gray-700">
-                          {status === "active" 
-                            ? moment(user.activatedAt || user.createdAt).format("MMM DD, YYYY")
-                            : moment(user.createdAt).format("MMM DD, YYYY")}
+                          {moment(dateValue(user)).format("MMM DD, YYYY")}
                         </span>
                       </div>
                     </td>
@@ -378,6 +431,7 @@ const PremiumUsersTable = ({ status = "pending", lock = false, role = "user", ti
         user={selectedUser} 
         onClose={() => setSelectedUser(null)} 
         refetch={refetch} 
+        deleted={deleted}
       />
     </div>
   );

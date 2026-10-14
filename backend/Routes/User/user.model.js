@@ -142,6 +142,16 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: null,
     },
+    // Audit trail for soft-deletes: which admin removed the account and why.
+    deletedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null,
+    },
+    deleteReason: {
+        type: String,
+        default: "",
+    },
     activatedAt: {
         type: Date,
         default: null,
@@ -161,8 +171,9 @@ const userSchema = new mongoose.Schema({
 });
 
 // Soft-delete: automatically exclude deleted users from ALL read queries.
-// A deleted user is NEVER returned by any API (admin included).
-// Restore/update is only possible via direct database (set deletedAt: null).
+// Queries that set `deletedAt` explicitly, or pass { withDeleted: true }, opt out.
+// Admins list deleted users via GET /user?deleted=true and restore them via
+// PUT /user/restore/:id.
 userSchema.index({ deletedAt: 1 });
 userSchema.pre(["find", "findOne", "countDocuments", "distinct"], function () {
     const query = this.getQuery();

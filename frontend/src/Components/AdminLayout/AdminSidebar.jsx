@@ -29,6 +29,7 @@ import {
   AcademicCapIcon,
   TrophyIcon,
   BanknotesIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { IconButton } from "@material-tailwind/react";
 
@@ -49,6 +50,7 @@ const sidebarData = [
       { label: "Active Users", icon: UsersIcon, to: "/admin/users", color: "text-green-500" },
       { label: "Non-Active Users", icon: UserMinusIcon, to: "/admin/non-active-users", color: "text-purple-500" },
       { label: "Banned Users", icon: NoSymbolIcon, to: "/admin/banned-users", color: "text-red-500" },
+      { label: "Deleted Users", icon: TrashIcon, to: "/admin/deleted-users", color: "text-rose-500" },
       { label: "Check & Balance", icon: BanknotesIcon, to: "/admin/check", color: "text-teal-500" },
     ]
   },
