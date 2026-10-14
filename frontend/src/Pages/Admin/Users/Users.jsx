@@ -5,9 +5,8 @@ const Users = () => {
   return (
     <div className="container mx-auto">
       <PremiumUsersTable 
-        status="active" 
-        title="Active Users" 
-        subtitle="Manage all active users in the system." 
+        role="user"
+        defaultStatus="all"
       />
     </div>
   );

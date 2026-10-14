@@ -234,6 +234,8 @@ const getAllData = async (req, res) => {
     // Lock (Banned) filter
     if (req.query.lock === "true") {
         filters.lock = true;
+    } else if (req.query.lock === "false") {
+        filters.lock = { $ne: true };
     }
 
     // Deleted users view — admin only. Setting deletedAt explicitly opts this
@@ -247,6 +249,9 @@ const getAllData = async (req, res) => {
         }
         filters.deletedAt = { $ne: null };
     }
+
+    const isAllTab = req.query.all === "true" || (!req.query.status && !req.query.lock && !req.query.deleted);
+    const includeWithDeleted = (showDeleted || isAllTab) && req.user?.role === "admin";
 
     // Initialize search filter
     const searchConditions = [];
@@ -288,7 +293,7 @@ const getAllData = async (req, res) => {
 
     // Date range filtering
     if (req.query.startDate || req.query.endDate) {
-        const dateField = req.query.status === "active" ? "activatedAt" : "createdAt";
+        const dateField = showDeleted ? "deletedAt" : req.query.status === "active" ? "activatedAt" : "createdAt";
         filters[dateField] = {};
         if (req.query.startDate) {
             filters[dateField].$gte = new Date(req.query.startDate);
@@ -312,7 +317,8 @@ const getAllData = async (req, res) => {
     try {
         const fields = "_id avatar name username email phone balance status role lock createdAt activatedAt reffer";
         const query = User.find(filters)
-            .select(showDeleted ? `${fields} deletedAt deletedBy deleteReason` : fields)
+            .setOptions({ withDeleted: includeWithDeleted })
+            .select(includeWithDeleted ? `${fields} deletedAt deletedBy deleteReason` : fields)
             .populate("reffer", "name username")
             .sort({ _id: req.query.reverse === 'true' ? -1 : 1 })
             .limit(limit);
@@ -321,7 +327,7 @@ const getAllData = async (req, res) => {
             query.skip(skip);
         }
 
-        if (showDeleted) {
+        if (includeWithDeleted) {
             // The deleting admin may since have been deleted too, so include them.
             query.populate({ path: "deletedBy", select: "name username", options: { withDeleted: true } });
         }
@@ -329,9 +335,14 @@ const getAllData = async (req, res) => {
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 
-        const todayQuery = req.query.status === "active" 
-            ? { status: "active", activatedAt: { $gte: startOfToday } }
-            : { status: "pending", createdAt: { $gte: startOfToday } };
+        const targetRole = filters.role || "user";
+        const todayQuery = showDeleted
+            ? { role: targetRole, deletedAt: { $gte: startOfToday } }
+            : req.query.status === "active" 
+            ? { role: targetRole, status: "active", activatedAt: { $gte: startOfToday } }
+            : { role: targetRole, createdAt: { $gte: startOfToday } };
+
+        const isAdminUser = req.user?.role === "admin";
 
         const [
             users,
@@ -339,16 +350,18 @@ const getAllData = async (req, res) => {
             grandTotal,
             active,
             pending,
+            banned,
             todayAdded,
             deletedTotal
         ] = await Promise.all([
             query,
-            User.countDocuments(filters),
-            User.countDocuments({ role: "user" }),
-            User.countDocuments({ status: "active" }),
-            User.countDocuments({ status: "pending" }),
+            User.countDocuments(filters).setOptions({ withDeleted: includeWithDeleted }),
+            User.countDocuments({ role: targetRole }).setOptions({ withDeleted: isAdminUser }),
+            User.countDocuments({ role: targetRole, status: "active" }),
+            User.countDocuments({ role: targetRole, status: "pending" }),
+            User.countDocuments({ role: targetRole, lock: true }),
             User.countDocuments(todayQuery),
-            showDeleted ? User.countDocuments({ role: filters.role, deletedAt: { $ne: null } }) : 0
+            isAdminUser ? User.countDocuments({ role: targetRole, deletedAt: { $ne: null } }) : 0
         ]);
 
         const nextCursor = users.length === limit ? users[users.length - 1]._id : null;
@@ -360,6 +373,7 @@ const getAllData = async (req, res) => {
             grandTotal,
             active,
             pending,
+            banned,
             todayAdded,
             deletedTotal,
             users,

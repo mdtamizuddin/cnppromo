@@ -1,17 +1,8 @@
 import React from 'react';
-import PremiumUsersTable from './components/PremiumUsersTable';
+import { Navigate } from 'react-router-dom';
 
 const BannedUsers = () => {
-  return (
-    <div className="container mx-auto">
-      <PremiumUsersTable 
-        status=""
-        lock={true}
-        title="Banned Users" 
-        subtitle="Manage all locked and banned accounts in the system." 
-      />
-    </div>
-  );
+  return <Navigate to="/admin/users?status=banned" replace />;
 };
 
 export default BannedUsers;
