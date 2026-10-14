@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useInView } from 'react-intersection-observer';
 import { api } from '../../../../util/axios';
+import { useDebounce } from '../../../../hooks/useDebounce';
 import moment from 'moment';
 import toast from 'react-hot-toast';
 import {
@@ -61,6 +62,8 @@ const PremiumUsersTable = ({
   const [option] = useState({ limit: 50 });
   const [searchParams, setSearchParams] = useSearchParams();
   const search = (searchParams.get("search") || "").trim();
+  const [searchInput, setSearchInput] = useState(search);
+  const debouncedSearch = useDebounce(searchInput, 400);
   const statusParam = searchParams.get("status");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [selectedUser, setSelectedUser] = useState(null);
@@ -135,9 +138,30 @@ const PremiumUsersTable = ({
     }, { replace: true });
   };
 
+  // Keep searchInput in sync if URL search param changes externally (e.g. navigation or reset)
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  // Debounced search sync to URL search params
+  useEffect(() => {
+    const trimmed = debouncedSearch.trim();
+    if (trimmed !== search) {
+      applySearch(trimmed);
+    }
+  }, [debouncedSearch]);
+
   const searchHandler = (e) => {
     e.preventDefault();
-    applySearch(e.target.search.value.trim());
+    const trimmed = searchInput.trim();
+    if (trimmed !== search) {
+      applySearch(trimmed);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput("");
+    applySearch("");
   };
 
   const handleTabChange = (tabId) => {
@@ -158,7 +182,7 @@ const PremiumUsersTable = ({
     ? "Activated"
     : "Joined";
 
-  const { data, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
+  const { data, isLoading, isFetching, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
     ["Premium Users Table", effectiveStatus, effectiveLock, role, effectiveDeleted, option.limit, search, dateRange, activeTab],
     async ({ pageParam = null }) => {
       let url = `/user?limit=${option.limit}&reverse=true`;
@@ -193,6 +217,7 @@ const PremiumUsersTable = ({
   const totalBanned = data?.pages[0]?.banned || 0;
   const deletedTotal = data?.pages[0]?.deletedTotal || 0;
   const filteredCount = data?.pages[0]?.total || 0;
+  const isSearching = (isFetching && !isFetchingNextPage) || (searchInput.trim() !== search);
 
   const dateValue = (user) =>
     user.deletedAt
@@ -404,6 +429,7 @@ const PremiumUsersTable = ({
               <button
                 type="button"
                 onClick={() => {
+                  setSearchInput("");
                   applySearch("");
                   setDateRange({ start: "", end: "" });
                 }}
@@ -423,22 +449,28 @@ const PremiumUsersTable = ({
             <div className="relative flex items-center">
               <MagnifyingGlassIcon className="absolute left-3.5 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
-                key={search}
+                type="text"
                 name="search"
-                defaultValue={search}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search by name, username, email, phone or ID..."
-                className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-hidden focus:border-blue-500 focus:bg-white transition-all"
+                className="w-full pl-10 pr-14 py-2 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-hidden focus:border-blue-500 focus:bg-white transition-all shadow-none"
               />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => applySearch("")}
-                  className="absolute right-2.5 p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 transition-colors"
-                  title="Clear search"
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
-              )}
+              <div className="absolute right-2.5 flex items-center gap-1">
+                {isSearching && (
+                  <Spinner className="h-4 w-4 text-blue-500" />
+                )}
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 transition-colors"
+                    title="Clear search"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </form>
 
@@ -491,7 +523,9 @@ const PremiumUsersTable = ({
           {isLoading && allUsers.length === 0 ? (
             <div className="text-center p-8 text-gray-400 font-medium text-xs">Loading users...</div>
           ) : allUsers.length === 0 ? (
-            <div className="text-center p-8 text-gray-400 font-medium text-xs">No users found</div>
+            <div className="text-center p-8 text-gray-400 font-medium text-xs">
+              {search ? `No users found matching "${search}"` : "No users found"}
+            </div>
           ) : (
             allUsers.map((user) => (
               <div key={user._id} className="p-3.5 space-y-2.5 hover:bg-blue-50/20 transition-colors">
@@ -615,7 +649,7 @@ const PremiumUsersTable = ({
               ) : allUsers.length === 0 ? (
                 <tr>
                   <td colSpan={role === "user" ? 7 : 6} className="text-center p-12 text-gray-400 font-medium text-xs">
-                    No users found
+                    {search ? `No users found matching "${search}"` : "No users found"}
                   </td>
                 </tr>
               ) : (
