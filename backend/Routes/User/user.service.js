@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const saltGenerator = require("../../util/saltGenerator");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = require("../../util/jwtSecret");
@@ -21,6 +22,8 @@ const REGISTRATION_BLOCKED_FIELDS = [
     "role", "balance", "status", "level", "lock", "active",
     "allowedUsers", "deletedAt", "activatedAt", "_id"
 ];
+
+const escapeRegex = (text) => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const createUser = async (req, res) => {
     try {
@@ -236,14 +239,19 @@ const getAllData = async (req, res) => {
 
     // Initialize search filter
     const searchConditions = [];
-    if (req.query.search) {
-        const regex = new RegExp(req.query.search, "i");
+    if (req.query.search && String(req.query.search).trim()) {
+        const trimmedSearch = String(req.query.search).trim();
+        const safeSearch = escapeRegex(trimmedSearch);
+        const regex = new RegExp(safeSearch, "i");
         searchConditions.push(
             { username: { $regex: regex } },
             { name: { $regex: regex } },
             { email: { $regex: regex } },
             { phone: { $regex: regex } }
         );
+        if (mongoose.Types.ObjectId.isValid(trimmedSearch)) {
+            searchConditions.push({ _id: trimmedSearch });
+        }
     }
 
     // Moderator filter
