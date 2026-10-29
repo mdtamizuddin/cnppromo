@@ -495,3 +495,23 @@ app.use((err, req, res, next) => {
 server.listen(port, () =>
   console.log(`Server listening on http://localhost:${port}`)
 );
+
+// `pm2 reload` starts the new worker, then sends SIGINT to the old one. Stop
+// accepting connections and let in-flight requests finish before exiting, so a
+// deploy drops nothing. io.close() also closes the underlying HTTP server.
+let shuttingDown = false;
+const shutdown = (signal) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`${signal} received, shutting down gracefully`);
+
+  // Hard stop if something keeps a connection open; must stay below kill_timeout.
+  setTimeout(() => process.exit(0), 8000).unref();
+
+  io.close(async () => {
+    await require("mongoose").connection.close().catch(() => {});
+    process.exit(0);
+  });
+};
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
