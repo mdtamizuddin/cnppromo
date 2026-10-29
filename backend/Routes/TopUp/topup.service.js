@@ -13,8 +13,31 @@ const createWithDraw = async (data) => {
             throw new Error("Withdraw amount must be greater than 50")
         }
 
-        const withDraw = new Withdraw(data);
-        await withDraw.save();
+        // A transaction id can only be used once, either by an earlier top-up
+        // or by any entry already in the unified ledger.
+        const trx = String(data.trx || "").trim();
+        if (!trx) {
+            throw new Error("Transection Id is required")
+        }
+        const Transaction = require("../Transaction/transaction.model");
+        const [usedByTopup, usedByLedger] = await Promise.all([
+            Withdraw.exists({ trx }),
+            Transaction.exists({ trxId: trx }),
+        ]);
+        if (usedByTopup || usedByLedger) {
+            throw new Error("This transaction ID has already been used")
+        }
+
+        const withDraw = new Withdraw({ ...data, trx });
+        try {
+            await withDraw.save();
+        } catch (saveErr) {
+            // Two requests with the same id can both pass the check above.
+            if (saveErr?.code === 11000) {
+                throw new Error("This transaction ID has already been used")
+            }
+            throw saveErr
+        }
 
         try {
             const { recordTransaction } = require("../Transaction/transaction.service");
