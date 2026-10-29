@@ -23,6 +23,22 @@ const bcrypt = require("bcrypt");
 const JWT_SECRET = require("./util/jwtSecret");
 const sessionService = require("./Routes/Session/session.service");
 
+// Express 4 ignores promises returned by async handlers, so an error thrown
+// outside a try/catch skips the global error handler and the request hangs.
+// Forward those rejections to next(err). Express 5 does this natively; remove
+// this block when upgrading.
+const Layer = require("express/lib/router/layer");
+Layer.prototype.handle_request = function handle(req, res, next) {
+  const fn = this.handle;
+  if (fn.length > 3) return next();
+  try {
+    const result = fn(req, res, next);
+    if (result && typeof result.catch === "function") result.catch(next);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const app = express();
 const port = process.env.PORT || 4000;
 
